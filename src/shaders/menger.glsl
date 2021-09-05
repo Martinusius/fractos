@@ -24,15 +24,24 @@ vec3 rotate(vec3 z, vec3 rotation) {
     return u.xyz;
 }
 
+float sphere(vec3 p, float r) {
+    return length(p) - r;
+}
 
 float box(vec3 p, vec3 b) {
     vec3 q = abs(p) - b;
     return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)), 0.0);
 }
 
-float sdf(vec3 z) {
+/*float sdf(vec3 z) {
+
+
     for(int i = 0; i < sdf_iterations; ++i) {
         z = abs(z);
+
+        if(sdf_rotation.x != 0.0 || sdf_rotation.y != 0.0 || sdf_rotation.z != 0.0)
+            z = rotate(z, sdf_rotation);
+
 
         if(z.x - z.y < 0.0) z.xy = z.yx;
         if(z.x - z.z < 0.0) z.xz = z.zx;
@@ -41,16 +50,22 @@ float sdf(vec3 z) {
         if(z.x + z.z < 0.0) z.xz = -z.zx;
         if(z.y + z.z < 0.0) z.zy = -z.yz;
 
-        z *= sdf_scale;
+        if(sdf_rotation2.x != 0.0 || sdf_rotation2.y != 0.0 || sdf_rotation2.z != 0.0)
+            z = rotate(z, sdf_rotation2);
+
+        z *= vec3(3.0, 3.0, 3.0);
         z -= vec3((sdf_scale - 1.0) * sdf_offset.x, (sdf_scale - 1.0) * sdf_offset.y, 0.0);
 
         if(z.z > 0.5 * sdf_offset.z * (sdf_scale - 1.0)) z.z -= sdf_offset.z * (sdf_scale - 1.0);   
     }
 
-    return box(z * pow(sdf_scale, float(-sdf_iterations)), vec3(pow(sdf_scale, float(-sdf_iterations))));
-}
 
-/*float sdf(vec3 z) {
+    
+
+    return box(z * pow(sdf_scale, float(-sdf_iterations)), vec3(pow(sdf_scale, float(-sdf_iterations))));
+}*/
+
+float sdf(vec3 z) {
     const float scale = 3.0;
 
     for(int i = 0; i < sdf_iterations; ++i) {
@@ -70,4 +85,4 @@ float sdf(vec3 z) {
     }
 
     return box(z * pow(scale, float(-sdf_iterations)), vec3(pow(scale, float(-sdf_iterations))));
-}*/
+}

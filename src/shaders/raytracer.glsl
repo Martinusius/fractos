@@ -1,5 +1,8 @@
 uniform vec2 resolution;
-uniform vec3 cameraPosition;
+uniform vec2 offset;
+uniform vec2 size;
+
+uniform vec3 cameraPos;
 uniform vec3 cameraDirection;
 
 uniform sampler2D previousFrame;
@@ -10,7 +13,7 @@ uniform float fov;
 uniform float time;
 
 
-const float epsilon = 0.0002;
+uniform float epsilon;
 
 
 float sdf(vec3 position);
@@ -28,12 +31,13 @@ uniform float roughness;
 uniform vec3 sunDirection;
 uniform float sunStrength;
 uniform vec3 color;
+uniform float backgroundMultiplier;
 
 const float renderDistance = 100.0;
 
 bool march(vec3 from, vec3 direction, out vec3 hit, out vec3 normal) {
     float totalDistance = 0.0;
-    for (int steps = 0; steps < 256; ++steps) {
+    for (int steps = 0; steps < 1024; ++steps) {
         vec3 p = from + totalDistance * direction;
 
         if(length(p) > 100.0)
@@ -127,7 +131,7 @@ vec3 raytrace(vec3 from, vec3 dir) {
                 direct += luminance * sunLight * sunStrength;
             }
         } else {
-            return direct + luminance * background(dir);
+            return direct + luminance * background(dir) * backgroundMultiplier;
         }
     }
     return vec3(0.0);
@@ -144,6 +148,18 @@ mat3 cameraMatrix() {
 
 
 void main() {
+    vec3 previousColor = texture2D(previousFrame, gl_FragCoord.xy / resolution).xyz;
+
+    if(
+        gl_FragCoord.x < offset.x ||
+        gl_FragCoord.y < offset.y ||
+        gl_FragCoord.x > offset.x + size.x ||
+        gl_FragCoord.y > offset.y + size.y
+    ) {
+        gl_FragColor = vec4(previousColor, 1);
+        return;
+    }
+
     vec2 uv = (gl_FragCoord.xy / resolution) * 2.0 - 1.0;
     uv.x *= resolution.x / resolution.y;
 
@@ -153,10 +169,10 @@ void main() {
 
     // Trace
     seed = (10.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex));
-    vec3 pixelColor = raytrace(cameraPosition, rayDirection);
+    vec3 pixelColor = raytrace(cameraPos, rayDirection);
 
     // Average samples
-    vec3 previousColor = texture2D(previousFrame, gl_FragCoord.xy / resolution).xyz;
+   
     vec3 averageColor = previousColor * float(sampleIndex) / float(sampleIndex + 1) + pixelColor / float(sampleIndex + 1);
    
     gl_FragColor = vec4(averageColor, 1);

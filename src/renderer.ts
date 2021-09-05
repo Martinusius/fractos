@@ -6,9 +6,40 @@ import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass';
 import { Background } from './background';
 
 export const renderer = new THREE.WebGLRenderer({ antialias: false });
+export const screenSize = new THREE.Vector2();
 
-renderer.setSize(document.body.clientWidth, document.body.clientHeight);
-document.body.appendChild(renderer.domElement);
+let element: HTMLElement | null;
+export function fractos(id: string) {
+    element = document.getElementById(id);
+
+    if(!element) return;
+    renderer.setSize(element.clientWidth, element.clientHeight);
+    element.appendChild(renderer.domElement);
+
+    const observer = new ResizeObserver(() => {
+        if(!element) return;
+        screenSize.set(element.clientWidth, element.clientHeight);
+    });
+
+    observer.observe(element);
+}
+
+export function setResolution(width: number, height: number, fixed = true) {
+
+    renderer.setSize(width, height);
+    effectsComposer.setSize(width, height);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+
+    if(!fixed) return;
+    const divisor = Math.max(width / screenSize.x, height / screenSize.y);
+
+    renderer.domElement.style.width = (width / divisor) + 'px';
+    renderer.domElement.style.height = (height / divisor) + 'px';
+    //effectsComposer.setSize(screenSize.x, screenSize.y);
+}
+
+
 
 
 const quadScene = new THREE.Scene();
@@ -28,18 +59,18 @@ controls.enabled = false;
 
 
 export function createShader(code: string, uniforms: { [uniform: string]: THREE.IUniform } = {}) {
-    return new THREE.RawShaderMaterial({
+    return new THREE.ShaderMaterial({
         uniforms: {
             resolution: { value: new THREE.Vector2() },
-            cameraPosition: { value: new THREE.Vector3() },
+            cameraPos: { value: new THREE.Vector3() },
             cameraDirection: { value: new THREE.Vector3() },
             fov: { value: 0 },
             modelView: { value: new THREE.Matrix4() },
             projection: { value: new THREE.Matrix4() },
             ...uniforms
         },
-        vertexShader: '#version 300 es\nprecision highp float;\nprecision highp int;\nin vec3 position;\nvoid main(){\ngl_Position = vec4(position, 1.0);\n}\n',
-        fragmentShader: '#version 300 es\nprecision highp float;\nprecision highp int;\nout highp vec4 pc_fragColor;\n#define gl_FragColor pc_fragColor\n#define gl_FragDepthEXT gl_FragDepth\n#define texture2D texture\n' + code
+        vertexShader: 'void main(){\ngl_Position = vec4(position, 1.0);\n}\n',
+        fragmentShader: code
     });
 }
 
@@ -74,7 +105,7 @@ export function render(shader: THREE.RawShaderMaterial, target: THREE.WebGLRende
     renderer.setRenderTarget(target);
 
     renderer.getSize(quad.material.uniforms.resolution.value);
-    quad.material.uniforms.cameraPosition.value.copy(camera.position);
+    quad.material.uniforms.cameraPos.value.copy(camera.position);
     camera.getWorldDirection(quad.material.uniforms.cameraDirection.value);
     quad.material.uniforms.fov.value = camera.fov / 180.0 * Math.PI;
     quad.material.uniforms.projection.value = camera.projectionMatrix;
@@ -88,7 +119,7 @@ export function renderPostprocessing(shader: THREE.RawShaderMaterial, target: TH
     renderer.setRenderTarget(target);
 
     renderer.getSize(quad.material.uniforms.resolution.value);
-    quad.material.uniforms.cameraPosition.value.copy(camera.position);
+    quad.material.uniforms.cameraPos.value.copy(camera.position);
     camera.getWorldDirection(quad.material.uniforms.cameraDirection.value);
     quad.material.uniforms.fov.value = camera.fov / 180.0 * Math.PI;
     quad.material.uniforms.projection.value = camera.projectionMatrix;

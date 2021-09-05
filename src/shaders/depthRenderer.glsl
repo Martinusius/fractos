@@ -1,7 +1,7 @@
 #include <packing>
 
 uniform vec2 resolution;
-uniform vec3 cameraPosition;
+uniform vec3 cameraPos;
 uniform vec3 cameraDirection;
 
 uniform float fov;
@@ -28,7 +28,7 @@ vec3 march(vec3 direction) {
 
     float totalDistance = 0.0;
     for (int steps = 0; steps < maximumRaySteps; ++steps) {
-        vec3 p = cameraPosition + totalDistance * direction;
+        vec3 p = cameraPos + totalDistance * direction;
 
         if(length(p) > 100.0)
             break;

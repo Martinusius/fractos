@@ -1,5 +1,5 @@
 uniform vec2 resolution;
-uniform vec3 cameraPosition;
+uniform vec3 cameraPos;
 uniform vec3 cameraDirection;
 
 uniform float fov;
@@ -22,7 +22,7 @@ struct Camera {
 Camera createCamera() {
     vec3 right = vec3(0.0);
     vec3 up = vec3(0.0);
-    Camera camera = Camera(cameraPosition, cameraDirection, right, up, fov, CAMERA_NEAR, CAMERA_FAR);
+    Camera camera = Camera(cameraPos, cameraDirection, right, up, fov, CAMERA_NEAR, CAMERA_FAR);
     camera.right = normalize(vec3(-camera.forward.z, 0.0, camera.forward.x));
     camera.up = normalize(-cross(camera.forward, camera.right));
     return camera;
@@ -87,7 +87,7 @@ float rand(vec2 n) {
 vec3 march(vec3 direction) {
     float totalDistance = 0.0;
     for (int steps = 0; steps < maximumRaySteps; ++steps) {
-        vec3 p = cameraPosition + totalDistance * direction;
+        vec3 p = cameraPos + totalDistance * direction;
 
         if(totalDistance > 100.0)
             break;
@@ -96,7 +96,7 @@ vec3 march(vec3 direction) {
         totalDistance += (steps < 4 ? rand(gl_FragCoord.xy / resolution * 100.0) * dist : dist);
        
         if(dist < epsilon) {
-            vec3 position = cameraPosition + totalDistance * direction;
+            vec3 position = cameraPos + totalDistance * direction;
             vec3 normal = calculateNormal(position);
 
             float diffuse = (enableShadows ? shadowRay(position, normal) : max(dot(normal, -sunDirection), 0.0)) * sunStrength;

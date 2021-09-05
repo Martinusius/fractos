@@ -1,5 +1,6 @@
 uniform vec2 resolution;
 uniform sampler2D data;
+uniform float contrast;
 
 vec3 reinhard(vec3 x) {
     return x / (1.0 + x);
@@ -45,7 +46,7 @@ vec3 aces(vec3 x) {
     return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
-vec3 contrast(vec3 color, float contrast) {
+vec3 setContrast(vec3 color, float contrast) {
     return (color - 0.5) * max(contrast, 0.0) + 0.5;
 }
 
@@ -58,8 +59,8 @@ vec3 filmic(vec3 x) {
 }
 
 float vignette(vec2 uv, float radius, float smoothness) {
-	float diff = radius - distance(uv, vec2(0.5, 0.5));
-	return smoothstep(-smoothness, smoothness, diff);
+    float diff = radius - distance(uv, vec2(0.5, 0.5));
+    return smoothstep(-smoothness, smoothness, diff);
 }
 
 void main() {
@@ -68,7 +69,7 @@ void main() {
     vec3 tonemapped = filmic(texture2D(data, uv).xyz);
 
     // Contrast boost
-    vec3 boosted = contrast(tonemapped, 1.5);
+    vec3 boosted = setContrast(tonemapped, contrast);
 
     vec3 withVignette = boosted * vignette(uv, 0.7, 0.5);
 

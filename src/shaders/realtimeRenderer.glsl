@@ -1,7 +1,7 @@
 #include <packing>
 
 uniform vec2 resolution;
-uniform vec3 cameraPosition;
+uniform vec3 cameraPos;
 uniform vec3 cameraDirection;
 
 uniform float fov;
@@ -84,6 +84,39 @@ float statixAO(vec3 p, vec3 n, float k, float delta) {
     return 1.0 - k * sum;
 }
 
+#define PI 3.141592653589
+
+vec2 seed = vec2(0);
+
+vec2 rand2n() {
+    seed += vec2(-1, 1);
+    // implementation based on: lumina.sourceforge.net/Tutorials/Noise.html
+    return vec2(fract(sin(dot(seed.xy ,vec2(12.9898,78.233))) * 43758.5453),
+        fract(cos(dot(seed.xy ,vec2(4.898,7.23))) * 23421.631));
+}
+
+vec3 ortho(vec3 v) {
+    //  See : http://lolengine.net/blog/2013/09/21/picking-orthogonal-vector-combing-coconuts
+    return abs(v.x) > abs(v.z) ? vec3(-v.y, v.x, 0.0)  : vec3(0.0, -v.z, v.y);
+}
+
+vec3 getSampleBiased(vec3  dir, float power) {
+    dir = normalize(dir);
+    vec3 o1 = normalize(ortho(dir));
+    vec3 o2 = normalize(cross(dir, o1));
+    vec2 r = rand2n();
+    r.x = r.x * 2.0 * PI;
+    r.y = pow(r.y,1.0/(power+1.0));
+    float oneminus = sqrt(1.0-r.y*r.y);
+    return cos(r.x)*oneminus*o1+sin(r.x)*oneminus*o2+r.y*dir;
+}
+
+
+vec3 getCosineWeightedSample(vec3 dir) {
+    return getSampleBiased(dir, 1.0);
+}
+
+
 float rand(vec2 n) { 
     return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
 }
@@ -113,7 +146,7 @@ MarchData march(vec3 direction) {
 
     float totalDistance = 0.0;
     for (int steps = 0; steps < maximumRaySteps; ++steps) {
-        vec3 p = cameraPosition + totalDistance * direction;
+        vec3 p = cameraPos + totalDistance * direction;
 
         if(length(p) > 100.0)
             break;
@@ -122,11 +155,11 @@ MarchData march(vec3 direction) {
         totalDistance += (steps < 1 ? rand(gl_FragCoord.xy / resolution * 100.0) * dist : dist);
        
         if(steps == 0) {
-            if(dist < 0.0) return MarchData(vec3(0), cameraPosition, true);
+            if(dist < 0.0) return MarchData(vec3(0), cameraPos, true);
             minDist = dist * epsilonScale;
         }
         else if(dist < minDist) {
-            vec3 position = cameraPosition + totalDistance * direction;
+            vec3 position = cameraPos + totalDistance * direction;
             vec3 normal = calculateNormal(position, minDist);
 
             float diffuse = (enableShadows ? shadowRay(position, normal, minDist) : max(dot(normal, -sunDirection), 0.0)) * sunStrength;
@@ -136,7 +169,17 @@ MarchData march(vec3 direction) {
 
             //vec3 color = normalize(abs(trap));
 
-            vec3 pixel = diffuse * color + ao * background(normal) * color * ambientLightStrength;         
+            const int samples = 4;
+
+            vec3 bg = vec3(0);
+            for(int i = 0; i < samples; ++i) {
+                bg += background(normalize(vec3(rand2n(), rand2n().x)));
+            }   
+
+            vec3 pixel = diffuse * color + ao * (bg / float(samples)) * color * ambientLightStrength;
+
+
+              
 
             return MarchData(pixel, position, true);
         }

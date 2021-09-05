@@ -1,8 +1,8 @@
 import FileSaver from 'file-saver';
 import * as THREE from 'three';
-import { copy, postprocess } from './util';
-import Queue, { setAutoResize, setResolution } from './queue';
-import { createShader, renderer, render, setShader, Utils } from './renderer';
+import { copy, copyAA, postprocess } from './util';
+import Queue, { setAutoResize } from './queue';
+import { createShader, renderer, render, setShader, Utils, setResolution } from './renderer';
 import { SDF } from './sdf';
 
 // @ts-ignore
@@ -42,6 +42,14 @@ export class Raytracer {
     public samplesPerFrame: number = 100;
     public color: THREE.Color = new THREE.Color(0xffffff);
     public time: number = 0;
+    public epsilon: number = 0.00005;
+
+    public backgroundMultiplier: number = 1;
+
+    public postprocessing: boolean = true;
+    public contrast: number = 1.5;
+
+    public bufferSize: number = 512;
 
     constructor(width: number, height: number, sdf: SDF, background: Background) {
         this.sdf = sdf;
@@ -55,11 +63,16 @@ export class Raytracer {
             new THREE.WebGLRenderTarget(width, height, { format: THREE.RGBAFormat, type: THREE.FloatType })
         ];
 
+       
+        console.log( renderer.properties.get(this.targets[0].texture));
+
         this.shader = createShader(raytracer + sdf.getCode() + background.getCode(), {
             previousFrame: { value: this.targets[0] },
             sampleIndex: { value: 0 },
+            offset: { value: new THREE.Vector2(0, 0) },
+            size: { value: new THREE.Vector2(0, 0) },
 
-            ...Utils.createUniformsFromVariables(this, 'sunDirection', 'sunStrength', 'roughness', 'rayDepth', 'samplesPerFrame', 'color', 'time'),
+            ...Utils.createUniformsFromVariables(this, 'sunDirection', 'sunStrength', 'roughness', 'rayDepth', 'samplesPerFrame', 'color', 'time', 'epsilon', 'backgroundMultiplier'),
             ...Utils.objectToUniforms(this.sdf, 'sdf_'),
             ...Utils.objectToUniforms(this.background, 'bg_')
         });
@@ -70,21 +83,34 @@ export class Raytracer {
             setAutoResize(false);
             setResolution(this.width, this.height);
 
+            renderer.setRenderTarget(this.targets[0]);
+            renderer.clear();
+
+            renderer.setRenderTarget(this.targets[1]);
+            renderer.clear();
+
             Utils.setUniformsFromObject(this.shader, this.sdf, 'sdf_');
             Utils.setUniformsFromObject(this.shader, this.background, 'bg_');
+
+            const widths = Math.ceil(this.width / this.bufferSize);
+            const heights = Math.ceil(this.height / this.bufferSize);
+            
+            let x = 0, y = 0;
 
             let sample = 0;
             Queue.loop(() => {
                 this.shader.uniforms.previousFrame.value = this.targets[1].texture;
                 this.shader.uniforms.sampleIndex.value = sample;
+                this.shader.uniforms.offset.value = new THREE.Vector2(x * this.bufferSize, y * this.bufferSize);
+                this.shader.uniforms.size.value = new THREE.Vector2(this.bufferSize, this.bufferSize);
 
-                Utils.setUniformsFromVariables(this.shader, this, 'sunDirection', 'sunStrength', 'roughness', 'rayDepth', 'samplesPerFrame', 'color', 'time');
+                Utils.setUniformsFromVariables(this.shader, this, 'sunDirection', 'sunStrength', 'roughness', 'rayDepth', 'samplesPerFrame', 'color', 'time', 'epsilon', 'backgroundMultiplier');
         
                 // Render the sample to a target
                 render(this.shader, this.targets[0]);
         
                 // Copy to screen
-                (sample === this.samplesPerFrame - 1 ? postprocess : copy)(this.targets[0], null);
+                copy(this.targets[0], null);
         
                 // Swap targets
                 this.targets = [this.targets[1], this.targets[0]];
@@ -94,6 +120,18 @@ export class Raytracer {
 
                 if(sample >= this.samplesPerFrame) {
                     sample = 0;
+                    ++x;
+                }
+
+                if(x >= widths) {
+                    x = 0;
+                    ++y;
+                }
+
+                if(y >= heights) {
+                    if(this.postprocessing) postprocess(this.targets[1], null, this.contrast);
+                    else copyAA(this.targets[1], null);
+
                     Queue.cancel();
                     resolve();
                 }

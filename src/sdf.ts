@@ -19,17 +19,15 @@ export class Menger extends SDF {
     public iterations: number;
     public offset: THREE.Vector3;
     public scale: number;
-    public rotation: THREE.Vector3;
-    public rotation2: THREE.Vector3;
+    public rotation: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+    public rotation2: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
 
-    constructor(iterations: number, offset: THREE.Vector3 = new THREE.Vector3(1, 1, 1), scale: number = 3, rotation = new THREE.Vector3(0, 0, 0), rotation2 = new THREE.Vector3(0, 0, 0)) {
+    constructor(iterations: number, offset: THREE.Vector3 = new THREE.Vector3(1, 1, 1), scale: number = 3) {
         super();
 
         this.iterations = iterations;
         this.offset = offset;
         this.scale = scale;
-        this.rotation = rotation;
-        this.rotation2 = rotation2;
     }
 
     public getCode() {
@@ -41,6 +39,9 @@ export class Menger extends SDF {
 export class Sierpinski extends SDF {
     public iterations: number;
     public scale: number;
+    public absX: boolean = false;
+    public rotation: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+
 
     constructor(iterations: number, scale: number = 2) {
         super();
@@ -67,5 +68,19 @@ export class Mandelbulb extends SDF {
 
     public getCode() {
         return mandelbulb;
+    }
+}
+
+export class CustomSDF extends SDF {
+    public readonly code;
+
+    constructor(code: string) {
+        super();
+
+        this.code = code;
+    }
+
+    public getCode() {
+        return this.code;
     }
 }

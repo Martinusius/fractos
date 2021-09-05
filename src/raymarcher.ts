@@ -1,8 +1,8 @@
 import FileSaver from 'file-saver';
 import * as THREE from 'three';
 import { Background } from './background';
-import Queue, { setAutoResize, setResolution } from './queue';
-import { createShader, render, renderer, setShader, Utils } from './renderer';
+import Queue, { setAutoResize } from './queue';
+import { createShader, render, renderer, setShader, Utils, setResolution } from './renderer';
 import { SDF } from './sdf';
 
 
