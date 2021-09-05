@@ -9,8 +9,10 @@
 All of these images were created using fractos
 
 ### Usage
-Fractos is based on three.js which means some of the parameters are three.js objects such as THREE.Color and THREE.Vector3
+Since Fractos is based on Three.js some of the parameters are Three.js objects such as THREE.Color and THREE.Vector3
 
+
+##### Realtime renderer setup
 ```ts
 const background = new ColorBackground(new THREE.Color('rgb(255, 80, 60)'));
 const fractal = new Menger(6 /* Number of iterations */);
@@ -28,5 +30,10 @@ renderer.enableShadows = true;
 camera.fov = 90;
 ```
 
+### Example Images (Ray Traced)
 
+![Fractos image](./images/image0.jpg)
+![Fractos image](./images/image1.jpg)
+![Fractos image](./images/image2.jpg)
+![Fractos image](./images/image3.jpg)
 
