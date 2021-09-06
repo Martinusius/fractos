@@ -14,5 +14,7 @@ function expose(types: Record<string, any>) {
     }
 }
 
+console.log('fractos');
+
 
 expose({ THREE, RealtimeRenderer, DepthRenderer, Raymarcher, Raytracer, Menger, Sierpinski, ColorBackground, HemisphereBackground, ImageBackground, Mandelbulb, Queue, controls, camera, fractos });

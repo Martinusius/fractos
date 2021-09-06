@@ -17,17 +17,15 @@ export abstract class SDF {
 
 export class Menger extends SDF {
     public iterations: number;
-    public offset: THREE.Vector3;
-    public scale: number;
-    public rotation: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
-    public rotation2: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+    public rotate = new THREE.Vector3(0, 0, 0);
+    public rotate2 = new THREE.Vector3(0, 0, 0);
+    public translate = new THREE.Vector3(0, 0, 0);
+    public scale = new THREE.Vector3(1, 1, 1);
 
-    constructor(iterations: number, offset: THREE.Vector3 = new THREE.Vector3(1, 1, 1), scale: number = 3) {
+    constructor(iterations: number) {
         super();
 
         this.iterations = iterations;
-        this.offset = offset;
-        this.scale = scale;
     }
 
     public getCode() {
@@ -40,7 +38,7 @@ export class Sierpinski extends SDF {
     public iterations: number;
     public scale: number;
     public absX: boolean = false;
-    public rotation: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+    public rotate = new THREE.Vector3(0, 0, 0);
 
 
     constructor(iterations: number, scale: number = 2) {
