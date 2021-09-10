@@ -30,6 +30,8 @@ export class RealtimeRenderer {
     public sunStrength: number = 1;
     public epsilonScale: number = 0.001;
 
+    public contrast: number = 1;
+
     public clock: THREE.Clock;
 
     constructor(sdf: SDF, background: Background) {
@@ -42,6 +44,7 @@ export class RealtimeRenderer {
         this.clock = new THREE.Clock();
 
         this.target = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
+        this.target.texture.magFilter 
         this.targetFinal = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
 
         this.shader = createShader(realtimeRenderer + sdf.getCode() + background.getCode(), {
@@ -82,7 +85,7 @@ export class RealtimeRenderer {
             Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this, 'enableShadows', 'shadowHardness', 'ambientLightStrength', 'ambientOcclusionStrength', 'color', 'sunStrength', 'epsilonScale');
 
             render(this.shader, this.targetFinal);
-            postprocess(this.targetFinal, null);
+            postprocess(this.targetFinal, null, this.contrast);
         });
     }
 }

@@ -95,28 +95,6 @@ vec2 rand2n() {
         fract(cos(dot(seed.xy ,vec2(4.898,7.23))) * 23421.631));
 }
 
-vec3 ortho(vec3 v) {
-    //  See : http://lolengine.net/blog/2013/09/21/picking-orthogonal-vector-combing-coconuts
-    return abs(v.x) > abs(v.z) ? vec3(-v.y, v.x, 0.0)  : vec3(0.0, -v.z, v.y);
-}
-
-vec3 getSampleBiased(vec3  dir, float power) {
-    dir = normalize(dir);
-    vec3 o1 = normalize(ortho(dir));
-    vec3 o2 = normalize(cross(dir, o1));
-    vec2 r = rand2n();
-    r.x = r.x * 2.0 * PI;
-    r.y = pow(r.y,1.0/(power+1.0));
-    float oneminus = sqrt(1.0-r.y*r.y);
-    return cos(r.x)*oneminus*o1+sin(r.x)*oneminus*o2+r.y*dir;
-}
-
-
-vec3 getCosineWeightedSample(vec3 dir) {
-    return getSampleBiased(dir, 1.0);
-}
-
-
 float rand(vec2 n) { 
     return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
 }
@@ -165,9 +143,6 @@ MarchData march(vec3 direction) {
             float diffuse = (enableShadows ? shadowRay(position, normal, minDist) : max(dot(normal, -sunDirection), 0.0)) * sunStrength;
 
             float ao = 1.0 / (float(steps) + dist / minDist) / ambientOcclusionStrength;
-            // ao = statixAO(position, normal, 3.0, 0.01);
-
-            //vec3 color = normalize(abs(trap));
 
             const int samples = 4;
 

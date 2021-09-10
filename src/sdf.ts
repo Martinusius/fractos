@@ -21,6 +21,7 @@ export class Menger extends SDF {
     public rotate2 = new THREE.Vector3(0, 0, 0);
     public translate = new THREE.Vector3(0, 0, 0);
     public scale = new THREE.Vector3(1, 1, 1);
+    public offset = 1;
 
     constructor(iterations: number) {
         super();

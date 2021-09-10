@@ -6,6 +6,8 @@ import { Raymarcher } from "./raymarcher";
 import { Raytracer } from "./raytracer";
 import { camera, controls, fractos } from "./renderer";
 import { Menger, Sierpinski, Mandelbulb } from "./sdf";
+import { PathTracer } from './pathTracer';
+
 import Queue from './queue';
 
 function expose(types: Record<string, any>) {
@@ -14,7 +16,4 @@ function expose(types: Record<string, any>) {
     }
 }
 
-console.log('fractos');
-
-
-expose({ THREE, RealtimeRenderer, DepthRenderer, Raymarcher, Raytracer, Menger, Sierpinski, ColorBackground, HemisphereBackground, ImageBackground, Mandelbulb, Queue, controls, camera, fractos });
+expose({ THREE, RealtimeRenderer, DepthRenderer, Raymarcher, Raytracer, Menger, Sierpinski, ColorBackground, HemisphereBackground, ImageBackground, Mandelbulb, Queue, controls, camera, fractos, PathTracer });

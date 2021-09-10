@@ -23,7 +23,7 @@ function normalize(vector: THREE.Vector3) {
 
 // Basic raymarcher which allows for realtime rendering
 export class Raymarcher {
-    private shader: THREE.RawShaderMaterial;
+    private shader: THREE.ShaderMaterial;
     private target: THREE.WebGLRenderTarget;
     
 
@@ -61,6 +61,9 @@ export class Raymarcher {
     }
 
     renderImage() {
+        Queue.cancel();
+
+        setAutoResize(false);
         setResolution(this.width, this.height);
 
         Utils.setUniformsFromObject(this.shader, this.sdf, 'sdf_');
@@ -71,6 +74,7 @@ export class Raymarcher {
         
         render(this.shader, this.target);
         postprocess(this.target, null);
+        console.log('render');
     }
 
     renderAnimation(frameCount: number, frameCallback = (frame: number) => {}) {

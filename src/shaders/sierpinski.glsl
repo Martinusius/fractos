@@ -1,6 +1,6 @@
 uniform int sdf_iterations;
 uniform float sdf_scale;
-uniform vec3 sdf_rotation;
+uniform vec3 sdf_rotate;
 uniform bool sdf_absX;
 
 mat4 rotationMatrix(vec3 axis, float angle) {
@@ -40,8 +40,8 @@ float sdf(vec3 z) {
         if(sdf_absX)
             z.x = abs(z.x);
 
-        if(sdf_rotation.x != 0.0 || sdf_rotation.y != 0.0 || sdf_rotation.z != 0.0)
-            z = rotate(z, sdf_rotation);
+        if(sdf_rotate.x != 0.0 || sdf_rotate.y != 0.0 || sdf_rotate.z != 0.0)
+            z = rotate(z, sdf_rotate);
 
         if(z.x + z.y < 0.0) z.xy = -z.yx;
         if(z.x + z.z < 0.0) z.xz = -z.zx;

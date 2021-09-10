@@ -8,6 +8,8 @@ import { Background } from './background';
 export const renderer = new THREE.WebGLRenderer({ antialias: false });
 export const screenSize = new THREE.Vector2();
 
+renderer.extensions.get('EXT_color_buffer_float');
+
 let element: HTMLElement | null;
 export function fractos(id: string) {
     element = document.getElementById(id);

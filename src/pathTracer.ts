@@ -6,7 +6,9 @@ import { createShader, renderer, render, setShader, Utils, setResolution } from 
 import { SDF } from './sdf';
 
 // @ts-ignore
-import raytracer from './shaders/raytracer.glsl';
+import core from './shaders/core.glsl';
+// @ts-ignore
+import pathTracer from './shaders/pathTracer.glsl';
 
 // @ts-ignore
 import './webm-writer-0.3.0';
@@ -26,7 +28,7 @@ export function asyncRepeat(count: number, callback: (i: number) => void, after?
 
 
 // Recursive path tracer implementation for raymarched scenes
-export class Raytracer {
+export class PathTracer {
     private targets: THREE.WebGLRenderTarget[] = [];
     private shader: THREE.ShaderMaterial;
     
@@ -46,9 +48,6 @@ export class Raytracer {
 
     public backgroundMultiplier: number = 1;
 
-    public postprocessing: boolean = true;
-    public contrast: number = 1.5;
-
     public bufferSize: number = 512;
 
     constructor(width: number, height: number, sdf: SDF, background: Background) {
@@ -63,7 +62,7 @@ export class Raytracer {
             new THREE.WebGLRenderTarget(width, height, { format: THREE.RGBAFormat, type: THREE.FloatType })
         ];
 
-        this.shader = createShader(raytracer + sdf.getCode() + background.getCode(), {
+        this.shader = createShader(core + pathTracer + sdf.getCode() + background.getCode(), {
             previousFrame: { value: this.targets[0] },
             sampleIndex: { value: 0 },
             offset: { value: new THREE.Vector2(0, 0) },
@@ -113,12 +112,10 @@ export class Raytracer {
                 this.targets = [this.targets[1], this.targets[0]];
         
 
-                console.log(`${++sample}/${this.samplesPerFrame}`);
+                //console.log(`${++sample}/${this.samplesPerFrame}`);
 
-                if(sample >= this.samplesPerFrame) {
-                    sample = 0;
-                    ++x;
-                }
+                ++x;
+                
 
                 if(x >= widths) {
                     x = 0;
@@ -126,12 +123,20 @@ export class Raytracer {
                 }
 
                 if(y >= heights) {
-                    if(this.postprocessing) postprocess(this.targets[1], null, this.contrast);
-                    else copyAA(this.targets[1], null);
+                    y = 0;
+                    console.log(`Samples: ${++sample}/${this.samplesPerFrame}`);
+                }
+
+                if(sample >= this.samplesPerFrame) {
+                    
+
+                    copyAA(this.targets[1], null);
 
                     Queue.cancel();
                     resolve();
                 }
+
+                
             });
         });
 

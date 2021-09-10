@@ -65,8 +65,8 @@ vec2 seed = vec2(0);
 vec2 rand2n() {
     seed += vec2(-1, 1);
     // implementation based on: lumina.sourceforge.net/Tutorials/Noise.html
-    return vec2(fract(sin(dot(seed.xy ,vec2(12.9898,78.233))) * 43758.5453),
-        fract(cos(dot(seed.xy ,vec2(4.898,7.23))) * 23421.631));
+    return vec2(fract(sin(dot(seed.xy, vec2(12.9898,78.233))) * 43758.5453),
+        fract(cos(dot(seed.xy, vec2(4.898,7.23))) * 23421.631));
 }
 
 vec3 ortho(vec3 v) {
