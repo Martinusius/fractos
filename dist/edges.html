@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body id="body">
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+
+            display: flex;
+            justify-content: center;
+
+            background-color: black;
+        }
+
+        canvas {
+            object-fit: contain;
+            width: auto !important;
+            height: auto !important;
+        }
+    </style>
+    <script src="fractos-full.js"></script>
+    <script>
+        fractos('body');
+
+        const fractal = new Menger(3);
+        fractal.translate = new THREE.Vector3(-1.5, 0.5, 0);
+        fractal.offset = 0.75;
+
+        // const fractal = new CustomSDF(document.getElementById('shader').textContent);
+
+        const renderer = new EdgeRenderer(fractal);
+        renderer.lineWidth = 1;
+
+        camera.position.set(20, 20, 20);
+        camera.fov = 10;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        controls.enabled = true;
+        controls.maxDistance = 99.9;
+        controls.minDistance = 2.0;
+        
+        //renderer.start();
+        renderer.renderImage(1080, 1080).then(() => console.log('done'));
+    </script>
+</body>
+</html>

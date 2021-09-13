@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body id="body">
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+
+            display: flex;
+            justify-content: center;
+
+            background-color: black;
+        }
+
+        canvas {
+            object-fit: contain;
+            width: auto !important;
+            height: auto !important;
+        }
+    </style>
+    <script src="fractos-full.js"></script>
+    <script>
+        fractos('body');
+
+        function getEnvMap(url, positive = 'p', negative = 'n') {
+            const r = url;
+            const urls = [r + positive + "x.jpg", r + negative + "x.jpg", r + positive + "y.jpg", r + negative + "y.jpg", r + positive + "z.jpg", r + negative + "z.jpg"];
+
+            textureCube = new THREE.CubeTextureLoader().load(urls);
+            textureCube.format = THREE.RGBFormat;
+            textureCube.mapping = THREE.CubeReflectionMapping;
+            textureCube.encoding = THREE.sRGBEncoding;
+            
+            return textureCube;
+        }
+
+        const background = new ImageBackground(getEnvMap('https://playground.babylonjs.com/textures/skybox_'));
+        // const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
+        // const bacground = new ColorBackground(new THREE.Color('rgb(255, 80, 60)'));
+        
+        const fractal = new Menger(3);
+        fractal.translate = new THREE.Vector3(-1.5, 0.5, 0);
+        fractal.offset = 0.75;
+
+
+        const renderer = new RealtimeRenderer(fractal, background);
+        renderer.color = new THREE.Color('rgb(255, 255, 255)');
+
+        const aoOnly = true;
+
+        if(aoOnly) {
+            renderer.sunStrength = 0.0;
+            renderer.ambientLightStrength = 5.0;
+            renderer.enableShadows = false;
+        }
+        else {
+            renderer.sunStrength = 1.0;
+            renderer.ambientLightStrength = 0.5;
+            renderer.enableShadows = true;
+        }
+
+        const renderer2 = new EdgeRenderer(fractal);
+        
+
+      
+
+        camera.fov = 10;
+        camera.position.set(20, 20, 20);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        controls.enabled = true;
+        renderer.start();
+        //renderer.adaptiveEpsilon = true;
+        //renderer.epsilonScale = 0.001;
+        renderer.epsilon = 0.001;
+
+        const pathTracer = new PathTracer(1080, 1080, fractal, background);
+        
+        pathTracer.color = renderer.color;
+        pathTracer.sunStrength = 1.0;
+        pathTracer.bufferSize = 1080;
+        pathTracer.backgroundMultiplier = 1.0;
+        pathTracer.epsilon = 0.00001;
+       
+
+        let capturing = false, paused = false;
+
+        window.addEventListener('keydown', event => {
+            if(event.repeat) return;
+
+            const key = event.key.toLowerCase();
+
+            if(key === 'c') {
+                if(capturing) {
+                    capturing = false;
+                    controls.enabled = true;
+                    renderer.start();
+                }
+                else {
+                    capturing = true;
+                    controls.enabled = false;
+                    pathTracer.samplesPerFrame = 100;
+                    renderer2.renderImage(1080, 1080);
+                }
+            }
+            else if(key === 'f') {
+                capturing = true;
+                controls.enabled = false;
+                pathTracer.samplesPerFrame = 200;
+                pathTracer.renderImage();
+            }
+            else if(key === 'p') {
+                if(paused) {
+                    const old = renderer.clock.getElapsedTime();
+                    renderer.clock.start();
+                    renderer.clock.elapsedTime = old;
+                    paused = false;
+                }
+                else {
+                    renderer.clock.stop();
+                    paused = true;
+                }
+            }
+            else if(key === 'l') {
+                const direction = new THREE.Vector3();
+                camera.getWorldDirection(direction);
+                renderer.sunDirection = direction;
+                raytracer.sunDirection = direction;
+            }
+            else if(key === 'i') {
+                console.log('Camera: ', camera.position);
+                console.log('Light: ', renderer.sunDirection);
+            }
+        });
+
+        
+
+        
+    </script>
+</body>
+</html>
