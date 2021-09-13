@@ -2,7 +2,6 @@ uniform vec2 offset;
 uniform vec2 size;
 
 uniform sampler2D previousFrame;
-uniform int samplesPerFrame;
 uniform int sampleIndex;
 
 uniform int rayDepth;
@@ -86,7 +85,7 @@ vec3 shading() {
         return previousColor;
     }
 
-    vec3 rayDirection = pixelDirection(gl_FragCoord.xy);
+    vec3 rayDirection = pixelDirection();
 
     // Trace
     seed = (10.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex));

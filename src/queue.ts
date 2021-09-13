@@ -21,6 +21,13 @@ export default class Queue {
     public static cancel() {
         callback = () => {};
     }
+
+    public static once(call: () => void) {
+        callback = () => {
+            call();
+            callback = () => {};
+        };
+    }
 }
 
 

@@ -5,6 +5,7 @@ import { Raymarcher } from "./raymarcher";
 import { camera, controls, fractos } from "./renderer";
 import { Menger, Sierpinski, Mandelbulb } from "./sdf";
 import Queue from './queue';
+import { EdgeRenderer } from "./edgeRenderer";
 
 function expose(types: Record<string, any>) {
     for(const [key, value] of Object.entries(types)) {
@@ -12,5 +13,4 @@ function expose(types: Record<string, any>) {
     }
 }
 
-
-expose({ THREE, RealtimeRenderer, Raymarcher, Menger, Sierpinski, ColorBackground, HemisphereBackground, ImageBackground, Mandelbulb, Queue, controls, camera, fractos });
+expose({ THREE, RealtimeRenderer, EdgeRenderer, Menger, Sierpinski, ColorBackground, HemisphereBackground, ImageBackground, Mandelbulb, Queue, controls, camera, fractos });

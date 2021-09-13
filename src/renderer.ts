@@ -9,6 +9,7 @@ export const renderer = new THREE.WebGLRenderer({ antialias: false });
 export const screenSize = new THREE.Vector2();
 
 renderer.extensions.get('EXT_color_buffer_float');
+//renderer.setPixelRatio(window.devicePixelRatio);
 
 let element: HTMLElement | null;
 export function fractos(id: string) {
@@ -20,14 +21,13 @@ export function fractos(id: string) {
 
     const observer = new ResizeObserver(() => {
         if(!element) return;
-        screenSize.set(element.clientWidth, element.clientHeight);
+        screenSize.set(element.clientWidth * window.devicePixelRatio, element.clientHeight * window.devicePixelRatio);
     });
 
     observer.observe(element);
 }
 
 export function setResolution(width: number, height: number, fixed = true) {
-
     renderer.setSize(width, height);
     effectsComposer.setSize(width, height);
     camera.aspect = width / height;

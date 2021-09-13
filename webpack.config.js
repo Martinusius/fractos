@@ -1,12 +1,37 @@
 const path = require('path');
 
-module.exports = {
+const public = {
     watch: true,
     devtool: 'inline-source-map',
-    entry: {
-        'fractos-full': './src/index.ts',
-        fractos: './src/public.ts'
+    entry: './src/public.ts',
+    mode: 'production',
+    module: {
+        rules: [
+            {
+                test: /\.ts/,
+                use: 'ts-loader',
+                exclude: /node_modules/
+            },
+            {
+                test: /\.glsl/ ,
+                type: 'asset/source',
+                exclude: /node_modules/
+            },
+        ],
     },
+    output: {
+        filename: 'fractos-new.js',
+        path: '\\\\NETSERVER\\www\\fractos',
+    },
+    resolve: {
+        extensions: ['.ts', '.js', '.glsl']
+    }
+};
+
+const full = {
+    watch: true,
+    devtool: 'inline-source-map',
+    entry: './src/index.ts',
     mode: 'development',
     module: {
         rules: [
@@ -23,11 +48,14 @@ module.exports = {
         ],
     },
     output: {
-        globalObject: 'self',
-        filename: '[name].js',
+        filename: 'fractos-full.js',
         path: path.resolve('./dist'),
     },
     resolve: {
         extensions: ['.ts', '.js', '.glsl']
     }
 };
+
+module.exports = [
+    public, full
+];

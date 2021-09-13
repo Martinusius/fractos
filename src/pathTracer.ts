@@ -63,7 +63,7 @@ export class PathTracer {
         ];
 
         this.shader = createShader(core + pathTracer + sdf.getCode() + background.getCode(), {
-            previousFrame: { value: this.targets[0] },
+            previousFrame: { value: this.targets[0].texture },
             sampleIndex: { value: 0 },
             offset: { value: new THREE.Vector2(0, 0) },
             size: { value: new THREE.Vector2(0, 0) },

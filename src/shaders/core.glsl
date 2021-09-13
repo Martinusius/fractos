@@ -2,8 +2,11 @@ uniform vec2 resolution;
 uniform vec3 cameraPos;
 uniform vec3 cameraDirection;
 uniform float fov;
-uniform float epsilon;
 uniform float time;
+
+uniform bool adaptiveEpsilon;
+uniform float epsilonScale;
+uniform float epsilon;
 
 
 const int maximumRaySteps = 1024;
@@ -49,15 +52,20 @@ mat3 cameraMatrix() {
     return mat3(cu, cv, cw);
 }
 
-vec3 pixelDirection(vec2 coord) {
+vec3 pixelDirection() {
     mat3 view = cameraMatrix();
-    vec2 uv = (coord / resolution) * 2.0 - 1.0;
+    vec2 uv = (gl_FragCoord.xy / resolution) * 2.0 - 1.0;
     uv.x *= resolution.x / resolution.y;
     return view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));
 }
 
 Ray raycast(vec3 origin, vec3 direction) {
     Ray data;
+
+    float minDist;
+
+    if(!adaptiveEpsilon)
+        minDist = epsilon;
 
     float totalDistance = 0.0;
     for (int steps = 0; steps < maximumRaySteps; ++steps) {
@@ -66,16 +74,27 @@ Ray raycast(vec3 origin, vec3 direction) {
         if(totalDistance > 100.0)
             break;
 
-        float currentDistance = sdf(currentPosition);
+        float currentDistance = max(0.0, sdf(currentPosition));
 
         // Antibanding
         totalDistance += (steps < 1 ? rand() * currentDistance : currentDistance);
-       
-        if(currentDistance < epsilon) {
+
+        if(adaptiveEpsilon && steps == 0) {
+            if(currentDistance < 0.0) {
+                data.hit = true;
+                data.position = origin;
+                data.normal = vec3(0);
+                data.steps = 0.0;
+
+                return data;
+            }
+            minDist = currentDistance * epsilonScale;
+        }
+        else if(currentDistance < minDist) {
             data.hit = true;
             data.position = origin + totalDistance * direction;
             data.normal = calculateNormal(data.position);
-            data.steps = float(steps) + currentDistance / epsilon;
+            data.steps = float(steps) + currentDistance / minDist;
 
             return data;
         }
@@ -85,8 +104,8 @@ Ray raycast(vec3 origin, vec3 direction) {
     return data;
 }
 
-Ray pixelRaycast(vec2 coord) {
-    return raycast(cameraPos, pixelDirection(coord));
+Ray pixelRaycast() {
+    return raycast(cameraPos, pixelDirection());
 }
 
 
@@ -97,28 +116,3 @@ void main() {
 }
 
 
-/*uniform vec3 sunDirection;
-uniform float sunStrength;
-uniform float ambientLightStrength;
-uniform float ambientOcclusionStrength;
-uniform vec3 color;
-uniform bool enableShadows;
-uniform float shadowHardness;
-
-vec3 shading() {
-    Ray ray = pixelRaycast();
-    if(ray.hit) {
-        float diffuse = (enableShadows ? shadowRay(ray.normal, normal) : max(dot(normal, -sunDirection), 0.0)) * sunStrength;
-        float ao = 1.0 / (steps) / ambientOcclusionStrength;
-
-        const int samples = 4;
-        vec3 backgroundAverage = vec3(0);
-        for(int i = 0; i < samples; ++i)
-            backgroundAverage += background(normalize(vec3(rand2n(), rand2n().x)));
-
-        return diffuse * color + ao * (backgroundAverage / float(samples)) * color * ambientLightStrength;
-    }
-    else {
-        return;
-    }
-}*/
