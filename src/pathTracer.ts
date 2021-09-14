@@ -6,13 +6,12 @@ import { createShader, renderer, render, setShader, Utils, setResolution } from 
 import { SDF } from './sdf';
 
 // @ts-ignore
-import core from './shaders/core.glsl';
-// @ts-ignore
 import pathTracer from './shaders/pathTracer.glsl';
 
 // @ts-ignore
 import './webm-writer-0.3.0';
 import { Background } from './background';
+import { core } from './core';
 
 export function asyncRepeat(count: number, callback: (i: number) => void, after?: () => void) {
     let i = 0;

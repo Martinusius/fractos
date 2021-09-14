@@ -26,14 +26,7 @@ vec3 rotate(vec3 z, vec3 rotation) {
     return u.xyz;
 }
 
-float sphere(vec3 p, float r) {
-    return length(p) - r;
-}
 
-float box(vec3 p, vec3 b) {
-    vec3 q = abs(p) - b;
-    return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)), 0.0);
-}
 
 /*float sdf(vec3 z) {
 

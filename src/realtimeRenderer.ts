@@ -3,14 +3,14 @@ import { copy, copyAA, postprocess } from './util';
 import { controls, createShader, render, renderer, renderRaster, setResolution, setShader, Utils } from './renderer';
 import { SDF } from './sdf';
 
-// @ts-ignore
-import core from './shaders/core.glsl';
+
 // @ts-ignore
 import simple from './shaders/simple.glsl';
 
 
 import Queue, { setAutoResize } from './queue';
 import { Background } from './background';
+import { core } from './core';
 
 function normalize(vector: THREE.Vector3) {
     vector.normalize();

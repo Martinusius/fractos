@@ -27,6 +27,11 @@
         }
     </style>
     <script src="fractos-full.js"></script>
+    <script id="sdf" type="x-shader/x-fragment">
+        float sdf(vec3 position) {
+            return octahedron(position, 1.0);
+        }
+    </script>
     <script>
         fractos('body');
 
@@ -46,9 +51,11 @@
         // const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
         // const bacground = new ColorBackground(new THREE.Color('rgb(255, 80, 60)'));
         
-        const fractal = new Menger(3);
-        fractal.translate = new THREE.Vector3(-1.5, 0.5, 0);
-        fractal.offset = 0.75;
+        // const fractal = new Menger(6);
+        // fractal.translate = new THREE.Vector3(-2.0, 1.0, 0);
+        // fractal.offset = 0.5;
+
+        const fractal = new CustomSDF(document.getElementById('sdf').textContent);
 
 
         const renderer = new RealtimeRenderer(fractal, background);
@@ -58,7 +65,7 @@
 
         if(aoOnly) {
             renderer.sunStrength = 0.0;
-            renderer.ambientLightStrength = 5.0;
+            renderer.ambientLightStrength = 2.0;
             renderer.enableShadows = false;
         }
         else {
@@ -72,14 +79,15 @@
 
       
 
-        camera.fov = 10;
-        camera.position.set(20, 20, 20);
+        camera.fov = 90;
+        camera.position.set(2, 2, 2);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         controls.enabled = true;
         renderer.start();
         //renderer.adaptiveEpsilon = true;
         //renderer.epsilonScale = 0.001;
+
         renderer.epsilon = 0.001;
 
         const pathTracer = new PathTracer(1080, 1080, fractal, background);
@@ -87,6 +95,7 @@
         pathTracer.color = renderer.color;
         pathTracer.sunStrength = 1.0;
         pathTracer.bufferSize = 1080;
+        // pathTracer.roughness = 0.2;
         pathTracer.backgroundMultiplier = 1.0;
         pathTracer.epsilon = 0.00001;
        
@@ -108,7 +117,7 @@
                     capturing = true;
                     controls.enabled = false;
                     pathTracer.samplesPerFrame = 100;
-                    renderer2.renderImage(1080, 1080);
+                    pathTracer.renderImage();
                 }
             }
             else if(key === 'f') {

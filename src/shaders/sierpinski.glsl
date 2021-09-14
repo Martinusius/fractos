@@ -26,11 +26,7 @@ vec3 rotate(vec3 z, vec3 rotation) {
 
 
 
-float tetrahedron(vec3 p, float r) {
-    float md = max(max(-p.x - p.y - p.z, p.x + p.y - p.z),
-              max(-p.x + p.y + p.z, p.x - p.y + p.z));
-    return (md - r) / sqrt(3.0);
-}
+
 
 
 float sdf(vec3 z) {

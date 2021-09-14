@@ -56,6 +56,4 @@ const full = {
     }
 };
 
-module.exports = [
-    public, full
-];
+module.exports = full;

@@ -11,6 +11,7 @@ import raytracer from './shaders/raytracer.glsl';
 // @ts-ignore
 import './webm-writer-0.3.0';
 import { Background } from './background';
+import { core } from './core';
 
 export function asyncRepeat(count: number, callback: (i: number) => void, after?: () => void) {
     let i = 0;
@@ -63,7 +64,7 @@ export class Raytracer {
             new THREE.WebGLRenderTarget(width, height, { format: THREE.RGBAFormat, type: THREE.FloatType })
         ];
 
-        this.shader = createShader(raytracer + sdf.getCode() + background.getCode(), {
+        this.shader = createShader(core + sdf.getCode() + background.getCode(), {
             previousFrame: { value: this.targets[0] },
             sampleIndex: { value: 0 },
             offset: { value: new THREE.Vector2(0, 0) },

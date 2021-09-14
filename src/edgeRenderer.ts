@@ -4,8 +4,6 @@ import { createShader, render, renderer, setResolution, Utils } from './renderer
 import { SDF } from './sdf';
 
 // @ts-ignore
-import core from './shaders/core.glsl';
-// @ts-ignore
 import position from './shaders/position.glsl';
 // @ts-ignore
 import normal from './shaders/normal.glsl';
@@ -18,6 +16,7 @@ import expandLines from './shaders/expandLines.glsl';
 import Queue, { setAutoResize } from './queue';
 import { Background } from './background';
 import { ShaderMaterial } from 'three';
+import { core } from './core';
 
 function normalize(vector: THREE.Vector3) {
     vector.normalize();
