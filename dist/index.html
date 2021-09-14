@@ -29,7 +29,7 @@
     <script src="fractos-full.js"></script>
     <script id="sdf" type="x-shader/x-fragment">
         float sdf(vec3 position) {
-            return octahedron(position, 1.0);
+            return box(position, vec3(1));
         }
     </script>
     <script>

@@ -74,12 +74,12 @@ Ray raycast(vec3 origin, vec3 direction) {
         if(totalDistance > 100.0)
             break;
 
-        float currentDistance = max(0.0, sdf(currentPosition));
+        float currentDistance = sdf(currentPosition);
 
         // Antibanding
-        totalDistance += (steps < 1 ? rand() * currentDistance : currentDistance);
+        totalDistance += max(0.0, (steps < 1 ? rand() * currentDistance : currentDistance));
 
-        if(adaptiveEpsilon && steps == 0) {
+        if(steps == 0) {
             if(currentDistance < 0.0) {
                 data.hit = true;
                 data.position = origin;
@@ -88,7 +88,9 @@ Ray raycast(vec3 origin, vec3 direction) {
 
                 return data;
             }
-            minDist = currentDistance * epsilonScale;
+
+            if(adaptiveEpsilon)
+                minDist = currentDistance * epsilonScale;
         }
         else if(currentDistance < minDist) {
             data.hit = true;

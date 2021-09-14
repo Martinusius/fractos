@@ -88,7 +88,7 @@ vec3 shading() {
     vec3 rayDirection = pixelDirection();
 
     // Trace
-    seed = (10.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex));
+    seed = (1.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex) * 0.1);
     vec3 pixelColor = raytrace(cameraPos, rayDirection);
 
     // Average samples
