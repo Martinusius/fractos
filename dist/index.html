@@ -51,11 +51,11 @@
         // const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
         // const bacground = new ColorBackground(new THREE.Color('rgb(255, 80, 60)'));
         
-        // const fractal = new Menger(6);
-        // fractal.translate = new THREE.Vector3(-2.0, 1.0, 0);
-        // fractal.offset = 0.5;
+        const fractal = new Menger(6);
+        fractal.translate = new THREE.Vector3(-2.0, 1.0, 0);
+        fractal.offset = 0.5;
 
-        const fractal = new CustomSDF(document.getElementById('sdf').textContent);
+        // const fractal = new CustomSDF(document.getElementById('sdf').textContent);
 
 
         const renderer = new RealtimeRenderer(fractal, background);
