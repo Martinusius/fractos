@@ -45,14 +45,15 @@ vec3 raytrace(vec3 from, vec3 dir) {
 
         if(ray.hit) {
             // Roughness calculation
-            if(rand() < roughness) {
-                dir = getCosineWeightedSample(ray.normal);
-                luminance *= color * albedo;
-            }
-            else {
-                dir = reflect(dir, ray.normal);
-                luminance *= color * max(0.0, dot(dir, ray.normal));
-            }
+
+            vec3 reflected = reflect(dir, ray.normal);
+            vec3 sampleDir = getCosineWeightedSample(ray.normal);
+            float lerpFactor = pow(roughness, 2.0);
+
+            dir = normalize(mix(reflected, sampleDir, lerpFactor));
+            
+            luminance *= color * albedo * mix(max(dot(ray.normal, dir), 0.0), 1.0, lerpFactor);
+            
 
             from = ray.position + ray.normal * epsilon * 2.0;
 

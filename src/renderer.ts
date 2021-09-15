@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Mesh } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
@@ -60,8 +61,22 @@ controls.enabled = false;
 
 
 
+
+
+const quad = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2, 1, 1)) as THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+quadScene.add(quad);
+
+export function setShader(shader: THREE.ShaderMaterial) {
+    quad.material = shader;
+}
+
+export function getShader() {
+    return quad.material;
+}
+
 export function createShader(code: string, uniforms: { [uniform: string]: THREE.IUniform } = {}) {
-    return new THREE.ShaderMaterial({
+    console.log('Compiling shader...');
+    const shader =  new THREE.ShaderMaterial({
         uniforms: {
             resolution: { value: new THREE.Vector2() },
             cameraPos: { value: new THREE.Vector3() },
@@ -74,20 +89,12 @@ export function createShader(code: string, uniforms: { [uniform: string]: THREE.
         vertexShader: 'void main(){\ngl_Position = vec4(position, 1.0);\n}\n',
         fragmentShader: code
     });
-}
 
-const quad = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry(2, 2, 1, 1),
-    createShader('void main() {\ngl_FragColor = vec4(1, 1, 0, 1);\n}')
-);
-quadScene.add(quad);
+    setShader(shader);
+    renderer.compile(quadScene, ortho);
 
-export function setShader(shader: THREE.ShaderMaterial) {
-    quad.material = shader;
-}
-
-export function getShader() {
-    return quad.material;
+    console.log('Done');
+    return shader;
 }
 
 

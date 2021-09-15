@@ -47,9 +47,9 @@
             return textureCube;
         }
 
-        const background = new ImageBackground(getEnvMap('https://playground.babylonjs.com/textures/skybox_'));
-        // const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
-        // const bacground = new ColorBackground(new THREE.Color('rgb(255, 80, 60)'));
+        // const background = new ImageBackground(getEnvMap('https://playground.babylonjs.com/textures/skybox_'));
+        const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
+        // const background = new ColorBackground(new THREE.Color('rgb(255, 255, 255)'));
         
         const fractal = new Menger(6);
         fractal.translate = new THREE.Vector3(-2.0, 1.0, 0);
@@ -59,13 +59,14 @@
 
 
         const renderer = new RealtimeRenderer(fractal, background);
-        renderer.color = new THREE.Color('rgb(255, 255, 255)');
+        renderer.color = new THREE.Color(1.0, 0.8, 0.4); //new THREE.Color('rgb(255, 200, 100)');
+        renderer.roughness = 0.2;
 
         const aoOnly = true;
 
         if(aoOnly) {
             renderer.sunStrength = 0.0;
-            renderer.ambientLightStrength = 2.0;
+            renderer.ambientLightStrength = 1.0;
             renderer.enableShadows = false;
         }
         else {
@@ -95,7 +96,7 @@
         pathTracer.color = renderer.color;
         pathTracer.sunStrength = 1.0;
         pathTracer.bufferSize = 1080;
-        // pathTracer.roughness = 0.2;
+        pathTracer.roughness = renderer.roughness;
         pathTracer.backgroundMultiplier = 1.0;
         pathTracer.epsilon = 0.00001;
        

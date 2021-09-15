@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { ColorBackground, HemisphereBackground, ImageBackground } from "./background";
-import { DepthRenderer } from "./depthRenderer";
 import { camera, controls, fractos } from "./renderer";
+import { DepthRenderer } from "./depthRenderer";
 import { Menger, Sierpinski, Mandelbulb, CustomSDF } from "./sdf";
 import { PathTracer } from './pathTracer';
 import { RealtimeRenderer } from "./realtimeRenderer";

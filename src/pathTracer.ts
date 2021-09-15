@@ -109,12 +109,10 @@ export class PathTracer {
         
                 // Swap targets
                 this.targets = [this.targets[1], this.targets[0]];
-        
 
-                //console.log(`${++sample}/${this.samplesPerFrame}`);
 
+                // Image splitting
                 ++x;
-                
 
                 if(x >= widths) {
                     x = 0;
@@ -127,15 +125,12 @@ export class PathTracer {
                 }
 
                 if(sample >= this.samplesPerFrame) {
-                    
-
-                    copyAA(this.targets[1], null);
+                    //copyAA(this.targets[1], null);\
+                    postprocess(this.targets[1], null, 1.0);
 
                     Queue.cancel();
                     resolve();
                 }
-
-                
             });
         });
 

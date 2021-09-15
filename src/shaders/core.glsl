@@ -14,8 +14,8 @@ const int maximumRaySteps = 1024;
 float sdf(vec3 position);
 vec3 background(vec3 direction);
 
-vec3 calculateNormal(vec3 position) {
-    vec2 h = vec2(epsilon, 0.0);
+vec3 calculateNormal(vec3 position, float minDist) {
+    vec2 h = vec2(minDist, 0.0);
     return normalize(vec3(sdf(position + h.xyy) - sdf(position - h.xyy),
                            sdf(position + h.yxy) - sdf(position - h.yxy),
                            sdf(position + h.yyx) - sdf(position - h.yyx)));
@@ -38,6 +38,9 @@ vec3 rand3() {
 
 
 struct Ray {
+    vec3 origin;
+    vec3 direction;
+
     bool hit;
     vec3 position;
     vec3 normal;
@@ -61,6 +64,8 @@ vec3 pixelDirection() {
 
 Ray raycast(vec3 origin, vec3 direction) {
     Ray data;
+    data.origin = origin;
+    data.direction = direction;
 
     float minDist;
 
@@ -95,7 +100,7 @@ Ray raycast(vec3 origin, vec3 direction) {
         else if(currentDistance < minDist) {
             data.hit = true;
             data.position = origin + totalDistance * direction;
-            data.normal = calculateNormal(data.position);
+            data.normal = calculateNormal(data.position, minDist);
             data.steps = float(steps) + currentDistance / minDist;
 
             return data;
