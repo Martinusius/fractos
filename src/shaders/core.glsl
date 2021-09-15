@@ -45,6 +45,8 @@ struct Ray {
     vec3 position;
     vec3 normal;
     float steps;
+
+    float epsilon;
 };
 
 mat3 cameraMatrix() {
@@ -67,10 +69,8 @@ Ray raycast(vec3 origin, vec3 direction) {
     data.origin = origin;
     data.direction = direction;
 
-    float minDist;
-
     if(!adaptiveEpsilon)
-        minDist = epsilon;
+        data.epsilon = epsilon;
 
     float totalDistance = 0.0;
     for (int steps = 0; steps < maximumRaySteps; ++steps) {
@@ -95,13 +95,56 @@ Ray raycast(vec3 origin, vec3 direction) {
             }
 
             if(adaptiveEpsilon)
-                minDist = currentDistance * epsilonScale;
+                data.epsilon = currentDistance * epsilonScale;
         }
-        else if(currentDistance < minDist) {
+        else if(currentDistance < data.epsilon) {
             data.hit = true;
             data.position = origin + totalDistance * direction;
-            data.normal = calculateNormal(data.position, minDist);
-            data.steps = float(steps) + currentDistance / minDist;
+            data.normal = calculateNormal(data.position, data.epsilon);
+            data.steps = float(steps) + currentDistance / data.epsilon;
+
+            return data;
+        }
+    }
+
+    data.hit = false;
+    return data;
+}
+
+Ray raycastEpsilon(vec3 origin, vec3 direction, float epsilon) {
+    Ray data;
+    data.origin = origin;
+    data.direction = direction;
+    data.epsilon = epsilon;
+
+    float totalDistance = 0.0;
+    for (int steps = 0; steps < maximumRaySteps; ++steps) {
+        vec3 currentPosition = origin + totalDistance * direction;
+
+        if(totalDistance > 100.0)
+            break;
+
+        float currentDistance = sdf(currentPosition);
+
+        // Antibanding
+        totalDistance += max(0.0, (steps < 1 ? rand() * currentDistance : currentDistance));
+
+        if(steps == 0) {
+            if(currentDistance < 0.0) {
+                data.hit = true;
+                data.position = origin;
+                data.normal = vec3(0);
+                data.steps = 0.0;
+
+                return data;
+            }
+
+        }
+        else if(currentDistance < data.epsilon) {
+            data.hit = true;
+            data.position = origin + totalDistance * direction;
+            data.normal = calculateNormal(data.position, data.epsilon);
+            data.steps = float(steps) + currentDistance / data.epsilon;
 
             return data;
         }

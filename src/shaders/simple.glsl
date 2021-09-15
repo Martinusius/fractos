@@ -1,14 +1,13 @@
 uniform vec3 sunDirection;
-uniform float sunStrength;
-uniform float ambientLightStrength;
-uniform float ambientOcclusionStrength;
+uniform vec3 sunColor;
+uniform float aoStrength;
 uniform vec3 color;
 uniform bool enableShadows;
 uniform float roughness;
 
-float calculateDirectLight(vec3 position, vec3 normal) {
+float calculateDirectLight(vec3 position, vec3 normal, float epsilon) {
     if(enableShadows) {
-        Ray shadowRay = raycast(position + normal * 2.0 * epsilon, normal);
+        Ray shadowRay = raycastEpsilon(position + (normal) * 2.0 * epsilon, -sunDirection, epsilon);
         return shadowRay.hit ? 0.0 : max(dot(normal, -sunDirection), 0.0);
     }
     else {
@@ -41,11 +40,11 @@ vec3 shading() {
         }
 
         //float ao = 1.0 / (ray.steps) / ambientOcclusionStrength;
-        float ao = statixAO(ray.position, ray.normal, 0.3, 0.1) + 0.3;
+        float ao = statixAO(ray.position, ray.normal, aoStrength / 2.0, 0.01)
+            + statixAO(ray.position, ray.normal, aoStrength / 2.0, 0.05) + aoStrength;
 
         vec3 indirect = ((backgroundAverage / float(samples)) - ao) * color;
-
-        vec3 direct = calculateDirectLight(ray.position, ray.normal) * indirect;
+        vec3 direct = calculateDirectLight(ray.position, ray.normal, ray.epsilon) * sunColor * color;
       
         return indirect + direct;
     }

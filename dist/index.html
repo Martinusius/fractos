@@ -52,17 +52,15 @@
         // const background = new ColorBackground(new THREE.Color('rgb(255, 255, 255)'));
         
         const fractal = new Menger(6);
-        fractal.translate = new THREE.Vector3(-2.0, 1.0, 0);
-        fractal.offset = 0.5;
 
         // const fractal = new CustomSDF(document.getElementById('sdf').textContent);
 
 
         const renderer = new RealtimeRenderer(fractal, background);
         renderer.color = new THREE.Color(1.0, 0.8, 0.4); //new THREE.Color('rgb(255, 200, 100)');
-        renderer.roughness = 0.2;
+        renderer.roughness = 1.0;
 
-        const aoOnly = true;
+        const aoOnly = false;
 
         if(aoOnly) {
             renderer.sunStrength = 0.0;
