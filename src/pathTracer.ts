@@ -28,13 +28,11 @@ export function asyncRepeat(count: number, callback: (i: number) => void, after?
 
 // Recursive path tracer implementation for raymarched scenes
 export class PathTracer {
-    private targets: THREE.WebGLRenderTarget[] = [];
+    private textures: THREE.WebGLRenderTarget[] = [];
     private shader: THREE.ShaderMaterial;
     
     public readonly sdf: SDF;
     public readonly background: Background;
-    public readonly width: number;
-    public readonly height: number;
 
     public roughness: number = 1;
     public sunDirection: THREE.Vector3 = new THREE.Vector3(-0.5, -2, -1);
@@ -49,20 +47,20 @@ export class PathTracer {
 
     public bufferSize: number = 512;
 
-    constructor(width: number, height: number, sdf: SDF, background: Background) {
+    constructor(sdf: SDF, background: Background) {
         this.sdf = sdf;
         this.background = background;
 
-        this.width = width;
-        this.height = height;
+        const size = new THREE.Vector2();
+        renderer.getSize(size);
 
-        this.targets = [
-            new THREE.WebGLRenderTarget(width, height, { format: THREE.RGBAFormat, type: THREE.FloatType }),
-            new THREE.WebGLRenderTarget(width, height, { format: THREE.RGBAFormat, type: THREE.FloatType })
+        this.textures = [
+            new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
+            new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType })
         ];
 
         this.shader = createShader(core + pathTracer + sdf.getCode() + background.getCode(), {
-            previousFrame: { value: this.targets[0].texture },
+            previousFrame: { value: this.textures[0].texture },
             sampleIndex: { value: 0 },
             offset: { value: new THREE.Vector2(0, 0) },
             size: { value: new THREE.Vector2(0, 0) },
@@ -73,28 +71,42 @@ export class PathTracer {
         });
     }
 
-    public renderImage() {
+    public renderImage(width: number, height: number) {
         return new Promise<void>(resolve => {
             setAutoResize(false);
-            setResolution(this.width, this.height);
+            setResolution(width, height);
 
-            renderer.setRenderTarget(this.targets[0]);
+            const targetSize = new THREE.Vector2(width, height);
+            const textureSize = new THREE.Vector2(this.textures[0].texture.image.width, this.textures[0].texture.image.height);
+
+            if(!targetSize.equals(textureSize)) {
+                this.textures[0].dispose();
+                this.textures[1].dispose();
+
+
+                this.textures = [
+                    new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
+                    new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType })
+                ];
+            }
+
+            renderer.setRenderTarget(this.textures[0]);
             renderer.clear();
 
-            renderer.setRenderTarget(this.targets[1]);
+            renderer.setRenderTarget(this.textures[1]);
             renderer.clear();
 
             Utils.setUniformsFromObject(this.shader, this.sdf, 'sdf_');
             Utils.setUniformsFromObject(this.shader, this.background, 'bg_');
 
-            const widths = Math.ceil(this.width / this.bufferSize);
-            const heights = Math.ceil(this.height / this.bufferSize);
+            const widths = Math.ceil(width / this.bufferSize);
+            const heights = Math.ceil(height / this.bufferSize);
             
             let x = 0, y = 0;
 
             let sample = 0;
             Queue.loop(() => {
-                this.shader.uniforms.previousFrame.value = this.targets[1].texture;
+                this.shader.uniforms.previousFrame.value = this.textures[1].texture;
                 this.shader.uniforms.sampleIndex.value = sample;
                 this.shader.uniforms.offset.value = new THREE.Vector2(x * this.bufferSize, y * this.bufferSize);
                 this.shader.uniforms.size.value = new THREE.Vector2(this.bufferSize, this.bufferSize);
@@ -102,13 +114,13 @@ export class PathTracer {
                 Utils.setUniformsFromVariables(this.shader, this, 'sunDirection', 'sunStrength', 'roughness', 'rayDepth', 'samplesPerFrame', 'color', 'time', 'epsilon', 'backgroundMultiplier');
         
                 // Render the sample to a target
-                render(this.shader, this.targets[0]);
+                render(this.shader, this.textures[0]);
         
                 // Copy to screen
-                copy(this.targets[0], null);
+                copy(this.textures[0], null);
         
-                // Swap targets
-                this.targets = [this.targets[1], this.targets[0]];
+                // Swap textures
+                this.textures = [this.textures[1], this.textures[0]];
 
 
                 // Image splitting
@@ -125,8 +137,8 @@ export class PathTracer {
                 }
 
                 if(sample >= this.samplesPerFrame) {
-                    //copyAA(this.targets[1], null);\
-                    postprocess(this.targets[1], null, 1.0);
+                    //copyAA(this.textures[1], null);\
+                    postprocess(this.textures[1], null, 1.0);
 
                     Queue.cancel();
                     resolve();

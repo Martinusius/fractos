@@ -91,7 +91,7 @@
 
         renderer.epsilon = 0.001;
 
-        const pathTracer = new PathTracer(1080, 1080, fractal, background);
+        const pathTracer = new PathTracer(fractal, background);
         
         pathTracer.color = renderer.color;
         pathTracer.sunStrength = 1.0;
@@ -117,15 +117,15 @@
                 else {
                     capturing = true;
                     controls.enabled = false;
-                    pathTracer.samplesPerFrame = 100;
-                    pathTracer.renderImage();
+                    pathTracer.samplesPerFrame = 50;
+                    pathTracer.renderImage(1080, 1080);
                 }
             }
             else if(key === 'f') {
                 capturing = true;
                 controls.enabled = false;
                 pathTracer.samplesPerFrame = 200;
-                pathTracer.renderImage();
+                pathTracer.renderImage(1080, 1080);
             }
             else if(key === 'p') {
                 if(paused) {

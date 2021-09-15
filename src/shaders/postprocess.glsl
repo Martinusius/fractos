@@ -90,7 +90,7 @@ vec3 saturation(vec3 color, float saturation) {
 void main() {
     vec2 uv = gl_FragCoord.xy / resolution.xy;
 
-    vec3 tonemapped = filmic(texture2D(data, uv).xyz);
+    vec3 tonemapped = texture2D(data, uv).xyz;//filmic();
 
     // Contrast boost
     vec3 boosted = saturation(tonemapped, 1.0);//setContrast(tonemapped, contrast);
