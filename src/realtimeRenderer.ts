@@ -32,7 +32,7 @@ export class RealtimeRenderer {
     public sunColor = new THREE.Vector3(1, 1, 1);
     public epsilon = 0.0001;
     public adaptiveEpsilon = true;
-    public epsilonScale = 0.0001;
+    public epsilonScale = 0.001;
     public roughness = 1.0;
 
     public clock: THREE.Clock;
@@ -113,8 +113,8 @@ export class RealtimeRenderer {
             Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this, 'enableShadows', 'aoStrength', 'color', 'sunColor', 'sunDirection', 'epsilon', 'adaptiveEpsilon', 'epsilonScale', 'roughness');
 
             render(this.shader, this.targetFinal);
-            copyAA(this.targetFinal, null);
-            //postprocess(this.targetFinal, null, 1);
+            //copyAA(this.targetFinal, null);
+            postprocess(this.targetFinal, null, 1);
         });
     }
 }

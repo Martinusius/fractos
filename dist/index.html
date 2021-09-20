@@ -28,8 +28,12 @@
     </style>
     <script src="fractos-full.js"></script>
     <script id="sdf" type="x-shader/x-fragment">
-        float sdf(vec3 position) {
-            return box(position, vec3(1));
+        float noove(vec3 position, float scale) {
+            return merge(sphere(position + vec3(0.5 * scale, 0, 0), 0.5 * scale), sphere(position - vec3(0.5 * scale, 0, 0), 0.5 * scale), 0.3 * scale);
+        }
+
+        float sdf(vec3 z) {
+            return noove(z, 1.0);
         }
     </script>
     <script>
@@ -48,16 +52,17 @@
         }
 
         // const background = new ImageBackground(getEnvMap('https://playground.babylonjs.com/textures/skybox_'));
-        const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
-        // const background = new ColorBackground(new THREE.Color('rgb(255, 255, 255)'));
+        // const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
+        const background = new ColorBackground(new THREE.Color(1, 1, 1));
         
-        const fractal = new Menger(6);
+        const fractal = new Sierpinski(16, 1.6);
+        fractal.rotate = new THREE.Vector3(0, 0, -0.5);
 
         // const fractal = new CustomSDF(document.getElementById('sdf').textContent);
 
 
         const renderer = new RealtimeRenderer(fractal, background);
-        renderer.color = new THREE.Color(1.0, 0.8, 0.4); //new THREE.Color('rgb(255, 200, 100)');
+        renderer.color = new THREE.Color(1, 1, 1); //new THREE.Color('rgb(255, 200, 100)');
         renderer.roughness = 1.0;
 
         const aoOnly = false;
@@ -79,7 +84,7 @@
       
 
         camera.fov = 90;
-        camera.position.set(2, 2, 2);
+        camera.position.set(0, 0, 2);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         controls.enabled = true;
@@ -87,7 +92,7 @@
         //renderer.adaptiveEpsilon = true;
         //renderer.epsilonScale = 0.001;
 
-        renderer.epsilon = 0.001;
+        
 
         const pathTracer = new PathTracer(fractal, background);
         
@@ -141,7 +146,7 @@
                 const direction = new THREE.Vector3();
                 camera.getWorldDirection(direction);
                 renderer.sunDirection = direction;
-                raytracer.sunDirection = direction;
+                pathTracer.sunDirection = direction;
             }
             else if(key === 'i') {
                 console.log('Camera: ', camera.position);
