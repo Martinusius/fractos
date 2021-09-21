@@ -55,7 +55,7 @@
         // const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
         const background = new ColorBackground(new THREE.Color(1, 1, 1));
         
-        const fractal = new Sierpinski(16, 1.6);
+        const fractal = new Sierpinski(8, 1.6);
         fractal.rotate = new THREE.Vector3(0, 0, 0);
 
         // const fractal = new CustomSDF(document.getElementById('sdf').textContent);
@@ -89,6 +89,7 @@
 
         controls.enabled = true;
         renderer.start();
+        renderer.postprocess = ['contrast(10.0)'];
         //renderer.adaptiveEpsilon = true;
         //renderer.epsilonScale = 0.001;
 
@@ -102,6 +103,7 @@
         pathTracer.roughness = renderer.roughness;
         pathTracer.backgroundMultiplier = 1.0;
         pathTracer.epsilon = 0.00001;
+
        
 
         let capturing = false, paused = false;
@@ -121,7 +123,7 @@
                     capturing = true;
                     controls.enabled = false;
                     pathTracer.samplesPerFrame = 10;
-                    pathTracer.renderImage(1080, 1080).then(image => image.postprocess('filmic()', 'saturation(1.8)', 'vignette(0.7, 0.5)'));
+                    pathTracer.renderImage(1080, 1080).then(image => image.postprocess('contrast(1.0)'));
                 }
             }
             else if(key === 'f') {

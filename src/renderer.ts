@@ -75,7 +75,6 @@ export function getShader() {
 }
 
 export function createShader(code: string, uniforms: { [uniform: string]: THREE.IUniform } = {}) {
-    console.log('Compiling shader...');
     const shader =  new THREE.ShaderMaterial({
         uniforms: {
             resolution: { value: new THREE.Vector2() },
@@ -93,7 +92,6 @@ export function createShader(code: string, uniforms: { [uniform: string]: THREE.
     setShader(shader);
     renderer.compile(quadScene, ortho);
 
-    console.log('Done');
     return shader;
 }
 
@@ -123,7 +121,7 @@ export function render(shader: THREE.RawShaderMaterial, target: THREE.WebGLRende
 
 
 
-export function renderPostprocessing(shader: THREE.RawShaderMaterial, target: THREE.WebGLRenderTarget | null = null) {
+export function renderAA(shader: THREE.RawShaderMaterial, target: THREE.WebGLRenderTarget | null = null) {
     quad.material = shader;
     renderer.setRenderTarget(target);
 
@@ -190,7 +188,7 @@ const curve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(1, 0, 1)
 ]);
 
-const points = curve.getPoints( 50 );
+const points = curve.getPoints(50);
 const geometry = new THREE.BufferGeometry().setFromPoints( points );
 
 const material = new THREE.LineBasicMaterial({ color : 0xff0000 } );

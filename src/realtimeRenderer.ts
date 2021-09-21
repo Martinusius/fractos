@@ -12,6 +12,8 @@ import Queue, { setAutoResize } from './queue';
 import { Background } from './background';
 import { core } from './core';
 
+import { Image } from './postprocessing';
+
 function normalize(vector: THREE.Vector3) {
     vector.normalize();
     return vector;
@@ -36,6 +38,8 @@ export class RealtimeRenderer {
     public roughness = 1.0;
 
     public clock: THREE.Clock;
+
+    public postprocess: string[] = [];
 
     constructor(sdf: SDF, background: Background) {
         this.sdf = sdf;
@@ -85,7 +89,7 @@ export class RealtimeRenderer {
         Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this, 'enableShadows', 'aoStrength', 'color', 'sunColor', 'sunDirection', 'epsilon', 'adaptiveEpsilon', 'epsilonScale', 'roughness');
 
         render(this.shader, this.targetFinal);
-        postprocess(this.targetFinal, null, 1);
+        return new Image(this.targetFinal);
     }
 
     start() {
@@ -113,8 +117,9 @@ export class RealtimeRenderer {
             Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this, 'enableShadows', 'aoStrength', 'color', 'sunColor', 'sunDirection', 'epsilon', 'adaptiveEpsilon', 'epsilonScale', 'roughness');
 
             render(this.shader, this.targetFinal);
-            copyAA(this.targetFinal, null);
-            //postprocess(this.targetFinal, null, 1);
+
+            (new Image(this.targetFinal)).postprocess(...this.postprocess);
+            //copyAA(this.targetFinal, null);
         });
     }
 }

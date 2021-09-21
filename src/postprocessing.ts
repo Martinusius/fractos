@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createShader, render } from './renderer';
+import { createShader, render, renderAA } from './renderer';
 
 // @ts-ignore
 import postprocess from './shaders/postprocess.glsl';
@@ -24,8 +24,10 @@ export class Image {
             
         });
 
-        const shader = createShader(postprocess.replace(/UWU/, steps.join('\n')));
+        const shader = createShader(postprocess.replace(/UWU/, steps.join('\n')), {
+            data: { value: this.texture }
+        });
 
-        render(shader, null);
+        renderAA(shader, null);
     }
 }

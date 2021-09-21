@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createShader, render, renderPostprocessing } from './renderer';
+import { createShader, render, renderAA } from './renderer';
 
 // @ts-ignore
 import copyGLSL from './shaders/copy.glsl';
@@ -32,7 +32,7 @@ export function copyAA(from: THREE.Texture | THREE.WebGLRenderTarget, to: THREE.
     if(from instanceof THREE.WebGLRenderTarget) from = from.texture;
 
     copyShader.uniforms.data.value = from;
-    renderPostprocessing(copyShader, to);
+    renderAA(copyShader, to);
 }
 
 export function postprocess(from: THREE.Texture | THREE.WebGLRenderTarget, to: THREE.WebGLRenderTarget | null, contrast = 1.0) {
@@ -40,5 +40,5 @@ export function postprocess(from: THREE.Texture | THREE.WebGLRenderTarget, to: T
 
     postprocessShader.uniforms.data.value = from;
     postprocessShader.uniforms.contrast.value = contrast;
-    renderPostprocessing(postprocessShader, to);
+    renderAA(postprocessShader, to);
 }
