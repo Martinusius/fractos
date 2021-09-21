@@ -113,8 +113,8 @@ export class RealtimeRenderer {
             Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this, 'enableShadows', 'aoStrength', 'color', 'sunColor', 'sunDirection', 'epsilon', 'adaptiveEpsilon', 'epsilonScale', 'roughness');
 
             render(this.shader, this.targetFinal);
-            //copyAA(this.targetFinal, null);
-            postprocess(this.targetFinal, null, 1);
+            copyAA(this.targetFinal, null);
+            //postprocess(this.targetFinal, null, 1);
         });
     }
 }

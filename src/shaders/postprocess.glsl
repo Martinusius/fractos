@@ -1,6 +1,5 @@
 uniform vec2 resolution;
 uniform sampler2D data;
-uniform float contrast;
 
 vec3 reinhard(vec3 x) {
     return x / (1.0 + x);
@@ -46,7 +45,7 @@ vec3 aces(vec3 x) {
     return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
-vec3 setContrast(vec3 color, float contrast) {
+vec3 contrast(vec3 color, float contrast) {
     return (color - 0.5) * max(contrast, 0.0) + 0.5;
 }
 
@@ -58,9 +57,11 @@ vec3 filmic(vec3 x) {
     return pow(result, vec3(2.2));
 }
 
-float vignette(vec2 uv, float radius, float smoothness) {
+vec3 vignette(vec3 color, float radius, float smoothness) {
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+
     float diff = radius - distance(uv, vec2(0.5, 0.5));
-    return smoothstep(-smoothness, smoothness, diff);
+    return color * smoothstep(-smoothness, smoothness, diff);
 }
 
 
@@ -87,12 +88,12 @@ vec3 saturation(vec3 color, float saturation) {
     return hsv2rgb(hsv); 
 }
 
+
 void main() {
     vec2 uv = gl_FragCoord.xy / resolution.xy;
+    vec3 color = texture2D(data, uv).xyz;
 
-    vec3 tonemapped = texture2D(data, uv).xyz; // filmic(texture2D(data, uv).xyz);
+    UWU
 
-    vec3 withVignette = tonemapped * vignette(uv, 0.7, 0.5);
-
-    gl_FragColor = vec4(withVignette, 1);
+    gl_FragColor = vec4(color, 1);
 }

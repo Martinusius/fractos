@@ -56,13 +56,13 @@
         const background = new ColorBackground(new THREE.Color(1, 1, 1));
         
         const fractal = new Sierpinski(16, 1.6);
-        fractal.rotate = new THREE.Vector3(0, 0, -0.5);
+        fractal.rotate = new THREE.Vector3(0, 0, 0);
 
         // const fractal = new CustomSDF(document.getElementById('sdf').textContent);
 
 
         const renderer = new RealtimeRenderer(fractal, background);
-        renderer.color = new THREE.Color(1, 1, 1); //new THREE.Color('rgb(255, 200, 100)');
+        renderer.color = new THREE.Color(1, 0.5, 1); //new THREE.Color('rgb(255, 200, 100)');
         renderer.roughness = 1.0;
 
         const aoOnly = false;
@@ -120,8 +120,8 @@
                 else {
                     capturing = true;
                     controls.enabled = false;
-                    pathTracer.samplesPerFrame = 50;
-                    pathTracer.renderImage(1080, 1080);
+                    pathTracer.samplesPerFrame = 10;
+                    pathTracer.renderImage(1080, 1080).then(image => image.postprocess('saturation(2.0)', 'vignette(0.7, 0.5)'));
                 }
             }
             else if(key === 'f') {

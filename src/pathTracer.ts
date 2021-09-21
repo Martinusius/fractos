@@ -12,6 +12,7 @@ import pathTracer from './shaders/pathTracer.glsl';
 import './webm-writer-0.3.0';
 import { Background } from './background';
 import { core } from './core';
+import { Image } from './postprocessing';
 
 export function asyncRepeat(count: number, callback: (i: number) => void, after?: () => void) {
     let i = 0;
@@ -72,7 +73,7 @@ export class PathTracer {
     }
 
     public renderImage(width: number, height: number) {
-        return new Promise<void>(resolve => {
+        return new Promise<Image>(resolve => {
             setAutoResize(false);
             setResolution(width, height);
 
@@ -137,11 +138,10 @@ export class PathTracer {
                 }
 
                 if(sample >= this.samplesPerFrame) {
-                    //copyAA(this.textures[1], null);\
-                    postprocess(this.textures[1], null, 1.0);
-
+                    //copyAA(this.textures[1], null);
+                    
                     Queue.cancel();
-                    resolve();
+                    resolve(new Image(this.textures[1]));
                 }
             });
         });

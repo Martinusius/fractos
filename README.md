@@ -4,7 +4,7 @@
 - Create highly customizable 3D fractals
 - Specialized ray marcher allows the fractals to be rendered in real time
 - Use the path tracer to create photorealistic images
-- [WIP] Create animations and encode them
+
 
 ### Usage
 Since Fractos is based on Three.js some of the parameters are Three.js objects such as THREE.Color and THREE.Vector3
@@ -27,7 +27,7 @@ renderer.enableShadows = true;
 camera.fov = 90;
 ```
 
-### Example Images (Ray Traced)
+### Example Images (Path Traced)
 
 ![Fractos image](./images/image0.jpg)
 ![Fractos image](./images/image1.jpg)
