@@ -89,7 +89,7 @@
 
         controls.enabled = true;
         renderer.start();
-        renderer.postprocess = ['contrast(10.0)'];
+        renderer.postprocess = ['vignette(0.7, 0.5)'];
         //renderer.adaptiveEpsilon = true;
         //renderer.epsilonScale = 0.001;
 
@@ -123,7 +123,7 @@
                     capturing = true;
                     controls.enabled = false;
                     pathTracer.samplesPerFrame = 10;
-                    pathTracer.renderImage(1080, 1080).then(image => image.postprocess('contrast(1.0)'));
+                    pathTracer.renderImage(1080, 1080).then(image => image.postprocess('vignette(0.7, 0.5)'));
                 }
             }
             else if(key === 'f') {

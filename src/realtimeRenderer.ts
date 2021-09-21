@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { copy, copyAA, postprocess } from './util';
+import { copy, copyAA } from './util';
 import { controls, createShader, render, renderer, renderRaster, setResolution, setShader, Utils } from './renderer';
 import { SDF } from './sdf';
 

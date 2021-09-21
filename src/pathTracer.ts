@@ -1,6 +1,6 @@
 import FileSaver from 'file-saver';
 import * as THREE from 'three';
-import { copy, copyAA, postprocess } from './util';
+import { copy, copyAA } from './util';
 import Queue, { setAutoResize } from './queue';
 import { createShader, renderer, render, setShader, Utils, setResolution } from './renderer';
 import { SDF } from './sdf';
