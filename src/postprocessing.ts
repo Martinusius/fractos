@@ -13,7 +13,16 @@ export class Image {
     }
 
     postprocess(...steps: string[]) {
-        steps = steps.map(step => 'color = ' + step.replace(/\(/, '(color, ') + ';');
+        steps = steps.map(step => {
+            const match = step.match(/\(.*\)/);
+            if(!match) throw new Error('Invalid postprocessing step');
+            const content = match[0].slice(1, -1);
+            if(content.trim() === '')
+                return 'color = ' + step.replace(/\(/, '(color') + ';';
+            else
+                return 'color = ' + step.replace(/\(/, '(color, ') + ';';
+            
+        });
 
         const shader = createShader(postprocess.replace(/UWU/, steps.join('\n')));
 

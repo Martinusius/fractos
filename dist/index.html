@@ -121,7 +121,7 @@
                     capturing = true;
                     controls.enabled = false;
                     pathTracer.samplesPerFrame = 10;
-                    pathTracer.renderImage(1080, 1080).then(image => image.postprocess('saturation(2.0)', 'vignette(0.7, 0.5)'));
+                    pathTracer.renderImage(1080, 1080).then(image => image.postprocess('filmic()', 'saturation(1.8)', 'vignette(0.7, 0.5)'));
                 }
             }
             else if(key === 'f') {
