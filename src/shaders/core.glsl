@@ -9,7 +9,7 @@ uniform float epsilonScale;
 uniform float epsilon;
 
 
-const int maximumRaySteps = 1024;
+const int maximumRaySteps = 2048;
 
 float sdf(vec3 position);
 vec3 background(vec3 direction);
@@ -22,6 +22,7 @@ vec3 calculateNormal(vec3 position, float minDist) {
 }
 
 vec2 seed = vec2(0);
+vec3 trap;
 
 float rand() { 
     seed += vec2(-1, 1);
@@ -63,6 +64,13 @@ vec3 pixelDirection() {
     uv.x *= resolution.x / resolution.y;
     return view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));
 }
+
+vec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {
+    map = abs(map);
+    map /= (map.r + map.g + map.b);
+    return (color1 * map.r + color2 * map.g + color3 * map.b);
+}
+
 
 Ray raycast(vec3 origin, vec3 direction) {
     Ray data;

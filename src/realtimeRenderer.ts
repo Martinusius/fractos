@@ -28,7 +28,7 @@ export class RealtimeRenderer {
     public readonly background: Background;
 
     public enableShadows = false;
-    public aoStrength = 0.6;
+    public aoStrength = 3.0;
     public color = new THREE.Color(0xffffff);
     public sunDirection = new THREE.Vector3(-0.5, -2, -1);
     public sunColor = new THREE.Vector3(1, 1, 1);

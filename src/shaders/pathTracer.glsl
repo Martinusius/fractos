@@ -38,19 +38,21 @@ const float albedo = 1.0;
 
 vec3 raytrace(vec3 from, vec3 dir) {
     vec3 direct = vec3(0.0);
-        
+    vec3 emission = vec3(0.0);
     vec3 luminance = vec3(1.0);
+
     for (int i = 0; i < rayDepth; i++) {
         Ray ray = raycast(from, dir);
 
         if(ray.hit) {
             // Roughness calculation
-
             vec3 reflected = reflect(dir, ray.normal);
             vec3 sampleDir = getCosineWeightedSample(ray.normal);
             float lerpFactor = pow(roughness, 2.0);
 
-            dir = normalize(mix(reflected, sampleDir, lerpFactor));
+            dir = normalize(mix(reflected, sampleDir, lerpFactor)); 
+
+            vec3 color = mapToChannels(vec3(1, 0.2, 0), vec3(1, 0.5, 0), vec3(0.5, 1, 0), abs(normalize(trap)));
             
             luminance *= color * albedo * mix(max(dot(ray.normal, dir), 0.0), 1.0, lerpFactor);
             

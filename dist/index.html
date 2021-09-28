@@ -33,7 +33,7 @@
         }
 
         float sdf(vec3 z) {
-            return noove(z, 1.0);
+            return distribution//noove(z, 1.0);
         }
     </script>
     <script>
@@ -53,38 +53,34 @@
 
         // const background = new ImageBackground(getEnvMap('https://playground.babylonjs.com/textures/skybox_'));
         // const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
-        const background = new ColorBackground(new THREE.Color(1, 1, 1));
+        const background = new ImageBackground(getEnvMap('https://martinusius.sk/sunset/sunset_'));
+        // const background = new HemisphereBackground(new THREE.Color(0.6, 0.6, 0.8), new THREE.Color(0.8, 0.8, 0.8), 0.3);
         
-        const fractal = new Sierpinski(8, 1.6);
+        const fractal = new Menger(8);
+        fractal.scale = new THREE.Vector3(0.6, 1, 0.5);
         fractal.rotate = new THREE.Vector3(0, 0, 0);
+        fractal.translate = new THREE.Vector3(0, 1.0, 0);
+        fractal.offset = 1;
 
         // const fractal = new CustomSDF(document.getElementById('sdf').textContent);
 
 
         const renderer = new RealtimeRenderer(fractal, background);
-        renderer.color = new THREE.Color(1, 0.5, 1); //new THREE.Color('rgb(255, 200, 100)');
-        renderer.roughness = 1.0;
+        renderer.color = new THREE.Color(1, 1, 1); //new THREE.Color('rgb(255, 200, 100)');
+        renderer.roughness = 1;
 
         const aoOnly = false;
 
         if(aoOnly) {
-            renderer.sunStrength = 0.0;
-            renderer.ambientLightStrength = 1.0;
+            renderer.sunColor = new THREE.Color(0, 0, 0);
             renderer.enableShadows = false;
         }
         else {
-            renderer.sunStrength = 1.0;
-            renderer.ambientLightStrength = 0.5;
             renderer.enableShadows = true;
         }
 
-        const renderer2 = new EdgeRenderer(fractal);
-        
-
-      
-
         camera.fov = 90;
-        camera.position.set(0, 0, 2);
+        camera.position.set(2, 2, 2);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         controls.enabled = true;
@@ -98,7 +94,7 @@
         const pathTracer = new PathTracer(fractal, background);
         
         pathTracer.color = renderer.color;
-        pathTracer.sunStrength = 1.0;
+        pathTracer.sunStrength = 2.0;
         pathTracer.bufferSize = 1080;
         pathTracer.roughness = renderer.roughness;
         pathTracer.backgroundMultiplier = 1.0;
@@ -123,14 +119,16 @@
                     capturing = true;
                     controls.enabled = false;
                     pathTracer.samplesPerFrame = 10;
+                    pathTracer.bufferSize = 540;
                     pathTracer.renderImage(1080, 1080).then(image => image.postprocess('vignette(0.7, 0.5)'));
                 }
             }
             else if(key === 'f') {
                 capturing = true;
                 controls.enabled = false;
-                pathTracer.samplesPerFrame = 200;
-                pathTracer.renderImage(1080, 1080);
+                pathTracer.samplesPerFrame = 50;
+                pathTracer.bufferSize = 1080;
+                pathTracer.renderImage(2160, 2160).then(image => image.postprocess('vignette(0.7, 0.5)'));
             }
             else if(key === 'p') {
                 if(paused) {
