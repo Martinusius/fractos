@@ -12,6 +12,7 @@ uniform float epsilon;
 const int maximumRaySteps = 2048;
 
 float sdf(vec3 position);
+void csdf(vec3 position);
 vec3 background(vec3 direction);
 
 vec3 calculateNormal(vec3 position, float minDist) {
@@ -106,6 +107,8 @@ Ray raycast(vec3 origin, vec3 direction) {
                 data.epsilon = currentDistance * epsilonScale;
         }
         else if(currentDistance < data.epsilon) {
+            csdf(currentPosition);
+
             data.hit = true;
             data.position = origin + totalDistance * direction;
             data.normal = calculateNormal(data.position, data.epsilon);

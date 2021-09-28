@@ -52,8 +52,6 @@ vec3 raytrace(vec3 from, vec3 dir) {
 
             dir = normalize(mix(reflected, sampleDir, lerpFactor)); 
 
-            vec3 color = mapToChannels(vec3(1, 0.2, 0), vec3(1, 0.5, 0), vec3(0.5, 1, 0), abs(normalize(trap)));
-            
             luminance *= color * albedo * mix(max(dot(ray.normal, dir), 0.0), 1.0, lerpFactor);
             
 

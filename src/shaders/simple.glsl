@@ -40,10 +40,10 @@ vec3 shading() {
         }
 
         //float ao = 1.0 / (ray.steps) / ambientOcclusionStrength;
-        float ao = statixAO(ray.position, ray.normal, 1.0, 0.01)
-            + statixAO(ray.position, ray.normal, 1.0, 0.05);
+        float ao = statixAO(ray.position, ray.normal, 0.3, 0.01)
+            + statixAO(ray.position, ray.normal, 0.3, 0.05);
 
-        vec3 indirect = ((backgroundAverage / float(samples)) - clamp(ao, 0.0, 1.0) * aoStrength) * color;
+        vec3 indirect = ((backgroundAverage / float(samples)) - ao * aoStrength - aoStrength * 0.2) * color;
         vec3 direct = calculateDirectLight(ray.position, ray.normal, ray.epsilon) * sunColor * color;
       
         return indirect + direct;

@@ -28,7 +28,7 @@ export class RealtimeRenderer {
     public readonly background: Background;
 
     public enableShadows = false;
-    public aoStrength = 3.0;
+    public aoStrength = 1.0;
     public color = new THREE.Color(0xffffff);
     public sunDirection = new THREE.Vector3(-0.5, -2, -1);
     public sunColor = new THREE.Vector3(1, 1, 1);
@@ -36,6 +36,8 @@ export class RealtimeRenderer {
     public adaptiveEpsilon = true;
     public epsilonScale = 0.001;
     public roughness = 1.0;
+
+    public tick: (time: number, renderer: RealtimeRenderer) => void = () => {};
 
     public clock: THREE.Clock;
 
@@ -96,6 +98,8 @@ export class RealtimeRenderer {
         setAutoResize(true);
 
         Queue.loop(() => {
+            this.tick(this.clock.getElapsedTime(), this);
+
             const size = new THREE.Vector2();
             renderer.getSize(size);
             const targetSize = new THREE.Vector2(this.target.texture.image.width, this.target.texture.image.height);
@@ -111,7 +115,6 @@ export class RealtimeRenderer {
             Utils.setUniformsFromObject(this.shader, this.sdf, 'sdf_');
             Utils.setUniformsFromObject(this.shader, this.background, 'bg_');
             
-            this.shader.uniforms.time.value =  this.clock.getElapsedTime();
             this.shader.uniforms.rasterizerColor.value = this.target.texture;
             this.shader.uniforms.sunDirection.value = normalize(this.sunDirection);
             Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this, 'enableShadows', 'aoStrength', 'color', 'sunColor', 'sunDirection', 'epsilon', 'adaptiveEpsilon', 'epsilonScale', 'roughness');
