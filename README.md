@@ -18,8 +18,7 @@ const renderer = new RealtimeRenderer(fractal, background);
 
 /* Renderer configuration (default values) */
 renderer.color = new THREE.Color('rgb(255, 255, 255)' /* Color of the fractal */);
-renderer.ambientLightStrength = 1.0;
-renderer.sunStrength = 1.0;
+renderer.sunColor = new THREE.Color('rgb(255, 255, 255)');
 renderer.sunDirection = new THREE.Vector3(-0.5, -2, -1);
 renderer.enableShadows = true;
 
