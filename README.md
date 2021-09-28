@@ -3,7 +3,7 @@
 
 - Create highly customizable 3D fractals
 - Specialized ray marcher allows the fractals to be rendered in real time
-- Use the path tracer to create photorealistic images
+- Use the built-in path tracer to create photorealistic images
 
 
 ### Usage
