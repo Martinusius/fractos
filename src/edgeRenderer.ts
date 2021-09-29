@@ -59,7 +59,6 @@ export class EdgeRenderer {
         this.expanded = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
 
         const uniforms = {
-            time: { value: 0 },
             epsilon: { value: this.epsilon },
             ...Utils.objectToUniforms(this.sdf, 'sdf_'),
         };
@@ -78,9 +77,7 @@ export class EdgeRenderer {
     }
 
     private setUniforms(shader: ShaderMaterial) {
-        Utils.setUniformsFromObject(shader, this.sdf, 'sdf_');
-            
-        shader.uniforms.time.value =  this.clock.getElapsedTime();
+        Utils.setUniformsFromObject(shader, this.sdf, 'sdf_'); 
         shader.uniforms.epsilon.value = this.epsilon;
     }
 

@@ -51,8 +51,8 @@ struct Ray {
     float epsilon;
 };
 
-mat3 cameraMatrix() {
-    vec3 cw = cameraDirection;
+mat3 cameraMatrix(vec3 direction) {
+    vec3 cw = direction;
     vec3 cp = vec3(0.0, 1.0, 0.0);
     vec3 cu = normalize(cross(cw, cp));
     vec3 cv = cross(cu, cw);
@@ -60,10 +60,21 @@ mat3 cameraMatrix() {
 }
 
 vec3 pixelDirection() {
-    mat3 view = cameraMatrix();
+    mat3 view = cameraMatrix(cameraDirection);
     vec2 uv = (gl_FragCoord.xy / resolution) * 2.0 - 1.0;
     uv.x *= resolution.x / resolution.y;
     return view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));
+}
+
+vec2 directionPixel(vec3 position, vec3 cameraPos, vec3 cameraDir) {
+    mat3 inverseView = inverse(cameraMatrix(cameraDir));
+    vec3 toPos = normalize(position - cameraPos);
+    vec3 fromCameraDir = inverseView * toPos;
+
+    float zDistance = 1.0 / tan(fov / 2.0);
+    vec2 uv = (fromCameraDir * zDistance / fromCameraDir.z).xy;
+    uv /= resolution.x / resolution.y;
+    return (uv + 1.0) / 2.0;
 }
 
 vec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {
