@@ -5,6 +5,7 @@ uniform sampler2D previousFrame;
 uniform sampler2D pixelMemory;
 uniform sampler2D positions;
 uniform int sampleIndex;
+uniform int samplesPerDrawCall;
 
 uniform int rayDepth;
 uniform float roughness;
@@ -12,6 +13,7 @@ uniform vec3 sunDirection;
 uniform float sunStrength;
 uniform vec3 color;
 uniform float backgroundMultiplier;
+
 
 uniform vec3 oldCameraPos;
 uniform vec3 oldCameraDir;
@@ -94,19 +96,8 @@ vec3 shading() {
     vec3 rayDirection = pixelDirection();
 
     Ray ray = raycast(cameraPos, rayDirection);
-
-    /*if(abs(oldCameraPos.x) > 0.0 && abs(ray.position.x) > 0.0) {
-        
-        return vec3(uv, 0);
-    }*/
-    
     
     vec2 uv = directionPixel(ray.position, oldCameraPos, oldCameraDir);
-
-    /*if(abs(oldCameraPos.x) > 0.0 && abs(ray.position.x) > 0.0) {
-        return texture2D(positions, uv).xyz;
-    }*/
-    
 
     int r = 3;
 
@@ -128,9 +119,14 @@ vec3 shading() {
     }
 
     // Trace
-    seed = (1.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex) * 0.1);
-    vec3 pixelColor = raytrace(cameraPos, rayDirection);
+    
+    vec3 pixelColor = vec3(0);
+
+    for(int i = 0; i < samplesPerDrawCall; ++i) {
+        seed = (1.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex + i) * 0.1);
+        pixelColor += raytrace(cameraPos, rayDirection);
+    }
 
     // Average samples
-    return previousColor * float(sampleIndex) / float(sampleIndex + 1) + pixelColor / float(sampleIndex + 1);
+    return previousColor * float(sampleIndex) / float(sampleIndex + samplesPerDrawCall) + pixelColor / float(sampleIndex + samplesPerDrawCall);
 }

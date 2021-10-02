@@ -4,6 +4,7 @@ uniform vec3 sdf_scale;
 uniform vec3 sdf_translate;
 uniform vec3 sdf_rotate;
 uniform vec3 sdf_rotate2;
+uniform int sdf_coloringIterations;
 
 float sdf(vec3 z) {
     const float scale = 3.0;
@@ -23,7 +24,7 @@ float sdf(vec3 z) {
 
 
         if(sdf_rotate2.x != 0.0 || sdf_rotate2.y != 0.0 || sdf_rotate2.z != 0.0)
-            z = rotate(z, sdf_rotate);
+            z = rotate(z, sdf_rotate2);
 
         z *= vec3(3, 3, 3) * sdf_scale;
         z += vec3(-2, -2, 0) + sdf_translate;
@@ -35,12 +36,12 @@ float sdf(vec3 z) {
     return box(z * pow(scale, float(-sdf_iterations)), vec3(pow(scale, float(-sdf_iterations))));
 }
 
-void csdf(vec3 z) {
+vec3 csdf(vec3 z) {
     const float scale = 3.0;
 
     trap = z;
 
-    for(int i = 0; i < sdf_iterations + 2; ++i) {
+    for(int i = 0; i < sdf_coloringIterations; ++i) {
         z = abs(z);
 
         if(sdf_rotate.x != 0.0 || sdf_rotate.y != 0.0 || sdf_rotate.z != 0.0)
@@ -64,5 +65,7 @@ void csdf(vec3 z) {
 
         trap = min(trap, z);
     }
+
+    return trap;
 }
 

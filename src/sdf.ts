@@ -17,6 +17,7 @@ export abstract class SDF {
 
 export class Menger extends SDF {
     public iterations: number;
+     public coloringIterations: number;
     public rotate = new THREE.Vector3(0, 0, 0);
     public rotate2 = new THREE.Vector3(0, 0, 0);
     public translate = new THREE.Vector3(0, 0, 0);
@@ -27,6 +28,7 @@ export class Menger extends SDF {
         super();
 
         this.iterations = iterations;
+        this.coloringIterations = iterations;
     }
 
     public getCode() {
@@ -37,15 +39,18 @@ export class Menger extends SDF {
 
 export class Sierpinski extends SDF {
     public iterations: number;
+    public coloringIterations: number;
     public scale: number;
     public absX: boolean = false;
     public rotate = new THREE.Vector3(0, 0, 0);
+    public translate = new THREE.Vector3(0, 0, 0);
 
 
     constructor(iterations: number, scale: number = 2) {
         super();
 
         this.iterations = iterations;
+        this.coloringIterations = iterations;
         this.scale = scale;
     }
 

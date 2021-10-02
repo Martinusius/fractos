@@ -31,22 +31,40 @@ export function asyncRepeat(count: number, callback: (i: number) => void, after?
 export class PathTracer {
     private textures: THREE.WebGLRenderTarget[] = [];
     private shader: THREE.ShaderMaterial;
+
+    private clock: THREE.Clock;
+    private timings = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
     
     public readonly sdf: SDF;
     public readonly background: Background;
 
-    public roughness: number = 1;
-    public sunDirection: THREE.Vector3 = new THREE.Vector3(-0.5, -2, -1);
-    public sunStrength: number = 1;
-    public rayDepth: number = 5;
-    public samplesPerFrame: number = 100;
-    public color: THREE.Color = new THREE.Color(0xffffff);
-    public time: number = 0;
-    public epsilon: number = 0.00005;
+    public samplesPerFrame = 100;
+    public samplesPerDrawCall = 1;
+    public roughness = 1;
 
-    public backgroundMultiplier: number = 1;
+    public sunDirection = new THREE.Vector3(-0.5, -2, -1);
+    public sunStrength = 1;
+    public backgroundMultiplier = 1;
 
-    public bufferSize: number = 512;
+    public rayDepth = 5;
+    public epsilon = 0.00005;
+    public bufferSize = 512;
+
+    public colorR = new THREE.Color(1, 1, 1);
+    public colorG = new THREE.Color(1, 1, 1);
+    public colorB = new THREE.Color(1, 1, 1);
+
+    public emissionR = new THREE.Color(0, 0, 0);
+    public emissionG = new THREE.Color(0, 0, 0);
+    public emissionB = new THREE.Color(0, 0, 0);
+
+    public set color(value: THREE.Color) {
+        console.log(value);
+        this.colorR = value;
+        this.colorG = value;
+        this.colorB = value;
+    }
+
 
     constructor(sdf: SDF, background: Background) {
         this.sdf = sdf;
@@ -54,6 +72,8 @@ export class PathTracer {
 
         const size = new THREE.Vector2();
         renderer.getSize(size);
+
+        this.clock = new THREE.Clock();
 
         this.textures = [
             new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
@@ -66,7 +86,22 @@ export class PathTracer {
             offset: { value: new THREE.Vector2(0, 0) },
             size: { value: new THREE.Vector2(0, 0) },
 
-            ...Utils.createUniformsFromVariables(this, 'sunDirection', 'sunStrength', 'roughness', 'rayDepth', 'samplesPerFrame', 'color', 'time', 'epsilon', 'backgroundMultiplier'),
+            ...Utils.createUniformsFromVariables<PathTracer>(this,
+                'sunDirection',
+                'sunStrength',
+                'roughness',
+                'rayDepth',
+                'samplesPerFrame',
+                'samplesPerDrawCall',
+                'colorR',
+                'colorG',
+                'colorB',
+                'emissionR',
+                'emissionG',
+                'emissionB',
+                'epsilon',
+                'backgroundMultiplier'
+            ),
             ...Utils.objectToUniforms(this.sdf, 'sdf_'),
             ...Utils.objectToUniforms(this.background, 'bg_')
         });
@@ -107,12 +142,31 @@ export class PathTracer {
 
             let sample = 0;
             Queue.loop(() => {
+                this.samplesPerDrawCall =  Math.floor(0.1 / this.timings.reduce((a, b) => a + b) * 10);
+                this.samplesPerDrawCall = Math.max(Math.min(this.samplesPerDrawCall, Math.min(20, this.samplesPerFrame - sample)), 1);
+                //console.log(this.timings);
+
                 this.shader.uniforms.previousFrame.value = this.textures[1].texture;
                 this.shader.uniforms.sampleIndex.value = sample;
                 this.shader.uniforms.offset.value = new THREE.Vector2(x * this.bufferSize, y * this.bufferSize);
                 this.shader.uniforms.size.value = new THREE.Vector2(this.bufferSize, this.bufferSize);
 
-                Utils.setUniformsFromVariables(this.shader, this, 'sunDirection', 'sunStrength', 'roughness', 'rayDepth', 'samplesPerFrame', 'color', 'time', 'epsilon', 'backgroundMultiplier');
+                Utils.setUniformsFromVariables<PathTracer>(this.shader, this,
+                    'sunDirection',
+                    'sunStrength',
+                    'roughness',
+                    'rayDepth',
+                    'samplesPerFrame',
+                    'samplesPerDrawCall',
+                    'colorR',
+                    'colorG',
+                    'colorB',
+                    'emissionR',
+                    'emissionG',
+                    'emissionB',
+                    'epsilon',
+                    'backgroundMultiplier'
+                );
         
                 // Render the sample to a target
                 render(this.shader, this.textures[0]);
@@ -134,15 +188,17 @@ export class PathTracer {
 
                 if(y >= heights) {
                     y = 0;
-                    console.log(`Samples: ${++sample}/${this.samplesPerFrame}`);
+                    sample += this.samplesPerDrawCall;
+                    console.log(`Samples: ${sample}/${this.samplesPerFrame}`);
                 }
 
                 if(sample >= this.samplesPerFrame) {
-                    //copyAA(this.textures[1], null);
                     
                     Queue.cancel();
                     resolve(new Image(this.textures[1]));
                 }
+
+                this.timings = [...this.timings.slice(1, this.timings.length), this.clock.getDelta()];
             });
         });
 

@@ -3,14 +3,21 @@ uniform vec2 size;
 
 uniform sampler2D previousFrame;
 uniform int sampleIndex;
+uniform int samplesPerDrawCall;
 
 uniform int rayDepth;
 uniform float roughness;
 uniform vec3 sunDirection;
 uniform float sunStrength;
-uniform vec3 color;
 uniform float backgroundMultiplier;
 
+uniform vec3 colorR;
+uniform vec3 colorG;
+uniform vec3 colorB;
+
+uniform vec3 emissionR;
+uniform vec3 emissionG;
+uniform vec3 emissionB;
 
 #define PI 3.141592653589
 
@@ -38,8 +45,8 @@ const float albedo = 1.0;
 
 vec3 raytrace(vec3 from, vec3 dir) {
     vec3 direct = vec3(0.0);
-    vec3 emission = vec3(0.0);
     vec3 luminance = vec3(1.0);
+    vec3 emissive = vec3(0.0);
 
     for (int i = 0; i < rayDepth; i++) {
         Ray ray = raycast(from, dir);
@@ -52,8 +59,11 @@ vec3 raytrace(vec3 from, vec3 dir) {
 
             dir = normalize(mix(reflected, sampleDir, lerpFactor)); 
 
+            vec3 color = mapToChannels(colorR, colorG, colorB, csdf(ray.position));
+            vec3 emission = mapToChannels(emissionR, emissionG, emissionB, csdf(ray.position));
+
+            emissive += emission * luminance;
             luminance *= color * albedo * mix(max(dot(ray.normal, dir), 0.0), 1.0, lerpFactor);
-            
 
             from = ray.position + ray.normal * epsilon * 2.0;
 
@@ -68,7 +78,7 @@ vec3 raytrace(vec3 from, vec3 dir) {
             }
         }
         else {
-            return direct + luminance * background(dir) * backgroundMultiplier;
+            return direct + luminance * background(dir) * backgroundMultiplier + emissive;
         }
     }
     return vec3(0.0);
@@ -89,9 +99,13 @@ vec3 shading() {
     vec3 rayDirection = pixelDirection();
 
     // Trace
-    seed = (1.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex) * 0.1);
-    vec3 pixelColor = raytrace(cameraPos, rayDirection);
+    vec3 pixelColor = vec3(0);
+
+    for(int i = 0; i < samplesPerDrawCall; ++i) {
+        seed = (1.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex + i) * 0.1);
+        pixelColor += raytrace(cameraPos, rayDirection);
+    }
 
     // Average samples
-    return previousColor * float(sampleIndex) / float(sampleIndex + 1) + pixelColor / float(sampleIndex + 1);
+    return previousColor * float(sampleIndex) / float(sampleIndex + samplesPerDrawCall) + pixelColor / float(sampleIndex + samplesPerDrawCall);
 }

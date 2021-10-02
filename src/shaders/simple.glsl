@@ -1,9 +1,12 @@
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
 uniform float aoStrength;
-uniform vec3 color;
 uniform bool enableShadows;
 uniform float roughness;
+
+uniform vec3 colorR;
+uniform vec3 colorG;
+uniform vec3 colorB;
 
 float calculateDirectLight(vec3 position, vec3 normal, float epsilon) {
     if(enableShadows) {
@@ -42,6 +45,8 @@ vec3 shading() {
         //float ao = 1.0 / (ray.steps) / ambientOcclusionStrength;
         float ao = statixAO(ray.position, ray.normal, 0.3, 0.01)
             + statixAO(ray.position, ray.normal, 0.3, 0.05);
+
+        vec3 color = mapToChannels(colorR, colorG, colorB, csdf(ray.position));
 
         vec3 indirect = ((backgroundAverage / float(samples)) - ao * aoStrength - aoStrength * 0.2) * color;
         vec3 direct = calculateDirectLight(ray.position, ray.normal, ray.epsilon) * sunColor * color;

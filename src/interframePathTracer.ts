@@ -6,7 +6,7 @@ import { createShader, renderer, render, setShader, Utils, setResolution, camera
 import { SDF } from './sdf';
 
 // @ts-ignore
-import pathTracer from './shaders/pathTracer.glsl';
+import pathTracer from './shaders/interframePathTracer.glsl';
 
 // @ts-ignore
 import position from './shaders/position.glsl';
@@ -32,7 +32,7 @@ export function asyncRepeat(count: number, callback: (i: number) => void, after?
 
 // [Might look at this in future but cannot guarantee]
 // TODO: Dynamic cache use threshold (difficulty: medium)
-// TODO: Optimize for fast rendering - multiple samples per frame (difficulty: very hard)
+// TODO: Eliminate precision bugs
 // Path tracer with interframe caching
 // Ideal for animations
 export class InterframePathTracer {
@@ -42,6 +42,9 @@ export class InterframePathTracer {
     private position: THREE.WebGLRenderTarget;
     private pixelMemory: THREE.WebGLRenderTarget;
     private positionShader: THREE.ShaderMaterial;
+
+    public samplesPerFrame: number = 100;
+    public samplesPerDrawCall: number = 1;
     
     public readonly sdf: SDF;
     public readonly background: Background;
@@ -50,16 +53,19 @@ export class InterframePathTracer {
     public sunDirection: THREE.Vector3 = new THREE.Vector3(-0.5, -2, -1);
     public sunStrength: number = 1;
     public rayDepth: number = 5;
-    public samplesPerFrame: number = 100;
+    
     public color: THREE.Color = new THREE.Color(0xffffff);
     public epsilon: number = 0.00005;
 
     public backgroundMultiplier: number = 1;
+    public clock: THREE.Clock;
 
     public bufferSize: number = 512;
 
     public oldCameraPos = new THREE.Vector3();
     public oldCameraDir = new THREE.Vector3();
+
+    public timings = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
 
     constructor(sdf: SDF, background: Background) {
         this.sdf = sdf;
@@ -67,6 +73,8 @@ export class InterframePathTracer {
 
         const size = new THREE.Vector2();
         renderer.getSize(size);
+
+        this.clock = new THREE.Clock();
 
         this.textures = [
             new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
@@ -89,12 +97,13 @@ export class InterframePathTracer {
             offset: { value: new THREE.Vector2(0, 0) },
             size: { value: new THREE.Vector2(0, 0) },
 
-            ...Utils.createUniformsFromVariables(this, 
+            ...Utils.createUniformsFromVariables<InterframePathTracer>(this, 
                 'sunDirection',
                 'sunStrength',
                 'roughness',
                 'rayDepth',
                 'samplesPerFrame',
+                'samplesPerDrawCall',
                 'color',
                 'epsilon',
                 'backgroundMultiplier',
@@ -106,8 +115,12 @@ export class InterframePathTracer {
         });
     }
 
+    public frame: number = 0;
+
     public renderImage(width: number, height: number) {
+
         return new Promise<Image>(resolve => {
+
             setAutoResize(false);
             setResolution(width, height);
 
@@ -145,6 +158,9 @@ export class InterframePathTracer {
 
             let sample = 0;
             Queue.loop(() => {
+                this.samplesPerDrawCall =  Math.floor(0.5 / this.timings.reduce((a, b) => a + b) * 10);
+                this.samplesPerDrawCall = Math.max(Math.min(this.samplesPerDrawCall, 20), 1);
+
                 this.shader.uniforms.previousFrame.value = this.textures[1].texture;
                 this.shader.uniforms.positions.value =  this.position.texture;
                 this.shader.uniforms.pixelMemory.value =  this.pixelMemory.texture;
@@ -158,6 +174,7 @@ export class InterframePathTracer {
                     'roughness',
                     'rayDepth',
                     'samplesPerFrame',
+                    'samplesPerDrawCall',
                     'color',
                     'epsilon',
                     'backgroundMultiplier',
@@ -185,12 +202,12 @@ export class InterframePathTracer {
 
                 if(y >= heights) {
                     y = 0;
-                    console.log(`Samples: ${++sample}/${this.samplesPerFrame}`);
+                    
+                    sample += this.samplesPerDrawCall;
+                    console.log(`Samples: ${sample}/${this.samplesPerFrame}`);
                 }
 
                 if(sample >= this.samplesPerFrame) {
-                    //copyAA(this.textures[1], null);
-
                     Utils.setUniformsFromObject(this.positionShader, this.sdf, 'sdf_'); 
                     this.positionShader.uniforms.epsilon.value = this.epsilon;
                     render(this.positionShader, this.position);
@@ -202,7 +219,17 @@ export class InterframePathTracer {
                     
                     Queue.cancel();
                     resolve(new Image(this.textures[1]));
+
+                    ++this.frame;
                 }
+
+                // Average draw call should take half a second
+                const delta = this.clock.getDelta();
+                //this.samplesPerDrawCall = Math.floor(0.5 / delta * this.samplesPerDrawCall);
+                console.log(delta);
+                this.timings = [...this.timings.slice(1, this.timings.length), delta];
+
+                //console.log(this.clock.getDelta());
             });
         });
 

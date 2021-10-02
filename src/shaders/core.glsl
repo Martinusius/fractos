@@ -12,7 +12,7 @@ uniform float epsilon;
 const int maximumRaySteps = 2048;
 
 float sdf(vec3 position);
-void csdf(vec3 position);
+vec3 csdf(vec3 position);
 vec3 background(vec3 direction);
 
 vec3 calculateNormal(vec3 position, float minDist) {
@@ -42,6 +42,8 @@ vec3 rand3() {
 struct Ray {
     vec3 origin;
     vec3 direction;
+
+    float closest;
 
     bool hit;
     vec3 position;
@@ -78,7 +80,8 @@ vec2 directionPixel(vec3 position, vec3 cameraPos, vec3 cameraDir) {
 }
 
 vec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {
-    map = abs(map);
+    float lowest = min(map.r, min(map.g, map.b));
+    map -= lowest;
     map /= (map.r + map.g + map.b);
     return (color1 * map.r + color2 * map.g + color3 * map.b);
 }
@@ -93,6 +96,7 @@ Ray raycast(vec3 origin, vec3 direction) {
         data.epsilon = epsilon;
 
     float totalDistance = 0.0;
+    float closest = 100.0;
     for (int steps = 0; steps < maximumRaySteps; ++steps) {
         vec3 currentPosition = origin + totalDistance * direction;
 
@@ -100,6 +104,7 @@ Ray raycast(vec3 origin, vec3 direction) {
             break;
 
         float currentDistance = sdf(currentPosition);
+        closest = min(closest, currentDistance);
 
         // Antibanding
         totalDistance += max(0.0, (steps < 1 ? rand() * currentDistance : currentDistance));
@@ -118,8 +123,6 @@ Ray raycast(vec3 origin, vec3 direction) {
                 data.epsilon = currentDistance * epsilonScale;
         }
         else if(currentDistance < data.epsilon) {
-            csdf(currentPosition);
-
             data.hit = true;
             data.position = origin + totalDistance * direction;
             data.normal = calculateNormal(data.position, data.epsilon);
@@ -129,6 +132,7 @@ Ray raycast(vec3 origin, vec3 direction) {
         }
     }
 
+    data.closest = closest;
     data.hit = false;
     return data;
 }
@@ -140,6 +144,7 @@ Ray raycastEpsilon(vec3 origin, vec3 direction, float epsilon) {
     data.epsilon = epsilon;
 
     float totalDistance = 0.0;
+      float closest = 100.0;
     for (int steps = 0; steps < maximumRaySteps; ++steps) {
         vec3 currentPosition = origin + totalDistance * direction;
 
@@ -147,6 +152,7 @@ Ray raycastEpsilon(vec3 origin, vec3 direction, float epsilon) {
             break;
 
         float currentDistance = sdf(currentPosition);
+        closest = min(closest, currentDistance);
 
         // Antibanding
         totalDistance += max(0.0, (steps < 1 ? rand() * currentDistance : currentDistance));
@@ -172,6 +178,7 @@ Ray raycastEpsilon(vec3 origin, vec3 direction, float epsilon) {
         }
     }
 
+    data.closest = closest;
     data.hit = false;
     return data;
 }

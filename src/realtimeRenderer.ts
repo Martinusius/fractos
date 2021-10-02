@@ -29,13 +29,22 @@ export class RealtimeRenderer {
 
     public enableShadows = false;
     public aoStrength = 1.0;
-    public color = new THREE.Color(0xffffff);
     public sunDirection = new THREE.Vector3(-0.5, -2, -1);
     public sunColor = new THREE.Vector3(1, 1, 1);
     public epsilon = 0.0001;
     public adaptiveEpsilon = true;
     public epsilonScale = 0.001;
     public roughness = 1.0;
+
+    public colorR = new THREE.Color(1, 1, 1);
+    public colorG = new THREE.Color(1, 1, 1);
+    public colorB = new THREE.Color(1, 1, 1);
+
+    public set color(value: THREE.Color) {
+        this.colorR = value;
+        this.colorG = value;
+        this.colorB = value;
+    }
 
     public tick: (time: number, renderer: RealtimeRenderer) => void = () => {};
 
@@ -60,7 +69,19 @@ export class RealtimeRenderer {
             rasterizerDepth: { value: null },
             sunDirection: { value: normalize(this.sunDirection) },
             time: { value: 0 },
-            ...Utils.createUniformsFromVariables<RealtimeRenderer>(this, 'enableShadows', 'aoStrength', 'color', 'sunColor', 'sunDirection', 'epsilon', 'adaptiveEpsilon', 'epsilonScale', 'roughness'),
+            ...Utils.createUniformsFromVariables<RealtimeRenderer>(this,
+                'enableShadows',
+                'aoStrength',
+                'sunColor',
+                'sunDirection',
+                'epsilon',
+                'adaptiveEpsilon',
+                'epsilonScale',
+                'roughness',
+                'colorR',
+                'colorG',
+                'colorB'
+            ),
             ...Utils.objectToUniforms(this.sdf, 'sdf_'),
             ...Utils.objectToUniforms(this.background, 'bg_'),
         });            
@@ -88,7 +109,19 @@ export class RealtimeRenderer {
         this.shader.uniforms.time.value =  this.clock.getElapsedTime();
         this.shader.uniforms.rasterizerColor.value = this.target.texture;
         this.shader.uniforms.sunDirection.value = normalize(this.sunDirection);
-        Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this, 'enableShadows', 'aoStrength', 'color', 'sunColor', 'sunDirection', 'epsilon', 'adaptiveEpsilon', 'epsilonScale', 'roughness');
+        Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this,
+            'enableShadows',
+            'aoStrength',
+            'sunColor',
+            'sunDirection',
+            'epsilon',
+            'adaptiveEpsilon',
+            'epsilonScale',
+            'roughness',
+            'colorR',
+            'colorG',
+            'colorB'
+        );
 
         render(this.shader, this.targetFinal);
         return new Image(this.targetFinal);
@@ -117,7 +150,19 @@ export class RealtimeRenderer {
             
             this.shader.uniforms.rasterizerColor.value = this.target.texture;
             this.shader.uniforms.sunDirection.value = normalize(this.sunDirection);
-            Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this, 'enableShadows', 'aoStrength', 'color', 'sunColor', 'sunDirection', 'epsilon', 'adaptiveEpsilon', 'epsilonScale', 'roughness');
+            Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this,
+                'enableShadows',
+                'aoStrength',
+                'sunColor',
+                'sunDirection',
+                'epsilon',
+                'adaptiveEpsilon',
+                'epsilonScale',
+                'roughness',
+                'colorR',
+                'colorG',
+                'colorB'    
+            );
 
             render(this.shader, this.targetFinal);
 
