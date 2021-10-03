@@ -27,7 +27,7 @@ float sdf(vec3 z) {
 }
 
 vec3 csdf(vec3 z) {
-    vec3 trap = z;
+    vec3 trap = abs(z);
 
     for(int i = 0; i < sdf_coloringIterations; ++i) {
         if(sdf_absX)
@@ -43,7 +43,7 @@ vec3 csdf(vec3 z) {
         z *= sdf_scale;
         z += vec3(1, 1, 1) + sdf_translate - sdf_scale;
 
-        trap = min(z, trap);
+        trap = sampleOrbit(trap, z);
     }
 
     return trap;

@@ -46,7 +46,7 @@ vec3 shading() {
         float ao = statixAO(ray.position, ray.normal, 0.3, 0.01)
             + statixAO(ray.position, ray.normal, 0.3, 0.05);
 
-        vec3 color = mapToChannels(colorR, colorG, colorB, csdf(ray.position));
+        vec3 color = clamp(mapToChannels(colorR, colorG, colorB, csdf(ray.position)), 0.0, 1.0);
 
         vec3 indirect = ((backgroundAverage / float(samples)) - ao * aoStrength - aoStrength * 0.2) * color;
         vec3 direct = calculateDirectLight(ray.position, ray.normal, ray.epsilon) * sunColor * color;

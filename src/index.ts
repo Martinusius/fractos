@@ -5,9 +5,10 @@ import { DepthRenderer } from "./depthRenderer";
 import { Menger, Sierpinski, Mandelbulb, CustomSDF } from "./sdf";
 import { PathTracer } from './pathTracer';
 import { RealtimeRenderer } from "./realtimeRenderer";
-import { InterframePathTracer } from "./interframePathTracer";
 import Queue from './queue';
 import { EdgeRenderer } from "./edgeRenderer";
+import { OrbitSampler, OrbitMapping } from "./orbit";
+
 
 
 function expose(types: Record<string, any>) {
@@ -18,6 +19,6 @@ function expose(types: Record<string, any>) {
 
 expose({
     THREE, RealtimeRenderer, DepthRenderer, PathTracer,
-    EdgeRenderer, Menger, Sierpinski, ColorBackground, HemisphereBackground, InterframePathTracer,
-    CustomSDF, ImageBackground, Mandelbulb, Queue, controls, camera, fractos
+    EdgeRenderer, Menger, Sierpinski, ColorBackground, HemisphereBackground,
+    CustomSDF, ImageBackground, Mandelbulb, Queue, OrbitSampler, OrbitMapping, controls, camera, fractos
 });

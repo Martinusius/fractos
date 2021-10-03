@@ -13,6 +13,7 @@ import './webm-writer-0.3.0';
 import { Background } from './background';
 import { core } from './core';
 import { Image } from './postprocessing';
+import { OrbitSampler, OrbitMapping } from './orbit';
 
 export function asyncRepeat(count: number, callback: (i: number) => void, after?: () => void) {
     let i = 0;
@@ -58,6 +59,9 @@ export class PathTracer {
     public emissionG = new THREE.Color(0, 0, 0);
     public emissionB = new THREE.Color(0, 0, 0);
 
+    public orbitSampler = OrbitSampler.Min;
+    public orbitMapping = OrbitMapping.Linear;
+
     public set color(value: THREE.Color) {
         console.log(value);
         this.colorR = value;
@@ -85,6 +89,7 @@ export class PathTracer {
             sampleIndex: { value: 0 },
             offset: { value: new THREE.Vector2(0, 0) },
             size: { value: new THREE.Vector2(0, 0) },
+            adaptiveEpsilon: { value: false },
 
             ...Utils.createUniformsFromVariables<PathTracer>(this,
                 'sunDirection',
@@ -100,7 +105,9 @@ export class PathTracer {
                 'emissionG',
                 'emissionB',
                 'epsilon',
-                'backgroundMultiplier'
+                'backgroundMultiplier',
+                'orbitSampler',
+                'orbitMapping'
             ),
             ...Utils.objectToUniforms(this.sdf, 'sdf_'),
             ...Utils.objectToUniforms(this.background, 'bg_')
@@ -146,6 +153,7 @@ export class PathTracer {
                 this.samplesPerDrawCall = Math.max(Math.min(this.samplesPerDrawCall, Math.min(20, this.samplesPerFrame - sample)), 1);
                 //console.log(this.timings);
 
+                this.shader.uniforms.adaptiveEpsilon.value = false;
                 this.shader.uniforms.previousFrame.value = this.textures[1].texture;
                 this.shader.uniforms.sampleIndex.value = sample;
                 this.shader.uniforms.offset.value = new THREE.Vector2(x * this.bufferSize, y * this.bufferSize);
@@ -165,7 +173,9 @@ export class PathTracer {
                     'emissionG',
                     'emissionB',
                     'epsilon',
-                    'backgroundMultiplier'
+                    'backgroundMultiplier',
+                    'orbitSampler',
+                    'orbitMapping'
                 );
         
                 // Render the sample to a target

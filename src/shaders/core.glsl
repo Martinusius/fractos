@@ -79,12 +79,46 @@ vec2 directionPixel(vec3 position, vec3 cameraPos, vec3 cameraDir) {
     return (uv + 1.0) / 2.0;
 }
 
-vec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {
-    float lowest = min(map.r, min(map.g, map.b));
-    map -= lowest;
-    map /= (map.r + map.g + map.b);
-    return (color1 * map.r + color2 * map.g + color3 * map.b);
+
+
+uniform int orbitSampler;
+uniform int orbitMapping;
+
+vec3 sampleOrbit(vec3 a, vec3 b) {
+    switch (orbitSampler) {
+    case 0:
+        return min(a, b);
+    case 1:
+        return max(a, b);
+    case 2:
+        return a + b;
+    case 3:
+        return min(abs(a), abs(b));
+    case 4:
+        return max(abs(a), abs(b));
+    case 5:
+        return abs(a) + abs(b);
+    }
 }
+
+float mapOrbit(float x) {
+    switch (orbitMapping) {
+    case 0:
+        return x;
+    case 1:
+        return 1.0 / (1.0 + pow(2.71828182846, -x));
+    case 2:
+        return x / (x + 1.0);
+    }
+}
+
+vec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {
+    return (mapOrbit(map.x) * color1 + mapOrbit(map.y) * color2 + mapOrbit(map.z) * color3);
+}
+
+// vec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {
+//     return (sigmoid(map.x) * color1 + sigmoid(map.y) * color2 + sigmoid(map.z) * color3);
+// }
 
 
 Ray raycast(vec3 origin, vec3 direction) {

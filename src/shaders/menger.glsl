@@ -7,8 +7,6 @@ uniform vec3 sdf_rotate2;
 uniform int sdf_coloringIterations;
 
 float sdf(vec3 z) {
-    const float scale = 3.0;
-
     for(int i = 0; i < sdf_iterations; ++i) {
         z = abs(z);
 
@@ -33,13 +31,12 @@ float sdf(vec3 z) {
 
     }
 
-    return box(z * pow(scale, float(-sdf_iterations)), vec3(pow(scale, float(-sdf_iterations))));
+    return box(z * pow(3.0, float(-sdf_iterations)), vec3(pow(3.0, float(-sdf_iterations))));
 }
 
 vec3 csdf(vec3 z) {
-    const float scale = 3.0;
 
-    trap = z;
+    trap = abs(z);
 
     for(int i = 0; i < sdf_coloringIterations; ++i) {
         z = abs(z);
@@ -63,7 +60,7 @@ vec3 csdf(vec3 z) {
 
         if(z.z > 1.0 * sdf_offset) z.z -= 2.0 * sdf_offset;
 
-        trap = min(trap, z);
+        trap = sampleOrbit(trap, z);
     }
 
     return trap;

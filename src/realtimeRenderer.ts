@@ -13,6 +13,7 @@ import { Background } from './background';
 import { core } from './core';
 
 import { Image } from './postprocessing';
+import { OrbitSampler, OrbitMapping } from './orbit';
 
 function normalize(vector: THREE.Vector3) {
     vector.normalize();
@@ -39,6 +40,9 @@ export class RealtimeRenderer {
     public colorR = new THREE.Color(1, 1, 1);
     public colorG = new THREE.Color(1, 1, 1);
     public colorB = new THREE.Color(1, 1, 1);
+
+    public orbitSampler = OrbitSampler.Min;
+    public orbitMapping = OrbitMapping.Linear;
 
     public set color(value: THREE.Color) {
         this.colorR = value;
@@ -80,7 +84,9 @@ export class RealtimeRenderer {
                 'roughness',
                 'colorR',
                 'colorG',
-                'colorB'
+                'colorB',
+                'orbitSampler',
+                'orbitMapping'
             ),
             ...Utils.objectToUniforms(this.sdf, 'sdf_'),
             ...Utils.objectToUniforms(this.background, 'bg_'),
@@ -120,7 +126,9 @@ export class RealtimeRenderer {
             'roughness',
             'colorR',
             'colorG',
-            'colorB'
+            'colorB',
+            'orbitSampler',
+            'orbitMapping'
         );
 
         render(this.shader, this.targetFinal);
@@ -161,7 +169,9 @@ export class RealtimeRenderer {
                 'roughness',
                 'colorR',
                 'colorG',
-                'colorB'    
+                'colorB',
+                'orbitSampler',
+                'orbitMapping'
             );
 
             render(this.shader, this.targetFinal);
