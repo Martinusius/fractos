@@ -104,10 +104,12 @@ vec3 sampleOrbit(vec3 a, vec3 b) {
 float mapOrbit(float x) {
     switch (orbitMapping) {
     case 0:
-        return x;
+        return 1.0;
     case 1:
-        return 1.0 / (1.0 + pow(2.71828182846, -x));
+        return x;
     case 2:
+        return 1.0 / (1.0 + pow(2.71828182846, -x));
+    case 3:
         return x / (x + 1.0);
     }
 }

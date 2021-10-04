@@ -42,7 +42,7 @@ export class RealtimeRenderer {
     public colorB = new THREE.Color(1, 1, 1);
 
     public orbitSampler = OrbitSampler.Min;
-    public orbitMapping = OrbitMapping.Linear;
+    public orbitMapping = OrbitMapping.Constant;
 
     public set color(value: THREE.Color) {
         this.colorR = value;

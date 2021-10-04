@@ -48,7 +48,7 @@ export class PathTracer {
     public backgroundMultiplier = 1;
 
     public rayDepth = 5;
-    public epsilon = 0.00005;
+    public epsilon = 0.000001;
     public bufferSize = 512;
 
     public colorR = new THREE.Color(1, 1, 1);
@@ -60,7 +60,7 @@ export class PathTracer {
     public emissionB = new THREE.Color(0, 0, 0);
 
     public orbitSampler = OrbitSampler.Min;
-    public orbitMapping = OrbitMapping.Linear;
+    public orbitMapping = OrbitMapping.Constant;
 
     public set color(value: THREE.Color) {
         console.log(value);

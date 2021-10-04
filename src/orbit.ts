@@ -8,6 +8,7 @@ export enum OrbitSampler {
 };
 
 export enum OrbitMapping {
+    Constant,
     Linear,
     Sigmoid,
     Reinhard
