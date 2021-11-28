@@ -27,20 +27,34 @@ export function asyncRepeat(count: number, callback: (i: number) => void, after?
     animator();
 }
 
+function visualizePixel(x: number, y: number, divisions: number) {
+    let string = '+' + '-'.repeat(divisions * 2 - 1) + '+';
+
+    for(let fy = 0; fy < divisions; ++fy) {
+        string += '\n|';
+
+        for(let fx = 0; fx < divisions; ++fx) {
+            const character = fy < y || fy === y && fx < x ? '■' : ' ';
+
+            string += fx === divisions - 1 ? character : character + ' ';
+        }
+
+        string += '|';
+    }
+    
+    return string + '\n+' + '-'.repeat(divisions * 2 - 1) + '+';
+}
 
 // Recursive path tracer implementation for raymarched scenes
 export class PathTracer {
     private textures: THREE.WebGLRenderTarget[] = [];
     private shader: THREE.ShaderMaterial;
-
-    private clock: THREE.Clock;
-    private timings = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
     
     public readonly sdf: SDF;
     public readonly background: Background;
 
-    public samplesPerFrame = 100;
-    public samplesPerDrawCall = 1;
+    public samplesPerFrame = 1;
+    public pixelDivisions = 1;
     public roughness = 1;
 
     public sunDirection = new THREE.Vector3(-0.5, -2, -1);
@@ -77,8 +91,6 @@ export class PathTracer {
         const size = new THREE.Vector2();
         renderer.getSize(size);
 
-        this.clock = new THREE.Clock();
-
         this.textures = [
             new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
             new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType })
@@ -97,7 +109,7 @@ export class PathTracer {
                 'roughness',
                 'rayDepth',
                 'samplesPerFrame',
-                'samplesPerDrawCall',
+                'pixelDivisions',
                 'colorR',
                 'colorG',
                 'colorB',
@@ -148,9 +160,24 @@ export class PathTracer {
             let x = 0, y = 0;
 
             let sample = 0;
+
+            const handleVisibilityChange = () => {
+                if(document.visibilityState === 'hidden')
+                    console.log('Render task paused');
+                else 
+                    console.log('Render task resumed');
+            };
+
+            const timer = setInterval(() => {
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+
+                if(document.visibilityState === 'visible')
+                    console.log(`Render task: ${Math.floor(sample / (this.samplesPerFrame * this.pixelDivisions * this.pixelDivisions) * 100)}%`);
+            }, 1000);
+
             Queue.loop(() => {
-                this.samplesPerDrawCall =  Math.floor(0.1 / this.timings.reduce((a, b) => a + b) * 10);
-                this.samplesPerDrawCall = Math.max(Math.min(this.samplesPerDrawCall, Math.min(20, this.samplesPerFrame - sample)), 1);
+                //this.samplesPerDrawCall =  Math.floor(0.1 / this.timings.reduce((a, b) => a + b) * 10);
+                //this.samplesPerDrawCall = Math.max(Math.min(this.samplesPerDrawCall, Math.min(20, this.samplesPerFrame - sample)), 1);
                 //console.log(this.timings);
 
                 this.shader.uniforms.adaptiveEpsilon.value = false;
@@ -165,7 +192,7 @@ export class PathTracer {
                     'roughness',
                     'rayDepth',
                     'samplesPerFrame',
-                    'samplesPerDrawCall',
+                    'pixelDivisions',
                     'colorR',
                     'colorG',
                     'colorB',
@@ -198,17 +225,23 @@ export class PathTracer {
 
                 if(y >= heights) {
                     y = 0;
-                    sample += this.samplesPerDrawCall;
-                    console.log(`Samples: ${sample}/${this.samplesPerFrame}`);
+                    sample += 1; //this.samplesPerDrawCall;
+
+                    const subpixelIndex = sample % (this.pixelDivisions * this.pixelDivisions);
+
+                    //console.log(visualizePixel(subpixelIndex % this.pixelDivisions, Math.floor(subpixelIndex / this.pixelDivisions), this.pixelDivisions));
+                  
                 }
 
-                if(sample >= this.samplesPerFrame) {
-                    
+                if(sample >= this.samplesPerFrame * this.pixelDivisions * this.pixelDivisions) {
+                    console.log('Render task: 100%');
                     Queue.cancel();
-                    resolve(new Image(this.textures[1]));
                 }
 
-                this.timings = [...this.timings.slice(1, this.timings.length), this.clock.getDelta()];
+            }, () => {
+                clearInterval(timer);
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                resolve(new Image(this.textures[1]));
             });
         });
 

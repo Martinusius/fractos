@@ -16,16 +16,16 @@
   "devDependencies": {
     "@types/ccapture.js": "^1.1.1",
     "@types/dat.gui": "^0.7.7",
-    "@types/three": "^0.129.1",
-    "css-loader": "^5.2.6",
+    "@types/three": "^0.129.2",
+    "css-loader": "^5.2.7",
     "file-loader": "^6.2.0",
-    "style-loader": "^3.0.0",
-    "ts-loader": "^9.2.3",
-    "webpack": "^5.48.0",
-    "webpack-cli": "^4.7.2"
+    "style-loader": "^3.3.1",
+    "ts-loader": "^9.2.6",
+    "webpack": "^5.64.4",
+    "webpack-cli": "^4.9.1"
   },
   "dependencies": {
-    "@types/file-saver": "^2.0.3",
+    "@types/file-saver": "^2.0.4",
     "ccapture.js": "^1.1.0",
     "ffmpeg.js": "^4.2.9003",
     "file-saver": "^2.0.5",
@@ -34,7 +34,7 @@
     "three": "^0.129.0",
     "threecap": "^0.2.1",
     "ts-whammy": "^1.0.4",
-    "typescript": "^4.3.4",
+    "typescript": "^4.5.2",
     "webm-writer": "^0.3.1",
     "whammy": "0.0.1"
   }

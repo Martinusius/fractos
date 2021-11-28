@@ -14,6 +14,8 @@ export class Image {
 
     postprocess(...steps: string[]) {
         steps = steps.map(step => {
+            if(!step.trim()) return '// Empty postprocessing step';
+
             const match = step.match(/\(.*\)/);
             if(!match) throw new Error('Invalid postprocessing step');
             const content = match[0].slice(1, -1);
@@ -24,10 +26,14 @@ export class Image {
             
         });
 
-        const shader = createShader(postprocess.replace(/UWU/, steps.join('\n')), {
+        const shader = createShader(postprocess.replace(/POSTPROCESS/, steps.join('\n')), {
             data: { value: this.texture }
         });
 
         renderAA(shader, null);
+    }
+
+    show() {
+        this.postprocess();
     }
 }

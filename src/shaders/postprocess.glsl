@@ -93,7 +93,7 @@ void main() {
     vec2 uv = gl_FragCoord.xy / resolution.xy;
     vec3 color = texture2D(data, uv).xyz;
 
-    UWU
+    POSTPROCESS
 
     gl_FragColor = vec4(color, 1);
 }

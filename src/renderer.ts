@@ -13,8 +13,8 @@ renderer.extensions.get('EXT_color_buffer_float');
 //renderer.setPixelRatio(window.devicePixelRatio);
 
 let element: HTMLElement | null;
-export function fractos(id: string) {
-    element = document.getElementById(id);
+export function fractos(selector: string) {
+    element = document.querySelector(selector);
 
     if(!element) return;
     renderer.setSize(element.clientWidth, element.clientHeight);

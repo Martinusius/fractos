@@ -10,22 +10,26 @@ export function setAutoResize(value: boolean) {
 
 
 
-
-let callback = () => {};
-
 export default class Queue {
-    public static loop(tick: () => void) {
-        callback = tick;
+    public static callback = () => {};
+    public static cleanup = () => {};
+
+    public static loop(callback: () => void, cleanup: () => void = () => {}) {
+        Queue.cleanup();
+        Queue.callback = callback;
+        Queue.cleanup = cleanup;
     }
 
     public static cancel() {
-        callback = () => {};
+        Queue.callback = () => {};
+        Queue.cleanup();
+        Queue.cleanup = () => {};
     }
 
-    public static once(call: () => void) {
-        callback = () => {
-            call();
-            callback = () => {};
+    public static once(callback: () => void) {
+        Queue.callback = () => {
+            callback();
+            this.callback = () => {};
         };
     }
 }
@@ -40,7 +44,7 @@ function animator() {
         setResolution(screenSize.x, screenSize.y, false);
 
     requestAnimationFrame(animator);
-    callback();
+    Queue.callback();
 }
 
 animator();

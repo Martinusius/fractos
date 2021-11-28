@@ -61,6 +61,20 @@ mat3 cameraMatrix(vec3 direction) {
     return mat3(cu, cv, cw);
 }
 
+vec2 subpixelCoord(int x, int y, int divisions) {
+    float subpixelSize = 1.0 / float(divisions);
+    vec2 offset = vec2(subpixelSize * (float(x) + 0.5) - 0.5, subpixelSize * (float(y) + 0.5) - 0.5);
+    return gl_FragCoord.xy + offset;
+}
+
+vec3 subpixelDirection(int x, int y, int divisions) {
+    mat3 view = cameraMatrix(cameraDirection);
+    vec2 uv = (subpixelCoord(x, y, divisions) / resolution) * 2.0 - 1.0;
+    uv.x *= resolution.x / resolution.y;
+    return view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));
+}
+
+
 vec3 pixelDirection() {
     mat3 view = cameraMatrix(cameraDirection);
     vec2 uv = (gl_FragCoord.xy / resolution) * 2.0 - 1.0;
@@ -104,7 +118,7 @@ vec3 sampleOrbit(vec3 a, vec3 b) {
 float mapOrbit(float x) {
     switch (orbitMapping) {
     case 0:
-        return 1.0;
+        return 1.0/3.0;
     case 1:
         return x;
     case 2:

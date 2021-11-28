@@ -22,6 +22,7 @@ const public = {
     output: {
         filename: 'fractos-new.js',
         path: '\\\\NETSERVER\\www\\fractos',
+        hashFunction: "sha256"
     },
     resolve: {
         extensions: ['.ts', '.js', '.glsl']
@@ -48,7 +49,7 @@ const full = {
         ],
     },
     output: {
-        filename: 'fractos-full.js',
+        filename: 'fractos.min.js',
         path: path.resolve('./dist'),
     },
     resolve: {
