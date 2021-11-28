@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "author": "Martinusius",
-  "license": "GNU AFFERO GPLV3",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "https://github.com/Martinusius/fractos"
