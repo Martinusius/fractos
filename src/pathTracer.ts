@@ -45,6 +45,25 @@ function visualizePixel(x: number, y: number, divisions: number) {
     return string + '\n+' + '-'.repeat(divisions * 2 - 1) + '+';
 }
 
+function autoBufferSize(width: number, heigth: number) {
+    let owidth = width;
+    let oheight = heigth;
+
+    let widthDiv = 1;
+    let heightDiv = 1;
+
+    while(width * heigth > 1600000) {
+        if(width > heigth) {
+            width = owidth / (++widthDiv);
+        }
+        else {
+            heigth = oheight / (++heightDiv);
+        }
+    }
+    
+    return { x: width, y: heigth };
+}
+
 // Recursive path tracer implementation for raymarched scenes
 export class PathTracer {
     private textures: THREE.WebGLRenderTarget[] = [];
@@ -63,7 +82,7 @@ export class PathTracer {
 
     public rayDepth = 5;
     public epsilon = 0.000001;
-    public bufferSize = 512;
+    public bufferSize?: number;
 
     public colorR = new THREE.Color(1, 1, 1);
     public colorG = new THREE.Color(1, 1, 1);
@@ -127,6 +146,8 @@ export class PathTracer {
     }
 
     public renderImage(width: number, height: number) {
+        const bufferSize = this.bufferSize ? { x: this.bufferSize, y: this.bufferSize } : autoBufferSize(width, height);
+
         return new Promise<Image>(resolve => {
             setAutoResize(false);
             setResolution(width, height);
@@ -154,8 +175,10 @@ export class PathTracer {
             Utils.setUniformsFromObject(this.shader, this.sdf, 'sdf_');
             Utils.setUniformsFromObject(this.shader, this.background, 'bg_');
 
-            const widths = Math.ceil(width / this.bufferSize);
-            const heights = Math.ceil(height / this.bufferSize);
+            
+
+            const widths = Math.ceil(width / bufferSize.x);
+            const heights = Math.ceil(height / bufferSize.y);
             
             let x = 0, y = 0;
 
@@ -183,8 +206,8 @@ export class PathTracer {
                 this.shader.uniforms.adaptiveEpsilon.value = false;
                 this.shader.uniforms.previousFrame.value = this.textures[1].texture;
                 this.shader.uniforms.sampleIndex.value = sample;
-                this.shader.uniforms.offset.value = new THREE.Vector2(x * this.bufferSize, y * this.bufferSize);
-                this.shader.uniforms.size.value = new THREE.Vector2(this.bufferSize, this.bufferSize);
+                this.shader.uniforms.offset.value = new THREE.Vector2(x * bufferSize.x, y * bufferSize.y);
+                this.shader.uniforms.size.value = new THREE.Vector2(bufferSize.x, bufferSize.y);
 
                 Utils.setUniformsFromVariables<PathTracer>(this.shader, this,
                     'sunDirection',
