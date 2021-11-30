@@ -56,3 +56,7 @@ float sdf(vec3 position) {
     
     return 0.5 * log(r) * r / dr;
 }
+
+vec3 csdf(vec3 z) {
+    return vec3(1);
+}
