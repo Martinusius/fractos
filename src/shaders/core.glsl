@@ -8,6 +8,9 @@ uniform bool adaptiveEpsilon;
 uniform float epsilonScale;
 uniform float epsilon;
 
+const float PI = 3.1415926535897932384626433832795;
+const float DEG_TO_RAD = PI / 180.0;
+
 
 const int maximumRaySteps = 2048;
 

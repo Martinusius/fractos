@@ -139,6 +139,7 @@ export class Utils {
         const uniforms: Record<string, any> = {};
 
         for(const [key, value] of Object.entries(object)) {
+            if(value instanceof Array) continue;
             uniforms[prefix + key] = { value };
         }
 
@@ -147,18 +148,9 @@ export class Utils {
 
     public static setUniformsFromObject(shader: THREE.RawShaderMaterial, object: any, prefix = '') {
         for(const [key, value] of Object.entries(object)) {
+            if(value instanceof Array) continue;
             shader.uniforms[prefix + key] = { value };
         }
-    }
-
-    public static backgroundToUniforms(background: Background) {
-        const uniforms: Record<string, any> = {};
-
-        for(const [key, value] of Object.entries(background)) {
-            uniforms['bg_' + key] = { value };
-        }
-
-        return uniforms;
     }
 
     public static createUniformsFromVariables<T>(object: T, ...variables: (keyof T)[]) {

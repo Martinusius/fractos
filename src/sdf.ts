@@ -15,14 +15,40 @@ export abstract class SDF {
     public abstract getCode(): string;
 }
 
+
+function transform(shaderCode: string, index: number, steps: string[]) {
+    const possibleTransforms = ['rotate', 'translate', 'scale', 'rotateX', 'rotateY', 'rotateZ', 'abs', 'absX', 'absY', 'absZ'];
+
+    steps = steps.map(step => {
+        if(!step.trim()) return '// Empty postprocessing step';
+
+        const match = step.match(/(.*)\((.*)\)/);
+
+        const name = match ? match[1] : step;
+
+        if(!possibleTransforms.includes(name)) throw new Error(`Invalid transform step: ${step}`);
+
+        // Allow numbers without decimal places
+        step = step.replace(/([^a-zA-Z\.])(\d+)([^\.\d])/g, '$1$2.0$3');
+
+        if(!match) 
+            return `z = ${step}(z);`;
+        else if(match[2].trim() === '')
+            return 'z = ' + step.replace(/\(/, '(z') + ';';
+        else
+            return 'z = ' + step.replace(/\(/, '(z, ') + ';';
+        
+    });
+
+    return shaderCode.replace(new RegExp(`TRANSFORM${index}`), steps.join('\n'));
+}
+
 export class Menger extends SDF {
     public iterations: number;
-     public coloringIterations: number;
-    public rotate = new THREE.Vector3(0, 0, 0);
-    public rotate2 = new THREE.Vector3(0, 0, 0);
-    public translate = new THREE.Vector3(0, 0, 0);
-    public scale = new THREE.Vector3(1, 1, 1);
-    public offset = 1;
+    public coloringIterations: number;
+
+    public transform: string[] = [];
+    public transform2: string[] = [];
 
     constructor(iterations: number) {
         super();
@@ -32,7 +58,7 @@ export class Menger extends SDF {
     }
 
     public getCode() {
-        return menger;
+        return transform(transform(menger, 0, this.transform), 1, this.transform2);
     }
 }
 

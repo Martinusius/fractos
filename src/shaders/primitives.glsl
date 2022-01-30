@@ -39,23 +39,44 @@ mat4 rotationMatrix(vec3 axis, float angle) {
                 0.0,                                0.0,                                0.0,                                1.0);
 }
 
-vec3 rotate(vec3 z, vec3 rotation) {
+vec3 rotate(vec3 z, float axisX, float axisY, float axisZ, float angle) {
     vec4 u = vec4(z, 1);
-    u *= rotationMatrix(vec3(1, 0, 0), rotation.x);
-    u *= rotationMatrix(vec3(0, 1, 0), rotation.y);
-    u *= rotationMatrix(vec3(0, 0, 1), rotation.z);
+    u *= rotationMatrix(vec3(axisX, axisY, axisZ), angle * DEG_TO_RAD);
     return u.xyz;
 }
 
 vec3 rotateX(vec3 z, float angle) {
-    return (vec4(z, 1) * rotationMatrix(vec3(1, 0, 0), angle)).xyz;
+    return (vec4(z, 1) * rotationMatrix(vec3(1, 0, 0), angle * DEG_TO_RAD)).xyz;
 }
 vec3 rotateY(vec3 z, float angle) {
-    return (vec4(z, 1) * rotationMatrix(vec3(0, 1, 0), angle)).xyz;
+    return (vec4(z, 1) * rotationMatrix(vec3(0, 1, 0), angle * DEG_TO_RAD)).xyz;
 }
 vec3 rotateZ(vec3 z, float angle) {
-    return (vec4(z, 1) * rotationMatrix(vec3(0, 0, 1), angle)).xyz;
+    return (vec4(z, 1) * rotationMatrix(vec3(0, 0, 1), angle * DEG_TO_RAD)).xyz;
 }
+
+vec3 absX(vec3 z) {
+    return vec3(abs(z.x), z.y, z.z);
+}
+vec3 absY(vec3 z) {
+    return vec3(z.x, abs(z.y), z.z);
+}
+vec3 absZ(vec3 z) {
+    return vec3(z.x, z.y, abs(z.z));
+}
+
+vec3 translate(vec3 p, float x, float y, float z) {
+    return p + vec3(x, y, z);
+}
+
+vec3 scale(vec3 p, float x, float y, float z) {
+    return p * vec3(x, y, z);
+}
+
+vec3 scale(vec3 p, float s) {
+    return p * s;
+}
+
 
 float tetrahedron(vec3 p, float r) {
     float md = max(max(-p.x - p.y - p.z, p.x + p.y - p.z),

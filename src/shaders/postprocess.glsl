@@ -49,6 +49,10 @@ vec3 contrast(vec3 color, float contrast) {
     return (color - 0.5) * max(contrast, 0.0) + 0.5;
 }
 
+vec3 brightness(vec3 color, float brightness) {
+    return color * max(brightness, 0.0);
+}
+
 
 
 vec3 filmic(vec3 x) {

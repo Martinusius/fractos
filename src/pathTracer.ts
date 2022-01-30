@@ -64,6 +64,15 @@ function autoBufferSize(width: number, heigth: number) {
     return { x: width, y: heigth };
 }
 
+function humanReadableTime(ms: number) {
+    const milliseconds = Math.floor(ms % 1000);
+    const seconds = Math.floor((ms / 1000) % 60);
+    const minutes = Math.floor((seconds / 60) % 60);
+    const hours = Math.floor(minutes / 60);
+
+    return `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 ? `${minutes}m ` : ''}${seconds > 0 ? `${seconds}s ` : ''}${milliseconds > 0 ? `${milliseconds % 1000}ms` : ''}`;
+}
+
 // Recursive path tracer implementation for raymarched scenes
 export class PathTracer {
     private textures: THREE.WebGLRenderTarget[] = [];
@@ -147,6 +156,7 @@ export class PathTracer {
 
     public renderImage(width: number, height: number) {
         const bufferSize = this.bufferSize ? { x: this.bufferSize, y: this.bufferSize } : autoBufferSize(width, height);
+        const start = performance.now();
 
         return new Promise<Image>(resolve => {
             setAutoResize(false);
@@ -252,12 +262,20 @@ export class PathTracer {
 
                     const subpixelIndex = sample % (this.pixelDivisions * this.pixelDivisions);
 
+
+
                     //console.log(visualizePixel(subpixelIndex % this.pixelDivisions, Math.floor(subpixelIndex / this.pixelDivisions), this.pixelDivisions));
                   
                 }
 
-                if(sample >= this.samplesPerFrame * this.pixelDivisions * this.pixelDivisions) {
+                if(sample >= this.pixelDivisions * this.pixelDivisions) {
+                    const durationMs = performance.now() - start;
+
                     console.log('Render task: 100%');
+                    console.log(`Rendering done in ${humanReadableTime(durationMs)}`);
+                    console.log(`Render Size: ${Math.floor(this.pixelDivisions * this.pixelDivisions * width * height / 100000) / 10} megapixels`);
+                    console.log(`Render Speed: ${Math.floor(this.pixelDivisions * this.pixelDivisions * width * height / durationMs / 10) / 100} megapixels per second`);
+
                     Queue.cancel();
                 }
 

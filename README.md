@@ -6,7 +6,7 @@
 - Use the built-in path tracer to create photorealistic images
 
 
-### Usage
+### Basic Usage
 Since Fractos is based on Three.js some of the parameters are Three.js objects such as THREE.Color and THREE.Vector3
 
 ##### Realtime renderer setup
@@ -28,8 +28,6 @@ renderer.sunColor = new THREE.Color('rgb(255, 255, 255)');
 renderer.sunDirection = new THREE.Vector3(-0.5, -2, -1);
 renderer.enableShadows = true;
 
-// Postprocessing steps
-renderer.postprocess = ['vignette(0.7, 0.5)'];
 
 /* Configure the camera (THREE.PerspectiveCamera) */
 camera.fov = 90;
@@ -54,9 +52,54 @@ pathTracer.sunDirection = new THREE.Vector3(-0.5, -2, -1);
 // Every pixel will be split into 8x8 subpixels which will be averaged to get the final pixel color
 pathTracer.pixelDivisions = 8;
 
-// Render the image (1080x1080 pixels) and postprocess it
-pathTracer.render(1080, 1080).then(image => image.postprocess('vignette(0.7, 0.5)'));
+// Render the image (1080x1080 pixels)
+pathTracer.renderImage(1080, 1080);
 ```
+
+
+### Fractal transformations
+To make interesting fractals you can take an already existing simple fractal (such as Menger sponge or Sierpinski tetrahedron) and apply some transformations (such as translation, rotation and scaling) during its iterations. This is how you do it with Fractos:
+
+```ts
+const fractal = new Menger(8);
+
+// Rotate 15 degrees then translate along the x coordinate
+fractal.transform = ['rotateX(15)', 'translate(0.1, 0, 0)'];
+
+// There's often more than one part of the iteration where transformations can be applied
+// Other groups of transformations are then labeled as transform<index>
+fractal.transform2 = ['scale(1, 1, 0.8)'];
+```
+
+When scaling it's recommended to choose numbers lower or equal to 1 otherwise rendering artifacts might appear
+
+The full list of transformations is:
+
+`translate(x, y, z)` `rotateX(angle)` `rotateY(angle)` `rotateZ(angle)` `rotate(axis, angle)` `scale(x, y, z)`
+
+`absX()` `absY()` `absZ()` `abs()`
+
+
+### Post processing
+
+Fractos also includes a simple post processing setup. The most common use case is to apply tone mapping to the image however it is also able to perform some basic color adjustments such as contrast, brightness, saturation.
+
+
+##### With realtime renderer
+```ts
+const renderer = new RealtimeRenderer(fractal, background);
+
+// Apply filmic tone mapping and increase the contrast by 50%
+renderer.postprocess = ['filmic()', 'contrast(1.5)'];
+```
+##### With path tracer
+```ts
+const pathTracer = new PathTracer(fractal, background);
+
+// Apply filmic tone mapping and increase the contrast by 50%
+pathTracer.renderImage(1080, 1080).then(image => image.postprocess('filmic()', 'contrast(1.5)'));
+```
+
 
 ### Example Images (Path Traced)
 
