@@ -26,6 +26,7 @@ vec3 ortho(vec3 v) {
     return abs(v.x) > abs(v.z) ? vec3(-v.y, v.x, 0.0)  : vec3(0.0, -v.z, v.y);
 }
 
+
 vec3 getSampleBiased(vec3 dir, float power) {
     dir = normalize(dir);
     vec3 o1 = normalize(ortho(dir));
@@ -41,6 +42,19 @@ vec3 getCosineWeightedSample(vec3 dir) {
     return getSampleBiased(dir, 1.0);
 }
 
+vec3 sampleBiased(vec3 normal) {
+    return normalize(normal + sphericalRand());
+}
+
+vec3 sampleUnbiased(vec3 normal) {
+    while(true) {
+        vec3 dir = sphericalRand();
+        if(dot(normal, dir) > 0.0) return dir;
+    }
+
+    return vec3(0);
+}
+
 vec3 raytrace(vec3 from, vec3 dir) {
     vec3 direct = vec3(0.0);
     vec3 luminance = vec3(1.0);
@@ -52,17 +66,17 @@ vec3 raytrace(vec3 from, vec3 dir) {
         if(ray.hit) {
             // Roughness calculation
             vec3 reflected = reflect(dir, ray.normal);
-            vec3 sampleDir = getCosineWeightedSample(ray.normal);
+            vec3 sampleDir = sampleBiased(ray.normal);//normalize(ray.normal + sphericalRand());
             float lerpFactor = pow(roughness, 2.0);
 
-            dir = normalize(mix(reflected, sampleDir, lerpFactor)); 
+            dir = sampleDir;//normalize(mix(reflected, sampleDir, lerpFactor)); 
 
             vec3 orbit = csdf(ray.position);
             vec3 color = clamp(mapToChannels(colorR, colorG, colorB, orbit), 0.0, 1.0);
             vec3 emission = mapToChannels(emissionR, emissionG, emissionB, orbit);
 
             emissive += emission * luminance;
-            luminance *= color * mix(max(dot(ray.normal, dir), 0.0), 1.0, lerpFactor);
+            luminance *= color;// * mix(max(dot(ray.normal, dir), 0.0), 1.0, lerpFactor);
 
             from = ray.position + ray.normal * epsilon;
 
@@ -101,7 +115,7 @@ vec3 shading() {
     int subX = subpixelIndex % pixelDivisions;
     int subY = subpixelIndex / pixelDivisions;
 
-    seed = (subpixelCoord(subX, subY, pixelDivisions)) * (1.0 + float(sampleIndex) * 0.1);
+    seed = (subpixelCoord(subX, subY, pixelDivisions)) * (1.0 + float(sampleIndex) * 0.001);
 
     vec3 rayDirection = subpixelDirection(subX, subY, pixelDivisions);
     vec3 pixelColor = raytrace(cameraPos, rayDirection);

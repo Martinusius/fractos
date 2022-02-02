@@ -25,13 +25,23 @@ vec3 calculateNormal(vec3 position, float minDist) {
                            sdf(position + h.yyx) - sdf(position - h.yyx)));
 }
 
-vec2 seed = vec2(0);
 vec3 trap;
 
+vec2 seed = vec2(0);
 float rand() { 
-    seed += vec2(-1, 1);
+    seed += vec2(-0.1, 0.1);
     return fract(sin(dot(seed, vec2(12.9898, 4.1414))) * 43758.5453);
 }
+
+/*float seed = 10.0;
+
+float PHI = 1.61803398874989484820459;
+
+float rand() {
+    vec2 xy = gl_FragCoord.xy;
+    seed += 1.0;
+    return fract(tan(distance(xy * PHI, xy) * seed) * xy.x);
+}*/
 
 vec2 rand2() {
     return vec2(rand(), rand());
@@ -40,6 +50,17 @@ vec2 rand2() {
 vec3 rand3() {
     return vec3(rand(), rand(), rand());
 }
+
+vec3 sphericalRand() {
+    float z = rand() * 2.0 - 1.0;
+    float rxy = sqrt(1.0 - z * z);
+    float phi = rand() * 2.0 * PI;
+    float x = rxy * cos(phi);
+    float y = rxy * sin(phi);
+
+    return vec3(x, y, z);
+}
+
 
 
 struct Ray {
