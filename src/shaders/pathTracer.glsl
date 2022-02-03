@@ -69,14 +69,14 @@ vec3 raytrace(vec3 from, vec3 dir) {
             vec3 sampleDir = sampleBiased(ray.normal);//normalize(ray.normal + sphericalRand());
             float lerpFactor = pow(roughness, 2.0);
 
-            dir = sampleDir;//normalize(mix(reflected, sampleDir, lerpFactor)); 
+            dir = normalize(mix(reflected, sampleDir, lerpFactor)); 
 
             vec3 orbit = csdf(ray.position);
             vec3 color = clamp(mapToChannels(colorR, colorG, colorB, orbit), 0.0, 1.0);
             vec3 emission = mapToChannels(emissionR, emissionG, emissionB, orbit);
 
             emissive += emission * luminance;
-            luminance *= color;// * mix(max(dot(ray.normal, dir), 0.0), 1.0, lerpFactor);
+            luminance *= color * mix(max(dot(ray.normal, dir), 0.0), 1.0, lerpFactor);
 
             from = ray.position + ray.normal * epsilon;
 
