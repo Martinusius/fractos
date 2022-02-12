@@ -1,19 +1,15 @@
-import FileSaver from 'file-saver';
 import * as THREE from 'three';
-import { copy, copyAA } from './util';
+import { copy, downloadJSON } from './util';
 import Queue, { setAutoResize } from './queue';
-import { createShader, renderer, render, setShader, Utils, setResolution } from './renderer';
+import { createShader, renderer, render, Utils, setResolution, camera } from './renderer';
 import { SDF } from './sdf';
 
 // @ts-ignore
 import pathTracer from './shaders/pathTracer.glsl';
 
-// @ts-ignore
-import './webm-writer-0.3.0';
 import { Background } from './background';
 import { core } from './core';
-import { Image } from './postprocessing';
-import { OrbitSampler, OrbitMapping } from './orbit';
+import { TemporaryImage } from './postprocessing';
 
 export function asyncRepeat(count: number, callback: (i: number) => void, after?: () => void) {
     let i = 0;
@@ -81,7 +77,6 @@ export class PathTracer {
     public readonly sdf: SDF;
     public readonly background: Background;
 
-    public samplesPerFrame = 1;
     public pixelDivisions = 1;
     public roughness = 1;
 
@@ -93,24 +88,9 @@ export class PathTracer {
     public epsilon = 0.000001;
     public bufferSize?: number;
 
-    public colorR = new THREE.Color(1, 1, 1);
-    public colorG = new THREE.Color(1, 1, 1);
-    public colorB = new THREE.Color(1, 1, 1);
+    public lastImage: TemporaryImage | null = null;
 
-    public emissionR = new THREE.Color(0, 0, 0);
-    public emissionG = new THREE.Color(0, 0, 0);
-    public emissionB = new THREE.Color(0, 0, 0);
-
-    public orbitSampler = OrbitSampler.Min;
-    public orbitMapping = OrbitMapping.Constant;
-
-    public set color(value: THREE.Color) {
-        console.log(value);
-        this.colorR = value;
-        this.colorG = value;
-        this.colorB = value;
-    }
-
+    public color = new THREE.Color(1, 1, 1);
 
     constructor(sdf: SDF, background: Background) {
         this.sdf = sdf;
@@ -130,35 +110,28 @@ export class PathTracer {
             offset: { value: new THREE.Vector2(0, 0) },
             size: { value: new THREE.Vector2(0, 0) },
             adaptiveEpsilon: { value: false },
+            time: { value: 0 },
 
             ...Utils.createUniformsFromVariables<PathTracer>(this,
                 'sunDirection',
                 'sunStrength',
                 'roughness',
                 'rayDepth',
-                'samplesPerFrame',
                 'pixelDivisions',
-                'colorR',
-                'colorG',
-                'colorB',
-                'emissionR',
-                'emissionG',
-                'emissionB',
+                'color',
                 'epsilon',
-                'backgroundMultiplier',
-                'orbitSampler',
-                'orbitMapping'
+                'backgroundMultiplier'
             ),
             ...Utils.objectToUniforms(this.sdf, 'sdf_'),
             ...Utils.objectToUniforms(this.background, 'bg_')
         });
     }
 
-    public renderImage(width: number, height: number) {
+    renderImage(width: number, height: number, time = 0) {
         const bufferSize = this.bufferSize ? { x: this.bufferSize, y: this.bufferSize } : autoBufferSize(width, height);
         const start = performance.now();
 
-        return new Promise<Image>(resolve => {
+        return new Promise<TemporaryImage>((resolve, reject) => {
             setAutoResize(false);
             setResolution(width, height);
 
@@ -168,7 +141,6 @@ export class PathTracer {
             if(!targetSize.equals(textureSize)) {
                 this.textures[0].dispose();
                 this.textures[1].dispose();
-
 
                 this.textures = [
                     new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
@@ -205,37 +177,26 @@ export class PathTracer {
                 document.addEventListener('visibilitychange', handleVisibilityChange);
 
                 if(document.visibilityState === 'visible')
-                    console.log(`Render task: ${Math.floor(sample / (this.samplesPerFrame * this.pixelDivisions * this.pixelDivisions) * 100)}%`);
+                    console.log(`Render task: ${Math.floor(sample / (this.pixelDivisions * this.pixelDivisions) * 100)}%`);
             }, 1000);
 
             Queue.loop(() => {
-                //this.samplesPerDrawCall =  Math.floor(0.1 / this.timings.reduce((a, b) => a + b) * 10);
-                //this.samplesPerDrawCall = Math.max(Math.min(this.samplesPerDrawCall, Math.min(20, this.samplesPerFrame - sample)), 1);
-                //console.log(this.timings);
-
                 this.shader.uniforms.adaptiveEpsilon.value = false;
                 this.shader.uniforms.previousFrame.value = this.textures[1].texture;
                 this.shader.uniforms.sampleIndex.value = sample;
                 this.shader.uniforms.offset.value = new THREE.Vector2(x * bufferSize.x, y * bufferSize.y);
                 this.shader.uniforms.size.value = new THREE.Vector2(bufferSize.x, bufferSize.y);
+                this.shader.uniforms.time.value = time;
 
                 Utils.setUniformsFromVariables<PathTracer>(this.shader, this,
                     'sunDirection',
                     'sunStrength',
                     'roughness',
                     'rayDepth',
-                    'samplesPerFrame',
                     'pixelDivisions',
-                    'colorR',
-                    'colorG',
-                    'colorB',
-                    'emissionR',
-                    'emissionG',
-                    'emissionB',
+                    'color',
                     'epsilon',
-                    'backgroundMultiplier',
-                    'orbitSampler',
-                    'orbitMapping'
+                    'backgroundMultiplier'
                 );
         
                 // Render the sample to a target
@@ -258,14 +219,8 @@ export class PathTracer {
 
                 if(y >= heights) {
                     y = 0;
-                    sample += 1; //this.samplesPerDrawCall;
-
+                    sample += 1;
                     const subpixelIndex = sample % (this.pixelDivisions * this.pixelDivisions);
-
-
-
-                    //console.log(visualizePixel(subpixelIndex % this.pixelDivisions, Math.floor(subpixelIndex / this.pixelDivisions), this.pixelDivisions));
-                  
                 }
 
                 if(sample >= this.pixelDivisions * this.pixelDivisions) {
@@ -282,12 +237,48 @@ export class PathTracer {
             }, () => {
                 clearInterval(timer);
                 document.removeEventListener('visibilitychange', handleVisibilityChange);
-                resolve(new Image(this.textures[1]));
+
+                this.lastImage = new TemporaryImage(this.textures[1]);
+
+                if(sample >= this.pixelDivisions * this.pixelDivisions) resolve(this.lastImage);
+                else reject(new Error('Render task cancelled'));
             });
         });
-
-        
     }
+
+    async renderAnimation(width: number, height: number, path: { position: THREE.Vector3, direction: THREE.Vector3, time: number }[], postprocess: string[]) {
+        const frames: string[] = [];
+        const files: string[] = [];
+
+        function downloadCurrent() {
+            const filename = `${index}-${index + frames.length - 1}.json`;
+            downloadJSON(frames, filename);
+            files.push(filename);
+            index += frames.length;
+            frames.length = 0;
+        }
+
+        let index = 1;
+
+        for(let i = 0; i < path.length; i++) {
+            if(frames.length === 50) downloadCurrent();
+
+            const point = path[i];
+            camera.position.copy(point.position);
+            camera.lookAt(point.position.clone().add(point.direction));
+
+            const image = await this.renderImage(width, height, point.time);
+            image.postprocess(...postprocess).show();
+
+            frames.push(renderer.domElement.toDataURL());
+            console.log(`Frame ${i + 1}/${path.length} done`);
+        }
+
+        downloadCurrent();
+
+        downloadJSON({ files, totalFrames: path.length }, 'header.json');
+    }
+
 }
 
 

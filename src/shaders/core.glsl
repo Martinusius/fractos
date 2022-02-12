@@ -12,7 +12,7 @@ const float PI = 3.1415926535897932384626433832795;
 const float DEG_TO_RAD = PI / 180.0;
 
 
-const int maximumRaySteps = 2048;
+const int maximumRaySteps = 16536;
 
 float sdf(vec3 position);
 vec3 csdf(vec3 position);
@@ -142,7 +142,7 @@ vec3 sampleOrbit(vec3 a, vec3 b) {
 float mapOrbit(float x) {
     switch (orbitMapping) {
     case 0:
-        return 1.0/3.0;
+        return 1.0 / 3.0;
     case 1:
         return x;
     case 2:

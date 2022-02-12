@@ -3,7 +3,6 @@ uniform vec2 size;
 
 uniform sampler2D previousFrame;
 uniform int sampleIndex;
-uniform int samplesPerDrawCall;
 uniform int pixelDivisions;
 
 uniform int rayDepth;
@@ -12,9 +11,7 @@ uniform vec3 sunDirection;
 uniform float sunStrength;
 uniform float backgroundMultiplier;
 
-uniform vec3 colorR;
-uniform vec3 colorG;
-uniform vec3 colorB;
+uniform vec3 color;
 
 uniform vec3 emissionR;
 uniform vec3 emissionG;
@@ -55,28 +52,21 @@ vec3 sampleUnbiased(vec3 normal) {
     return vec3(0);
 }
 
-vec3 raytrace(vec3 from, vec3 dir) {
+vec3 raytrace(vec3 from, vec3 direction) {
     vec3 direct = vec3(0.0);
     vec3 luminance = vec3(1.0);
-    vec3 emissive = vec3(0.0);
 
     for (int i = 0; i < rayDepth; i++) {
-        Ray ray = raycast(from, dir);
+        Ray ray = raycast(from, direction);
 
         if(ray.hit) {
             // Roughness calculation
-            vec3 reflected = reflect(dir, ray.normal);
+            vec3 reflected = reflect(direction, ray.normal);
             vec3 sampleDir = sampleBiased(ray.normal);//normalize(ray.normal + sphericalRand());
-            float lerpFactor = pow(roughness, 2.0);
+            float lerpFactor = roughness * roughness;
 
-            dir = normalize(mix(reflected, sampleDir, lerpFactor)); 
-
-            vec3 orbit = csdf(ray.position);
-            vec3 color = clamp(mapToChannels(colorR, colorG, colorB, orbit), 0.0, 1.0);
-            vec3 emission = mapToChannels(emissionR, emissionG, emissionB, orbit);
-
-            emissive += emission * luminance;
-            luminance *= color * mix(max(dot(ray.normal, dir), 0.0), 1.0, lerpFactor);
+            direction = normalize(mix(reflected, sampleDir, lerpFactor)); 
+            luminance *= clamp(color, 0.0, 1.0) * mix(max(dot(ray.normal, direction), 0.0), 1.0, lerpFactor);
 
             from = ray.position + ray.normal * epsilon;
 
@@ -91,7 +81,7 @@ vec3 raytrace(vec3 from, vec3 dir) {
             }
         }
         else {
-            return direct + luminance * background(dir) * backgroundMultiplier + emissive;
+            return direct + luminance * background(direction) * backgroundMultiplier;
         }
     }
     return vec3(0.0);
@@ -118,8 +108,8 @@ vec3 shading() {
     seed = (subpixelCoord(subX, subY, pixelDivisions)) * (1.0 + float(sampleIndex) * 0.001);
 
     vec3 rayDirection = subpixelDirection(subX, subY, pixelDivisions);
-    vec3 pixelColor = raytrace(cameraPos, rayDirection);
 
+    vec3 pixelColor = raytrace(cameraPos, rayDirection);
     
 
     return previousColor * float(sampleIndex) / float(sampleIndex + 1) + pixelColor / float(sampleIndex + 1);

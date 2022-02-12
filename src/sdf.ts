@@ -20,16 +20,16 @@ function transform(shaderCode: string, index: number, steps: string[]) {
     const possibleTransforms = ['rotate', 'translate', 'scale', 'rotateX', 'rotateY', 'rotateZ', 'abs', 'absX', 'absY', 'absZ'];
 
     steps = steps.map(step => {
-        if(!step.trim()) return '// Empty postprocessing step';
+        if(!step.trim()) return '// Empty transform step';
 
-        const match = step.match(/(.*)\((.*)\)/);
+        const match = step.match(/([^\(]*)\((.*)\)/);
 
         const name = match ? match[1] : step;
 
         if(!possibleTransforms.includes(name)) throw new Error(`Invalid transform step: ${step}`);
 
         // Allow numbers without decimal places
-        step = step.replace(/([^a-zA-Z\.])(\d+)([^\.\d])/g, '$1$2.0$3');
+        step = step.replace(/([^a-zA-Z\.\d])(\d+)([^\.\d])/g, '$1$2.0$3');
 
         if(!match) 
             return `z = ${step}(z);`;

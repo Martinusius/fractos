@@ -53,6 +53,14 @@ vec3 brightness(vec3 color, float brightness) {
     return color * max(brightness, 0.0);
 }
 
+vec3 add(vec3 color, float r, float g, float b) {
+    return color + vec3(r, g, b);
+}
+
+vec3 add(vec3 color, float l) {
+    return color + l;
+}
+
 
 
 vec3 filmic(vec3 x) {

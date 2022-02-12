@@ -37,13 +37,14 @@ export default class Queue {
 
 
 function animator() {
+    requestAnimationFrame(animator);
+
     const currentSize = new THREE.Vector2();
     renderer.getSize(currentSize);
 
     if(autoResize && !screenSize.equals(currentSize)) 
         setResolution(screenSize.x, screenSize.y, false);
-
-    requestAnimationFrame(animator);
+    
     Queue.callback();
 }
 

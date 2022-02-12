@@ -4,9 +4,7 @@ uniform float aoStrength;
 uniform bool enableShadows;
 uniform float roughness;
 
-uniform vec3 colorR;
-uniform vec3 colorG;
-uniform vec3 colorB;
+uniform vec3 color;
 
 float calculateDirectLight(vec3 position, vec3 normal, float epsilon) {
     if(enableShadows) {
@@ -23,7 +21,7 @@ float statixAO(vec3 p, vec3 n, float k, float delta) {
     float sum = 0.0;
     for(int i = 1; i <= 5; ++i) {
         float fi = float(i);
-        sum += pow(2.0, -fi) * fi * delta - sdf(p + n * fi * delta);
+        sum += pow(2.0, -fi) * (fi * delta - sdf(p + n * fi * delta));
     }
     return k * sum;
 }
@@ -46,12 +44,12 @@ vec3 shading() {
         float ao = statixAO(ray.position, ray.normal, 0.3, 0.01)
             + statixAO(ray.position, ray.normal, 0.3, 0.05);
 
-        vec3 color = clamp(mapToChannels(colorR, colorG, colorB, csdf(ray.position)), 0.0, 1.0);
+        vec3 color = clamp(color, 0.0, 1.0);
 
         vec3 indirect = ((backgroundAverage / float(samples)) - ao * aoStrength - aoStrength * 0.2) * color;
         vec3 direct = calculateDirectLight(ray.position, ray.normal, ray.epsilon) * sunColor * color;
       
-        return indirect + direct;
+        //return indirect + direct;
     }
     else {
         return background(ray.direction);

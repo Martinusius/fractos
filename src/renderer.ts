@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import { Mesh } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { FirstPersonControls } from 'three/examples/jsm/controls/FirstPersonControls';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass';
-import { Background } from './background';
 
-export const renderer = new THREE.WebGLRenderer({ antialias: false });
+
+export const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
 export const screenSize = new THREE.Vector2();
 
 renderer.extensions.get('EXT_color_buffer_float');
@@ -23,9 +24,18 @@ export function fractos(selector: string) {
     const observer = new ResizeObserver(() => {
         if(!element) return;
         screenSize.set(element.clientWidth * window.devicePixelRatio, element.clientHeight * window.devicePixelRatio);
+
+        const canvasSize = new THREE.Vector2();
+        renderer.getSize(canvasSize);
+
+        const divisor = Math.max(canvasSize.x / screenSize.x, canvasSize.y / screenSize.y);
+        renderer.domElement.style.width = (canvasSize.x / divisor) + 'px';
+        renderer.domElement.style.height = (canvasSize.y / divisor) + 'px';
     });
 
     observer.observe(element);
+
+    return renderer.domElement;
 }
 
 export function setResolution(width: number, height: number, fixed = true) {
@@ -33,6 +43,8 @@ export function setResolution(width: number, height: number, fixed = true) {
     effectsComposer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+
+    controls.handleResize();
 
     if(!fixed) return;
     const divisor = Math.max(width / screenSize.x, height / screenSize.y);
@@ -52,15 +64,16 @@ export const camera = new THREE.PerspectiveCamera(90, document.body.clientWidth 
 camera.position.set(2, 2, 2);
 camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-export const controls = new OrbitControls(camera, renderer.domElement);
-controls.enabled = false;
+// export const controls = new PointerLockControls(camera, renderer.domElement);
+// const mover = setupMovement(controls, 0.001);
+// controls.enabled = false;
 
 
+// export const controls = new OrbitControls(camera, renderer.domElement);
 
-
-
-
-
+export const controls = new FirstPersonControls(camera, renderer.domElement);
+controls.movementSpeed = 0.2;
+controls.lookSpeed = 0.05;
 
 
 const quad = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2, 1, 1)) as THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
@@ -106,8 +119,8 @@ effectsComposer.addPass(new RenderPass(quadScene, ortho));
 effectsComposer.addPass(new SMAAPass(document.body.clientWidth, document.body.clientHeight));
 
 
-
 export function render(shader: THREE.RawShaderMaterial, target: THREE.WebGLRenderTarget | null = null) {
+
     quad.material = shader;
     renderer.setRenderTarget(target);
 
@@ -170,25 +183,6 @@ export class Utils {
 
 
 const scene = new THREE.Scene();
-const sphere = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true }));
-
-const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-1, 0, 1),
-    new THREE.Vector3(-0.5, 0.5, 0.5),
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0.5, -0.5, 0.5),
-    new THREE.Vector3(1, 0, 1)
-]);
-
-const points = curve.getPoints(50);
-const geometry = new THREE.BufferGeometry().setFromPoints( points );
-
-const material = new THREE.LineBasicMaterial({ color : 0xff0000 } );
-
-// Create the final object to add to the scene
-const curveObject = new THREE.Line(geometry, material);
-
-scene.add(curveObject);
 
 export function renderRaster(target: THREE.WebGLRenderTarget | null = null) {
     renderer.setRenderTarget(target);

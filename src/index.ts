@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { ColorBackground, HemisphereBackground, ImageBackground } from "./background";
-import { camera, controls, fractos } from "./renderer";
+import { camera, controls, fractos, renderer } from "./renderer";
 import { DepthRenderer } from "./depthRenderer";
 import { Menger, Sierpinski, Mandelbulb, CustomSDF } from "./sdf";
 import { PathTracer } from './pathTracer';
@@ -8,6 +8,7 @@ import { RealtimeRenderer } from "./realtimeRenderer";
 import Queue from './queue';
 import { EdgeRenderer } from "./edgeRenderer";
 import { OrbitSampler, OrbitMapping } from "./orbit";
+import { playAnimation } from "./animationPlayer";
 
 
 
@@ -20,5 +21,5 @@ function expose(types: Record<string, any>) {
 expose({
     THREE, RealtimeRenderer, DepthRenderer, PathTracer,
     EdgeRenderer, Menger, Sierpinski, ColorBackground, HemisphereBackground,
-    CustomSDF, ImageBackground, Mandelbulb, Queue, OrbitSampler, OrbitMapping, controls, camera, fractos
+    CustomSDF, ImageBackground, Mandelbulb, Queue, OrbitSampler, OrbitMapping, controls, camera, fractos, playAnimation
 });

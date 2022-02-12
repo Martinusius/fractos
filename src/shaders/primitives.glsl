@@ -17,16 +17,6 @@ float intersect(float a, float b) {
     return max(a, b);
 }
 
-
-float sphere(vec3 p, float r) {
-    return length(p) - r;
-}
-
-float box(vec3 p, vec3 b) {
-    vec3 q = abs(p) - b;
-    return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)), 0.0);
-}
-
 mat4 rotationMatrix(vec3 axis, float angle) {
     axis = normalize(axis);
     float s = sin(angle);
@@ -77,6 +67,30 @@ vec3 scale(vec3 p, float s) {
     return p * s;
 }
 
+
+
+// Transitions
+
+float between(float a, float b) {
+    return mix(a, b, mod(time, 1.0));
+}
+
+vec3 between(vec3 a, vec3 b) {
+    return mix(a, b, mod(time, 1.0));
+}
+
+
+
+// Shapes
+
+float sphere(vec3 p, float r) {
+    return length(p) - r;
+}
+
+float box(vec3 p, vec3 b) {
+    vec3 q = abs(p) - b;
+    return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)), 0.0);
+}
 
 float tetrahedron(vec3 p, float r) {
     float md = max(max(-p.x - p.y - p.z, p.x + p.y - p.z),
