@@ -49,7 +49,7 @@ vec3 shading() {
         vec3 indirect = ((backgroundAverage / float(samples)) - ao * aoStrength - aoStrength * 0.2) * color;
         vec3 direct = calculateDirectLight(ray.position, ray.normal, ray.epsilon) * sunColor * color;
       
-        //return indirect + direct;
+        return indirect + direct;
     }
     else {
         return background(ray.direction);
