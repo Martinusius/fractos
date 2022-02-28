@@ -45,16 +45,16 @@ function transform(shaderCode: string, index: number, steps: string[]) {
 
 export class Menger extends SDF {
     public iterations: number;
-    public coloringIterations: number;
+    public scale: number;
 
     public transform: string[] = [];
     public transform2: string[] = [];
 
-    constructor(iterations: number) {
+    constructor(iterations: number, scale: number = 3) {
         super();
 
         this.iterations = iterations;
-        this.coloringIterations = iterations;
+        this.scale = scale;
     }
 
     public getCode() {
@@ -65,23 +65,21 @@ export class Menger extends SDF {
 
 export class Sierpinski extends SDF {
     public iterations: number;
-    public coloringIterations: number;
     public scale: number;
-    public absX: boolean = false;
-    public rotate = new THREE.Vector3(0, 0, 0);
-    public translate = new THREE.Vector3(0, 0, 0);
+
+    public transform: string[] = [];
+    public transform2: string[] = [];
 
 
     constructor(iterations: number, scale: number = 2) {
         super();
 
         this.iterations = iterations;
-        this.coloringIterations = iterations;
         this.scale = scale;
     }
 
     public getCode() {
-        return sierpinski;
+        return transform(transform(sierpinski, 0, this.transform), 1, this.transform2);
     }
 }
 

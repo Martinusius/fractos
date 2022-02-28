@@ -13,6 +13,7 @@ import { core } from './core';
 
 import { TemporaryImage } from './postprocessing';
 import Timer from './timer';
+import { FirstPersonControls } from 'three/examples/jsm/controls/FirstPersonControls';
 
 function normalize(vector: THREE.Vector3) {
     vector.normalize();
@@ -54,7 +55,7 @@ export class RealtimeRenderer {
 
     // Frame timer
     private clock = new THREE.Clock();
-    public framerate = 60;
+    public framerate = 0;
 
     public lastImage: TemporaryImage | null = null;
 
@@ -145,9 +146,9 @@ export class RealtimeRenderer {
             const delta = this.clock.getDelta();
 
             accumulatedTime += delta;
-            controls.update(delta);
+            if(controls instanceof FirstPersonControls) controls.update(delta);
 
-            if(accumulatedTime < interval) return;
+            if(this.framerate !== 0 && accumulatedTime < interval) return;
             accumulatedTime = accumulatedTime - interval;
             
             onFrame();

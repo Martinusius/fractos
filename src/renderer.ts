@@ -44,7 +44,7 @@ export function setResolution(width: number, height: number, fixed = true) {
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
 
-    controls.handleResize();
+    if(controls instanceof FirstPersonControls) controls.handleResize();
 
     if(!fixed) return;
     const divisor = Math.max(width / screenSize.x, height / screenSize.y);
@@ -69,11 +69,11 @@ camera.lookAt(new THREE.Vector3(0, 0, 0));
 // controls.enabled = false;
 
 
-// export const controls = new OrbitControls(camera, renderer.domElement);
+export const controls = new OrbitControls(camera, renderer.domElement);
 
-export const controls = new FirstPersonControls(camera, renderer.domElement);
-controls.movementSpeed = 0.2;
-controls.lookSpeed = 0.05;
+// export const controls = new FirstPersonControls(camera, renderer.domElement);
+// controls.movementSpeed = 0.2;
+// controls.lookSpeed = 0.05;
 
 
 const quad = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2, 1, 1)) as THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;

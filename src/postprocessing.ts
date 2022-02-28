@@ -22,7 +22,7 @@ export class TemporaryImage {
     }
 
     private renderToScreen() {
-        const possibleEffects = ['reinhard', 'filmic', 'aces', 'uchimura', 'contrast', 'brightness', 'saturation', 'vignette', 'add'];
+        const possibleEffects = ['reinhard', 'filmic', 'aces', 'uchimura', 'contrast', 'brightness', 'saturation', 'vignette', 'add', 'sRGB'];
 
         const shaderSteps = this.postprocessing.map(step => {
             if(!step.trim()) return '// Empty postprocessing step';

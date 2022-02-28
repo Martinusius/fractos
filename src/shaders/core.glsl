@@ -15,7 +15,6 @@ const float DEG_TO_RAD = PI / 180.0;
 const int maximumRaySteps = 16536;
 
 float sdf(vec3 position);
-vec3 csdf(vec3 position);
 vec3 background(vec3 direction);
 
 vec3 calculateNormal(vec3 position, float minDist) {

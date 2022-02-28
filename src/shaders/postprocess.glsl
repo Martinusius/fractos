@@ -101,6 +101,16 @@ vec3 saturation(vec3 color, float saturation) {
 }
 
 
+float sRGB(float x) {
+    if (x <= 0.00031308)
+        return 12.92 * x;
+    else
+        return 1.055*pow(x,(1.0 / 2.4) ) - 0.055;
+}
+vec3 sRGB(vec3 c) {
+    return vec3(sRGB(c.x), sRGB(c.y), sRGB(c.z));
+}
+
 void main() {
     vec2 uv = gl_FragCoord.xy / resolution.xy;
     vec3 color = texture2D(data, uv).xyz;

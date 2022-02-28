@@ -87,6 +87,8 @@ vec3 raytrace(vec3 from, vec3 direction) {
     return vec3(0.0);
 }
 
+
+
 vec3 shading() {
     vec3 previousColor = texture2D(previousFrame, gl_FragCoord.xy / resolution).xyz;
 
@@ -110,7 +112,6 @@ vec3 shading() {
     vec3 rayDirection = subpixelDirection(subX, subY, pixelDivisions);
 
     vec3 pixelColor = raytrace(cameraPos, rayDirection);
-    
 
     return previousColor * float(sampleIndex) / float(sampleIndex + 1) + pixelColor / float(sampleIndex + 1);
 
