@@ -35,7 +35,6 @@ export default class Queue {
 }
 
 
-
 function animator() {
     requestAnimationFrame(animator);
 

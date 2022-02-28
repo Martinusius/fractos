@@ -1,39 +1,11 @@
 const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
 
-const public = {
-    watch: true,
-    devtool: 'inline-source-map',
-    entry: './src/public.ts',
-    mode: 'production',
-    module: {
-        rules: [
-            {
-                test: /\.ts/,
-                use: 'ts-loader',
-                exclude: /node_modules/
-            },
-            {
-                test: /\.glsl/ ,
-                type: 'asset/source',
-                exclude: /node_modules/
-            },
-        ],
-    },
-    output: {
-        filename: 'fractos-new.js',
-        path: '\\\\NETSERVER\\www\\fractos',
-        hashFunction: "sha256"
-    },
-    resolve: {
-        extensions: ['.ts', '.js', '.glsl']
-    }
-};
-
-const full = {
+module.exports = {
     watch: true,
     devtool: 'inline-source-map',
     entry: './src/index.ts',
-    mode: 'development',
+    mode: 'production',
     module: {
         rules: [
             {
@@ -54,7 +26,10 @@ const full = {
     },
     resolve: {
         extensions: ['.ts', '.js', '.glsl']
+    },
+    optimization: {
+        minimizer: [new TerserPlugin({
+            extractComments: false,
+        })],
     }
 };
-
-module.exports = full;
