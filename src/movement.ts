@@ -1,3 +1,4 @@
+// @ts-ignore
 import { PointerLockControls } from "./PointerLockControls";
 
 export function setupMovement(controls: PointerLockControls, speed: number) {

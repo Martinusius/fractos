@@ -6,11 +6,6 @@ import { SDF } from './sdf';
 import realtimeRenderer from './shaders/depthRenderer.glsl';
 import Queue, { setAutoResize } from './queue';
 
-function normalize(vector: THREE.Vector3) {
-    vector.normalize();
-    return vector;
-}
-
 export class DepthRenderer {
     private shader: THREE.ShaderMaterial;
 

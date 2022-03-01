@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { Mesh } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { FirstPersonControls } from 'three/examples/jsm/controls/FirstPersonControls';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
@@ -14,7 +13,7 @@ renderer.extensions.get('EXT_color_buffer_float');
 //renderer.setPixelRatio(window.devicePixelRatio);
 
 let element: HTMLElement | null;
-export function fractos(selector: string) {
+export function init(selector: string) {
     element = document.querySelector(selector);
 
     if(!element) return;

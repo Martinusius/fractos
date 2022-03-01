@@ -14,14 +14,9 @@ import expandLines from './shaders/expandLines.glsl';
 
 
 import Queue, { setAutoResize } from './queue';
-import { Background } from './background';
 import { ShaderMaterial } from 'three';
 import { core } from './core';
 
-function normalize(vector: THREE.Vector3) {
-    vector.normalize();
-    return vector;
-}
 
 export class EdgeRenderer {
     private positionShader: THREE.ShaderMaterial;

@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 // @ts-ignore
 import menger from './shaders/menger.glsl';
 

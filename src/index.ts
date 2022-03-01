@@ -1,25 +1,9 @@
-import * as THREE from "three";
-import { ColorBackground, HemisphereBackground, ImageBackground } from "./background";
-import { camera, controls, fractos, renderer } from "./renderer";
-import { DepthRenderer } from "./depthRenderer";
-import { Menger, Sierpinski, Mandelbulb, CustomSDF } from "./sdf";
-import { PathTracer } from './pathTracer';
-import { RealtimeRenderer } from "./realtimeRenderer";
-import Queue from './queue';
-import { EdgeRenderer } from "./edgeRenderer";
-import { OrbitSampler, OrbitMapping } from "./orbit";
-import { playAnimation } from "./animationPlayer";
-
-
-
-function expose(types: Record<string, any>) {
-    for(const [key, value] of Object.entries(types)) {
-        (window as any)[key] = value; 
-    }
-}
-
-expose({
-    THREE, RealtimeRenderer, DepthRenderer, PathTracer,
-    EdgeRenderer, Menger, Sierpinski, ColorBackground, HemisphereBackground,
-    CustomSDF, ImageBackground, Mandelbulb, Queue, OrbitSampler, OrbitMapping, controls, camera, fractos, playAnimation
-});
+export { ColorBackground, HemisphereBackground, ImageBackground } from "./background";
+export { camera, controls, init } from "./renderer";
+export { DepthRenderer } from "./depthRenderer";
+export { Menger, Sierpinski, Mandelbulb, CustomSDF } from "./sdf";
+export { PathTracer } from './pathTracer';
+export { RealtimeRenderer } from "./realtimeRenderer";
+export { default as Queue } from './queue';
+export { EdgeRenderer } from "./edgeRenderer";
+export { playAnimation } from "./animationPlayer";

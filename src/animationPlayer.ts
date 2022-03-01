@@ -1,4 +1,4 @@
-export function playAnimation(width: number, height: number, images: string[], fps: number) {
+export function playAnimation(width: number, height: number, images: string[]) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
 

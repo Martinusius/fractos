@@ -23,7 +23,7 @@ export function asyncRepeat(count: number, callback: (i: number) => void, after?
     animator();
 }
 
-function visualizePixel(x: number, y: number, divisions: number) {
+/*function visualizePixel(x: number, y: number, divisions: number) {
     let string = '+' + '-'.repeat(divisions * 2 - 1) + '+';
 
     for(let fy = 0; fy < divisions; ++fy) {
@@ -39,7 +39,7 @@ function visualizePixel(x: number, y: number, divisions: number) {
     }
     
     return string + '\n+' + '-'.repeat(divisions * 2 - 1) + '+';
-}
+}*/
 
 function autoBufferSize(width: number, heigth: number) {
     let owidth = width;
@@ -220,7 +220,7 @@ export class PathTracer {
                 if(y >= heights) {
                     y = 0;
                     sample += 1;
-                    const subpixelIndex = sample % (this.pixelDivisions * this.pixelDivisions);
+                    // const subpixelIndex = sample % (this.pixelDivisions * this.pixelDivisions);
                 }
 
                 if(sample >= this.pixelDivisions * this.pixelDivisions) {

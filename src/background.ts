@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { Utils } from './renderer';
 
 
 // @ts-ignore

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createShader, render, renderAA, renderer } from './renderer';
+import { createShader, renderAA } from './renderer';
 
 // @ts-ignore
 import postprocess from './shaders/postprocess.glsl';

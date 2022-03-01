@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { camera, effectsComposer, renderer, screenSize, setResolution } from "./renderer";
+import { renderer, screenSize, setResolution } from "./renderer";
 
 let autoResize = false;
 
@@ -33,6 +33,7 @@ export default class Queue {
         };
     }
 }
+
 
 
 function animator() {
