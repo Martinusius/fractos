@@ -7,20 +7,19 @@
 
 
 ### Basic Usage
-Since Fractos is based on Three.js some of the parameters are Three.js objects such as THREE.Color and THREE.Vector3
-
+Fractos depends on [Three.js](https://raw.githubusercontent.com/mrdoob/three.js) and you need to install it before using Fractos.
 ##### Realtime renderer setup
 ```ts
 // Create fractos canvas inside selector
-fractos('body');
+Fractos.init('body');
 
 // Scene background
-const background = new ColorBackground(new THREE.Color('rgb(255, 80, 60)'));
+const background = new Fractos.ColorBackground(new THREE.Color('rgb(255, 80, 60)'));
 
 // Menger sponge
-const fractal = new Menger(6 /* Number of iterations */);
+const fractal = new Fractos.Menger(6 /* Number of iterations */);
 
-const renderer = new RealtimeRenderer(fractal, background);
+const renderer = new Fractos.RealtimeRenderer(fractal, background);
 
 /* Renderer configuration (default values) */
 renderer.color = new THREE.Color('rgb(255, 255, 255)' /* Color of the fractal */);
@@ -30,22 +29,22 @@ renderer.enableShadows = true;
 
 
 /* Configure the camera (THREE.PerspectiveCamera) */
-camera.fov = 90;
+Fractos.camera.fov = 90;
 ```
 
 
 ##### Path tracer setup
 ```ts
 // Create fractos canvas inside selector
-fractos('body');
+Fractos.init('body');
 
 // Scene background
-const background = new ImageBackground(/* Insert your own THREE.CubeTexture here */);
+const background = new Fractos.ImageBackground(/* Insert your own THREE.CubeTexture here */);
 
 // Sierpinski tetrahedron
-const fractal = new Sierpinski(12 /* Number of iterations */);
+const fractal = new Fractos.Sierpinski(12 /* Number of iterations */);
 
-const pathTracer = new PathTracer(fractal, background);
+const pathTracer = new Fractos.PathTracer(fractal, background);
 pathTracer.color = new THREE.Color('rgb(255, 255, 255)' /* Color of the fractal */);
 pathTracer.sunDirection = new THREE.Vector3(-0.5, -2, -1);
 
@@ -61,7 +60,7 @@ pathTracer.renderImage(1080, 1080);
 To make interesting fractals you can take an already existing simple fractal (such as Menger sponge or Sierpinski tetrahedron) and apply some transformations (such as translation, rotation and scaling) during its iterations. This is how you do it with Fractos:
 
 ```ts
-const fractal = new Menger(8);
+const fractal = new Fractos.Menger(8);
 
 // Rotate 15 degrees then translate along the x coordinate
 fractal.transform = ['rotateX(15)', 'translate(0.1, 0, 0)'];
@@ -87,14 +86,14 @@ Fractos also includes a simple post processing setup. The most common use case i
 
 ##### With realtime renderer
 ```ts
-const renderer = new RealtimeRenderer(fractal, background);
+const renderer = new Fractos.RealtimeRenderer(fractal, background);
 
 // Apply filmic tone mapping and increase the contrast by 50%
 renderer.postprocess = ['filmic()', 'contrast(1.5)'];
 ```
 ##### With path tracer
 ```ts
-const pathTracer = new PathTracer(fractal, background);
+const pathTracer = new Fractos.PathTracer(fractal, background);
 
 // Apply filmic tone mapping and increase the contrast by 50%
 pathTracer.renderImage(1080, 1080).then(image => image.postprocess('filmic()', 'contrast(1.5)'));
