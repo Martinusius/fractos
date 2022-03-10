@@ -2111,7 +2111,7 @@ class TemporaryImage {
     const shader = createShader(postprocess.replace(/POSTPROCESS/, shaderSteps.join("\n")), {
       data: { value: this.texture }
     });
-    renderAA(shader, null);
+    render(shader, null);
   }
   download() {
     this.renderToScreen();

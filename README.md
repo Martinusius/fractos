@@ -7,11 +7,11 @@
 
 
 ### Basic Usage
-Fractos depends on [Three.js](https://raw.githubusercontent.com/mrdoob/three.js) and you need to install it before using Fractos.
+Fractos depends on [Three.js](https://raw.githubusercontent.com/mrdoob/three.js). Install it using npm or include a script tag in your html.
 ##### Realtime renderer setup
 ```ts
-// Create fractos canvas inside selector
-Fractos.init('body');
+// Initialize fractos with the canvas inside the body element
+Fractos.init('body'); // Any css selector can be used
 
 // Scene background
 const background = new Fractos.ColorBackground(new THREE.Color('rgb(255, 80, 60)'));
@@ -35,7 +35,7 @@ Fractos.camera.fov = 90;
 
 ##### Path tracer setup
 ```ts
-// Create fractos canvas inside selector
+// Initialize fractos with the canvas inside the body element
 Fractos.init('body');
 
 // Scene background
@@ -57,31 +57,31 @@ pathTracer.renderImage(1080, 1080);
 
 
 ### Fractal transformations
-To make interesting fractals you can take an already existing simple fractal (such as Menger sponge or Sierpinski tetrahedron) and apply some transformations (such as translation, rotation and scaling) during its iterations. This is how you do it with Fractos:
+One of the ways to create an interesting fractal shape is to take an already existing fractal (such as the Menger sponge or the Sierpinski tetrahedron) and to apply some transformations (such as translation, rotation and scaling) during its iterations. This is how you do it with Fractos:
 
 ```ts
 const fractal = new Fractos.Menger(8);
 
-// Rotate 15 degrees then translate along the x coordinate
-fractal.transform = ['rotateX(15)', 'translate(0.1, 0, 0)'];
+// Rotate 15 degrees around the x axis then translate 0.1 along the y axis
+fractal.transform = ['rotateX(15)', 'translate(0, 0.1, 0)'];
 
 // There's often more than one part of the iteration where transformations can be applied
-// Other groups of transformations are then labeled as transform<index>
 fractal.transform2 = ['scale(1, 1, 0.8)'];
 ```
+For the most part it is not easy to tell what a particular set of transformations is going to look like. Usually the best way to find one that produces an interesting shape is by trial and error.
 
-When scaling it's recommended to choose numbers lower or equal to 1 otherwise rendering artifacts might appear
+WARNING: When scaling it's recommended to choose numbers lower or equal to 1 otherwise rendering artifacts might appear.
 
 The full list of transformations is:
 
-`translate(x, y, z)` `rotateX(angle)` `rotateY(angle)` `rotateZ(angle)` `rotate(axis, angle)` `scale(x, y, z)`
+`translate(x, y, z)` `rotateX(angle)` `rotateY(angle)` `rotateZ(angle)` `rotate(axisX, axisY, axisZ, angle)` `scale(x, y, z)`
 
 `absX()` `absY()` `absZ()` `abs()`
 
 
 ### Post processing
 
-Fractos also includes a simple post processing setup. The most common use case is to apply tone mapping to the image however it is also able to perform some basic color adjustments such as contrast, brightness, saturation.
+Fractos also includes a simple post processing setup. The most common use case is to apply tone mapping to the image, however it is also able to perform some basic color adjustments such as changing the contrast, brightness or saturation.
 
 
 ##### With realtime renderer

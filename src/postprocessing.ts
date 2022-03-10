@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createShader, renderAA } from './renderer';
+import { createShader, render } from './renderer';
 
 // @ts-ignore
 import postprocess from './shaders/postprocess.glsl';
@@ -48,7 +48,7 @@ export class TemporaryImage {
             data: { value: this.texture }
         });
 
-        renderAA(shader, null);
+        render(shader, null);
     }
 
     download() {

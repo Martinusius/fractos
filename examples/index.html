@@ -139,7 +139,7 @@
             const urls = [r + positive + "x.jpg", r + negative + "x.jpg", r + positive + "y.jpg", r + negative + "y.jpg", r + positive + "z.jpg", r + negative + "z.jpg"];
 
             textureCube = new THREE.CubeTextureLoader().load(urls);
-            textureCube.format = THREE.RGBFormat;
+            textureCube.format = THREE.RGBAFormat;
             textureCube.mapping = THREE.CubeReflectionMapping;
             textureCube.encoding = THREE.sRGBEncoding;
 
@@ -150,10 +150,17 @@
         //const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
         const background = new Fractos.ColorBackground(new THREE.Color(1, 1, 1));
 
-        const fractal = new Fractos.Menger(8);
+        const fractal = new Fractos.Menger(12);
 
+        fractal.transform = [
+            'rotateX(-45)',
+            'translate(0.5, 0, -0.5)',
+            'absZ',
+            'rotateZ(-45)',
+            'rotateY(45)'
+        ];
 
-        fractal.transform2 = ['rotateX(-10)', 'absZ'];
+        fractal.transform2 = ['rotateX(-20)'];
 
         // const fractal = new CustomSDF(document.getElementById('sdf').textContent);
 
@@ -162,7 +169,7 @@
         const renderer = new Fractos.RealtimeRenderer(fractal, background);
         renderer.animationDuration = 100;
 
-        renderer.color = new THREE.Color(0.7, 0.7, 0.7);
+        renderer.color = new THREE.Color(0.5, 0.3, 1);
         renderer.enableShadows = true;
         renderer.framerate = 0;
 
@@ -182,8 +189,8 @@
 
         renderer.postprocess = [];
 
-        pathTracer.pixelDivisions = 8;
-        pathTracer.sunStrength = 1;
+        pathTracer.pixelDivisions = 16;
+        pathTracer.sunStrength = 3;
         pathTracer.backgroundMultiplier = 1;
         pathTracer.sunColor = new THREE.Color(1, 1, 0.8);
 
@@ -203,7 +210,7 @@
                 if(capturing) {
                     renderer.timer.stop();
                     pathTracer.renderImage(1080, 1080, renderer.time / renderer.animationDuration)
-                        .then(image => image.postprocess('uchimura', 'vignette(0.7, 0.5)').show()).catch(() => {});
+                        .then(image => image.postprocess('uchimura').show()).catch(() => {});
                     Fractos.controls.enabled = true;
                 }
                 else {
