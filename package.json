@@ -1,6 +1,6 @@
 {
     "name": "fractos",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "files": [
         "dist"
     ],
@@ -8,8 +8,8 @@
     "module": "./dist/fractos.module.js",
     "exports": {
         ".": {
-            "import": "./dist/fractos.min.js",
-            "require": "./dist/fractos.module.js"
+            "import": "./dist/fractos.module.js",
+            "require": "./dist/fractos.min.js"
         }
     },
     "scripts": {
