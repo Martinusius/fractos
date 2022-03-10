@@ -1,15 +1,15 @@
 {
     "name": "fractos",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "files": [
         "dist"
     ],
-    "main": "./dist/my-lib.umd.js",
-    "module": "./dist/my-lib.es.js",
+    "main": "./dist/fractos.min.js",
+    "module": "./dist/fractos.module.js",
     "exports": {
         ".": {
-            "import": "./dist/my-lib.es.js",
-            "require": "./dist/my-lib.umd.js"
+            "import": "./dist/fractos.min.js",
+            "require": "./dist/fractos.module.js"
         }
     },
     "scripts": {
