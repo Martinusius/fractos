@@ -1,2 +1,2 @@
-examples/three.min.js linguist-vendored
-dist/* linguist-generated
+examples/three.min.js linguist-vendored=true
+dist/* linguist-generated=true
