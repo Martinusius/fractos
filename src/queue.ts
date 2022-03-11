@@ -7,9 +7,6 @@ export function setAutoResize(value: boolean) {
     autoResize = value;
 }
 
-
-
-
 export default class Queue {
     public static callback = () => {};
     public static cleanup = () => {};

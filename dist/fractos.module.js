@@ -2535,27 +2535,4 @@ class EdgeRenderer {
     });
   }
 }
-function playAnimation(width, height, images) {
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-  canvas.width = width;
-  canvas.height = height;
-  canvas.style.zIndex = "100";
-  function convertImage(dataURL) {
-    const image = new Image();
-    image.src = dataURL;
-    return image;
-  }
-  let index = 0;
-  function animate() {
-    if (!images[index] || !context) {
-      canvas.remove();
-      return;
-    }
-    requestAnimationFrame(animate);
-    context.drawImage(convertImage(images[index++]), 0, 0);
-  }
-  document.body.appendChild(canvas);
-  animate();
-}
-export { ColorBackground, CustomSDF, DepthRenderer, EdgeRenderer, HemisphereBackground, ImageBackground, Mandelbulb, Menger, PathTracer, Queue, RealtimeRenderer, Sierpinski, camera, controls, init, playAnimation };
+export { ColorBackground, CustomSDF, DepthRenderer, EdgeRenderer, HemisphereBackground, ImageBackground, Mandelbulb, Menger, PathTracer, Queue, RealtimeRenderer, Sierpinski, camera, controls, init };

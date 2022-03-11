@@ -6,4 +6,3 @@ export { PathTracer } from './pathTracer';
 export { RealtimeRenderer } from "./realtimeRenderer";
 export { default as Queue } from './queue';
 export { EdgeRenderer } from "./edgeRenderer";
-export { playAnimation } from "./animationPlayer";
