@@ -107,9 +107,12 @@ float sRGB(float x) {
     else
         return 1.055*pow(x,(1.0 / 2.4) ) - 0.055;
 }
+
+
 vec3 sRGB(vec3 c) {
     return vec3(sRGB(c.x), sRGB(c.y), sRGB(c.z));
 }
+
 
 void main() {
     vec2 uv = gl_FragCoord.xy / resolution.xy;

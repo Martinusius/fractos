@@ -32,16 +32,6 @@ float rand() {
     return fract(sin(dot(seed, vec2(12.9898, 4.1414))) * 43758.5453);
 }
 
-/*float seed = 10.0;
-
-float PHI = 1.61803398874989484820459;
-
-float rand() {
-    vec2 xy = gl_FragCoord.xy;
-    seed += 1.0;
-    return fract(tan(distance(xy * PHI, xy) * seed) * xy.x);
-}*/
-
 vec2 rand2() {
     return vec2(rand(), rand());
 }
@@ -67,6 +57,8 @@ struct Ray {
     vec3 direction;
 
     float closest;
+
+    vec3 closestPoint;
 
     bool hit;
     vec3 position;
@@ -118,7 +110,7 @@ vec2 directionPixel(vec3 position, vec3 cameraPos, vec3 cameraDir) {
 
 
 
-uniform int orbitSampler;
+/*uniform int orbitSampler;
 uniform int orbitMapping;
 
 vec3 sampleOrbit(vec3 a, vec3 b) {
@@ -153,11 +145,7 @@ float mapOrbit(float x) {
 
 vec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {
     return (mapOrbit(map.x) * color1 + mapOrbit(map.y) * color2 + mapOrbit(map.z) * color3);
-}
-
-// vec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {
-//     return (sigmoid(map.x) * color1 + sigmoid(map.y) * color2 + sigmoid(map.z) * color3);
-// }
+}*/
 
 
 Ray raycast(vec3 origin, vec3 direction) {
@@ -170,6 +158,8 @@ Ray raycast(vec3 origin, vec3 direction) {
 
     float totalDistance = 0.0;
     float closest = 100.0;
+    float closestT = 0.0;
+
     for (int steps = 0; steps < maximumRaySteps; ++steps) {
         vec3 currentPosition = origin + totalDistance * direction;
 
@@ -177,7 +167,11 @@ Ray raycast(vec3 origin, vec3 direction) {
             break;
 
         float currentDistance = sdf(currentPosition);
-        closest = min(closest, currentDistance);
+
+        if(currentDistance < closest) {
+            closest = currentDistance;
+            closestT = totalDistance;
+        }
 
         // Antibanding
         totalDistance += max(0.0, (steps < 1 ? rand() * currentDistance : currentDistance));
@@ -188,6 +182,8 @@ Ray raycast(vec3 origin, vec3 direction) {
                 data.position = origin;
                 data.normal = vec3(0);
                 data.steps = 0.0;
+                data.closest = 0.0;
+                data.closestPoint = data.position;
 
                 return data;
             }
@@ -200,14 +196,44 @@ Ray raycast(vec3 origin, vec3 direction) {
             data.position = origin + totalDistance * direction;
             data.normal = calculateNormal(data.position, data.epsilon);
             data.steps = float(steps) + currentDistance / data.epsilon;
+            data.closest = 0.0;
+            data.closestPoint = data.position;
 
             return data;
         }
     }
 
-    data.closest = closest;
+    float l = closestT - closest;
+    float r = closestT + closest;
+
+    for(int i = 0; i < 10; i++) {
+        float ld = sdf(origin + l * direction);
+        float rd = sdf(origin + r * direction);
+
+        if(ld < rd) {
+            r = (l + r) / 2.0;
+        }
+        else {
+            l = (l + r) / 2.0;
+        }
+    }
+
+    data.closestPoint = origin + (l + r) / 2.0 * direction;
+
+    data.closest = sdf(origin + (l + r) / 2.0 * direction);
     data.hit = false;
     return data;
+}
+
+float linear(float x) {
+    if (x <= 0.04045)
+        return x / 12.92;
+    else
+        return pow((x + 0.055) / 1.055, 2.4);
+}
+
+vec3 linear(vec3 color) {
+    return vec3(linear(color.r), linear(color.g), linear(color.b));
 }
 
 Ray raycastEpsilon(vec3 origin, vec3 direction, float epsilon) {

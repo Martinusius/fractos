@@ -1,112 +1,167 @@
 // @ts-ignore
-import menger from './shaders/menger.glsl';
+import functions from "./sdf.glsl";
+import { v4 } from "uuid";
 
-// @ts-ignore
-import sierpinski from './shaders/sierpinski.glsl';
+function limitEval(code: string, fnOnStop: Function, opt_timeoutInMS: number) {
+  let id = Math.random() + 1,
+    blob = new Blob(
+      ["onmessage=function(a){a=a.data;postMessage({i:a.i+1});postMessage({r:eval.call(this,a.c),i:a.i});};"],
+      { type: "text/javascript" }
+    ),
+    myWorker = new Worker(URL.createObjectURL(blob));
 
-// @ts-ignore
-import mandelbulb from './shaders/mandelbulb.glsl';
+  function onDone(argument: any) {
+    URL.revokeObjectURL(blob as any);
 
+    // @ts-ignore
+    fnOnStop(argument);
+  }
 
-// Signed distance function that defines a certain shape
-export abstract class SDF {
-    public abstract getCode(): string;
+  myWorker.onmessage = function (data) {
+    data = data.data as any;
+    if (data) {
+      if ((data as any).i === id) {
+        id = 0;
+
+        // @ts-ignore
+        //console.log(data.r);
+
+        // @ts-ignore
+        onDone(data.r);
+      } else if ((data as any).i === id + 1) {
+        setTimeout(function () {
+          if (id) {
+            myWorker.terminate();
+
+            // @ts-ignore
+            onDone(undefined);
+          }
+        }, opt_timeoutInMS || 1000);
+      }
+    }
+  };
+
+  myWorker.postMessage({ c: code, i: id });
 }
 
+function iteratize(steps: string[]) {
+  const stepIndices: Record<string, number> = {};
+  const stepNames: string[] = [];
 
-function transform(shaderCode: string, index: number, steps: string[]) {
-    const possibleTransforms = ['rotate', 'translate', 'scale', 'rotateX', 'rotateY', 'rotateZ', 'abs', 'absX', 'absY', 'absZ'];
+  let i = 0;
+  let string = "";
 
-    steps = steps.map(step => {
-        if(!step.trim()) return '// Empty transform step';
+  steps.forEach((step) => {
+    if (stepIndices[step] === undefined) {
+      stepIndices[step] = i++;
+      stepNames.push(step);
+    }
 
-        const match = step.match(/([^\(]*)\((.*)\)/);
+    string += String.fromCharCode(stepIndices[step] + 65);
+  });
 
-        const name = match ? match[1] : step;
+  function convertBack(string: string) {
+    let result = "";
 
-        if(!possibleTransforms.includes(name)) throw new Error(`Invalid transform step: ${step}`);
+    for (let i = 0; i < string.length; i++) {
+      if (string[i] === "@") result += "@";
+      else result += stepNames[string.charCodeAt(i) - 65] + "\n";
+    }
 
-        // Allow numbers without decimal places
-        step = step.replace(/([^a-zA-Z\.\d])(\d+)([^\.\d])/g, '$1$2.0$3');
+    return result;
+  }
 
-        if(!match) 
-            return `z = ${step}(z);`;
-        else if(match[2].trim() === '')
-            return 'z = ' + step.replace(/\(/, '(z') + ';';
-        else
-            return 'z = ' + step.replace(/\(/, '(z, ') + ';';
-        
+  let stepsString;
+
+  for (let i = 32; i > 1; i--) {
+    const matches = string.match(new RegExp(`(.+)(?=\\1{${i}})`, "g"));
+
+    if (matches) {
+      const otherSteps = convertBack(string.replace(new RegExp(`(${matches[0]}){${i + 1}}`, "g"), "@"));
+
+      const uuid = v4();
+
+      stepsString = otherSteps.replace(
+        "@",
+        `/* BEGIN ITERATION ${uuid} */ for(int i = 0; i < ${i + 1}; i++) {\n${convertBack(
+          matches[0]
+        )}\n} /* END ITERATION ${uuid} */\n`
+      );
+
+      break;
+    }
+  }
+
+  const success = stepsString !== undefined;
+
+  if (!stepsString) stepsString = convertBack(string);
+
+  const array = stepsString.split("\n");
+
+  return {
+    success,
+    steps: array.slice(0, array.length - 1),
+  };
+}
+
+export class UncompiledSDF {
+  constructor(public readonly instructions: string[]) {}
+}
+
+class SDF {
+  public readonly glsl: string;
+  public readonly stepCount: number;
+
+  private static stripFunction(code: Function) {
+    const codeStr = code.toString();
+    return codeStr.slice(codeStr.indexOf("{") + 1, codeStr.lastIndexOf("}"));
+  }
+
+  static createInSandbox(code: string | Function) {
+    if (code instanceof Function) code = SDF.stripFunction(code);
+
+    return new Promise<SDF>((resolve) => {
+      limitEval(
+        `${functions} ;; ${code} ;;  _STEPS`,
+        (code: string[]) => {
+          resolve(new SDF(new UncompiledSDF(code)));
+        },
+        100
+      );
     });
+  }
 
-    return shaderCode.replace(new RegExp(`TRANSFORM${index}`), steps.join('\n'));
-}
+  constructor(code: string | UncompiledSDF | Function = "") {
+    if (code instanceof Function) code = SDF.stripFunction(code);
 
-export class Menger extends SDF {
-    public iterations: number;
-    public scale: number;
+    const steps =
+      code instanceof UncompiledSDF
+        ? code.instructions.reverse()
+        : eval(`${functions} ;; ${code} ;;  _STEPS`).reverse();
 
-    public transform: string[] = [];
-    public transform2: string[] = [];
+    let iteratization = { success: true, steps };
 
-    constructor(iterations: number, scale: number = 3) {
-        super();
+    while ((iteratization = iteratize(iteratization.steps)).success);
 
-        this.iterations = iterations;
-        this.scale = scale;
-    }
+    this.stepCount = iteratization.steps.length;
 
-    public getCode() {
-        return transform(transform(menger, 0, this.transform), 1, this.transform2);
-    }
-}
-
-
-export class Sierpinski extends SDF {
-    public iterations: number;
-    public scale: number;
-
-    public transform: string[] = [];
-    public transform2: string[] = [];
-
-
-    constructor(iterations: number, scale: number = 2) {
-        super();
-
-        this.iterations = iterations;
-        this.scale = scale;
-    }
-
-    public getCode() {
-        return transform(transform(sierpinski, 0, this.transform), 1, this.transform2);
-    }
-}
-
-export class Mandelbulb extends SDF {
-    public iterations: number;
-    public power: number;
+    this.glsl = `
     
-    constructor(iterations: number, power: number) {
-        super();
+    uniform int iterations;
+    uniform float step;
 
-        this.iterations = iterations;
-        this.power = power;
-    }
+    float sdf(vec3 z) {
+      SDF data = SDF(z, 1.0);
 
-    public getCode() {
-        return mandelbulb;
-    }
+      float dist = 1000.0;
+
+      float steps = ${iteratization.steps.length}.0;
+      
+      ${iteratization.steps.join(";\n") + ";\n"}
+
+      return dist;
+    }`;
+  }
 }
 
-export class CustomSDF extends SDF {
-    public readonly code;
-
-    constructor(code: string) {
-        super();
-
-        this.code = code;
-    }
-
-    public getCode() {
-        return this.code;
-    }
-}
+export default SDF;

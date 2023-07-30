@@ -22,7 +22,7 @@ var __publicField = (obj, key, value) => {
   return value;
 };
 import * as THREE from "three";
-import { EventDispatcher, Vector3, MOUSE, TOUCH, Quaternion, Spherical, Vector2, MathUtils, OrthographicCamera, BufferGeometry, Float32BufferAttribute, Mesh, ShaderMaterial, UniformsUtils, WebGLRenderTarget, Clock, LinearFilter, RGBAFormat, Color, RGBFormat, Texture, NearestFilter } from "three";
+import { EventDispatcher, Vector3, MOUSE, TOUCH, Quaternion, Spherical, Vector2, OrthographicCamera, BufferGeometry, Float32BufferAttribute, Mesh, ShaderMaterial, UniformsUtils, WebGLRenderTarget, Clock, LinearFilter, RGBAFormat, Color, RGBFormat, Texture, NearestFilter } from "three";
 var colorBackground = "uniform vec3 bg_color;\n\nvec3 background(vec3 direction) {\n    return bg_color;\n}";
 var hemisphereBackground = "uniform vec3 bg_top;\nuniform vec3 bg_bottom;\nuniform float bg_blendAngle;\n\nvec3 background(vec3 direction) {\n    float angle = atan(direction.y / length(direction.xz));\n    return mix(bg_bottom, bg_top, clamp((angle + bg_blendAngle) / 2.0 / bg_blendAngle, 0.0, 1.0));\n}";
 var imageBackground = "uniform samplerCube bg_image;\n\nvec3 background(vec3 direction) {\n    return texture(bg_image, direction).xyz;\n}";
@@ -31,16 +31,15 @@ class Background {
 class ColorBackground extends Background {
   constructor(color) {
     super();
+    __publicField(this, "glsl", colorBackground);
     __publicField(this, "color");
     this.color = color;
-  }
-  getCode() {
-    return colorBackground;
   }
 }
 class HemisphereBackground extends Background {
   constructor(top, bottom, blendAngle = 0.1) {
     super();
+    __publicField(this, "glsl", hemisphereBackground);
     __publicField(this, "top");
     __publicField(this, "bottom");
     __publicField(this, "blendAngle");
@@ -48,18 +47,13 @@ class HemisphereBackground extends Background {
     this.bottom = bottom;
     this.blendAngle = blendAngle;
   }
-  getCode() {
-    return hemisphereBackground;
-  }
 }
 class ImageBackground extends Background {
   constructor(image) {
     super();
+    __publicField(this, "glsl", imageBackground);
     __publicField(this, "image");
     this.image = image;
-  }
-  getCode() {
-    return imageBackground;
   }
 }
 const _changeEvent = { type: "change" };
@@ -698,233 +692,6 @@ class OrbitControls extends EventDispatcher {
     this.update();
   }
 }
-const _lookDirection = new Vector3();
-const _spherical = new Spherical();
-const _target = new Vector3();
-class FirstPersonControls {
-  constructor(object, domElement) {
-    if (domElement === void 0) {
-      console.warn('THREE.FirstPersonControls: The second parameter "domElement" is now mandatory.');
-      domElement = document;
-    }
-    this.object = object;
-    this.domElement = domElement;
-    this.enabled = true;
-    this.movementSpeed = 1;
-    this.lookSpeed = 5e-3;
-    this.lookVertical = true;
-    this.autoForward = false;
-    this.activeLook = true;
-    this.heightSpeed = false;
-    this.heightCoef = 1;
-    this.heightMin = 0;
-    this.heightMax = 1;
-    this.constrainVertical = false;
-    this.verticalMin = 0;
-    this.verticalMax = Math.PI;
-    this.mouseDragOn = false;
-    this.autoSpeedFactor = 0;
-    this.mouseX = 0;
-    this.mouseY = 0;
-    this.moveForward = false;
-    this.moveBackward = false;
-    this.moveLeft = false;
-    this.moveRight = false;
-    this.viewHalfX = 0;
-    this.viewHalfY = 0;
-    let lat = 0;
-    let lon = 0;
-    this.handleResize = function() {
-      if (this.domElement === document) {
-        this.viewHalfX = window.innerWidth / 2;
-        this.viewHalfY = window.innerHeight / 2;
-      } else {
-        this.viewHalfX = this.domElement.offsetWidth / 2;
-        this.viewHalfY = this.domElement.offsetHeight / 2;
-      }
-    };
-    this.onMouseDown = function(event) {
-      if (this.domElement !== document) {
-        this.domElement.focus();
-      }
-      event.preventDefault();
-      if (this.activeLook) {
-        switch (event.button) {
-          case 0:
-            this.moveForward = true;
-            break;
-          case 2:
-            this.moveBackward = true;
-            break;
-        }
-      }
-      this.mouseDragOn = true;
-    };
-    this.onMouseUp = function(event) {
-      event.preventDefault();
-      if (this.activeLook) {
-        switch (event.button) {
-          case 0:
-            this.moveForward = false;
-            break;
-          case 2:
-            this.moveBackward = false;
-            break;
-        }
-      }
-      this.mouseDragOn = false;
-    };
-    this.onMouseMove = function(event) {
-      if (this.domElement === document) {
-        this.mouseX = event.pageX - this.viewHalfX;
-        this.mouseY = event.pageY - this.viewHalfY;
-      } else {
-        this.mouseX = event.pageX - this.domElement.offsetLeft - this.viewHalfX;
-        this.mouseY = event.pageY - this.domElement.offsetTop - this.viewHalfY;
-      }
-    };
-    this.onKeyDown = function(event) {
-      switch (event.code) {
-        case "ArrowUp":
-        case "KeyW":
-          this.moveForward = true;
-          break;
-        case "ArrowLeft":
-        case "KeyA":
-          this.moveLeft = true;
-          break;
-        case "ArrowDown":
-        case "KeyS":
-          this.moveBackward = true;
-          break;
-        case "ArrowRight":
-        case "KeyD":
-          this.moveRight = true;
-          break;
-        case "KeyR":
-          this.moveUp = true;
-          break;
-        case "KeyF":
-          this.moveDown = true;
-          break;
-      }
-    };
-    this.onKeyUp = function(event) {
-      switch (event.code) {
-        case "ArrowUp":
-        case "KeyW":
-          this.moveForward = false;
-          break;
-        case "ArrowLeft":
-        case "KeyA":
-          this.moveLeft = false;
-          break;
-        case "ArrowDown":
-        case "KeyS":
-          this.moveBackward = false;
-          break;
-        case "ArrowRight":
-        case "KeyD":
-          this.moveRight = false;
-          break;
-        case "KeyR":
-          this.moveUp = false;
-          break;
-        case "KeyF":
-          this.moveDown = false;
-          break;
-      }
-    };
-    this.lookAt = function(x, y, z) {
-      if (x.isVector3) {
-        _target.copy(x);
-      } else {
-        _target.set(x, y, z);
-      }
-      this.object.lookAt(_target);
-      setOrientation(this);
-      return this;
-    };
-    this.update = function() {
-      const targetPosition = new Vector3();
-      return function update(delta) {
-        if (this.enabled === false)
-          return;
-        if (this.heightSpeed) {
-          const y = MathUtils.clamp(this.object.position.y, this.heightMin, this.heightMax);
-          const heightDelta = y - this.heightMin;
-          this.autoSpeedFactor = delta * (heightDelta * this.heightCoef);
-        } else {
-          this.autoSpeedFactor = 0;
-        }
-        const actualMoveSpeed = delta * this.movementSpeed;
-        if (this.moveForward || this.autoForward && !this.moveBackward)
-          this.object.translateZ(-(actualMoveSpeed + this.autoSpeedFactor));
-        if (this.moveBackward)
-          this.object.translateZ(actualMoveSpeed);
-        if (this.moveLeft)
-          this.object.translateX(-actualMoveSpeed);
-        if (this.moveRight)
-          this.object.translateX(actualMoveSpeed);
-        if (this.moveUp)
-          this.object.translateY(actualMoveSpeed);
-        if (this.moveDown)
-          this.object.translateY(-actualMoveSpeed);
-        let actualLookSpeed = delta * this.lookSpeed;
-        if (!this.activeLook) {
-          actualLookSpeed = 0;
-        }
-        let verticalLookRatio = 1;
-        if (this.constrainVertical) {
-          verticalLookRatio = Math.PI / (this.verticalMax - this.verticalMin);
-        }
-        lon -= this.mouseX * actualLookSpeed;
-        if (this.lookVertical)
-          lat -= this.mouseY * actualLookSpeed * verticalLookRatio;
-        lat = Math.max(-85, Math.min(85, lat));
-        let phi = MathUtils.degToRad(90 - lat);
-        const theta = MathUtils.degToRad(lon);
-        if (this.constrainVertical) {
-          phi = MathUtils.mapLinear(phi, 0, Math.PI, this.verticalMin, this.verticalMax);
-        }
-        const position2 = this.object.position;
-        targetPosition.setFromSphericalCoords(1, phi, theta).add(position2);
-        this.object.lookAt(targetPosition);
-      };
-    }();
-    this.dispose = function() {
-      this.domElement.removeEventListener("contextmenu", contextmenu);
-      this.domElement.removeEventListener("mousedown", _onMouseDown);
-      this.domElement.removeEventListener("mousemove", _onMouseMove);
-      this.domElement.removeEventListener("mouseup", _onMouseUp);
-      window.removeEventListener("keydown", _onKeyDown);
-      window.removeEventListener("keyup", _onKeyUp);
-    };
-    const _onMouseMove = this.onMouseMove.bind(this);
-    const _onMouseDown = this.onMouseDown.bind(this);
-    const _onMouseUp = this.onMouseUp.bind(this);
-    const _onKeyDown = this.onKeyDown.bind(this);
-    const _onKeyUp = this.onKeyUp.bind(this);
-    this.domElement.addEventListener("contextmenu", contextmenu);
-    this.domElement.addEventListener("mousemove", _onMouseMove);
-    this.domElement.addEventListener("mousedown", _onMouseDown);
-    this.domElement.addEventListener("mouseup", _onMouseUp);
-    window.addEventListener("keydown", _onKeyDown);
-    window.addEventListener("keyup", _onKeyUp);
-    function setOrientation(controls2) {
-      const quaternion = controls2.object.quaternion;
-      _lookDirection.set(0, 0, -1).applyQuaternion(quaternion);
-      _spherical.setFromVector3(_lookDirection);
-      lat = 90 - MathUtils.radToDeg(_spherical.phi);
-      lon = MathUtils.radToDeg(_spherical.theta);
-    }
-    this.handleResize();
-    setOrientation(this);
-  }
-}
-function contextmenu(event) {
-  event.preventDefault();
-}
 var CopyShader = {
   uniforms: {
     "tDiffuse": { value: null },
@@ -932,28 +699,28 @@ var CopyShader = {
   },
   vertexShader: `
 
-        varying vec2 vUv;
+		varying vec2 vUv;
 
-        void main() {
+		void main() {
 
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
-        }`,
+		}`,
   fragmentShader: `
 
-        uniform float opacity;
+		uniform float opacity;
 
-        uniform sampler2D tDiffuse;
+		uniform sampler2D tDiffuse;
 
-        varying vec2 vUv;
+		varying vec2 vUv;
 
-        void main() {
+		void main() {
 
-            vec4 texel = texture2D( tDiffuse, vUv );
-            gl_FragColor = opacity * texel;
+			vec4 texel = texture2D( tDiffuse, vUv );
+			gl_FragColor = opacity * texel;
 
-        }`
+		}`
 };
 class Pass {
   constructor() {
@@ -1261,90 +1028,90 @@ const SMAAEdgesShader = {
   },
   vertexShader: `
 
-        uniform vec2 resolution;
+		uniform vec2 resolution;
 
-        varying vec2 vUv;
-        varying vec4 vOffset[ 3 ];
+		varying vec2 vUv;
+		varying vec4 vOffset[ 3 ];
 
-        void SMAAEdgeDetectionVS( vec2 texcoord ) {
-            vOffset[ 0 ] = texcoord.xyxy + resolution.xyxy * vec4( -1.0, 0.0, 0.0,  1.0 ); // WebGL port note: Changed sign in W component
-            vOffset[ 1 ] = texcoord.xyxy + resolution.xyxy * vec4(  1.0, 0.0, 0.0, -1.0 ); // WebGL port note: Changed sign in W component
-            vOffset[ 2 ] = texcoord.xyxy + resolution.xyxy * vec4( -2.0, 0.0, 0.0,  2.0 ); // WebGL port note: Changed sign in W component
-        }
+		void SMAAEdgeDetectionVS( vec2 texcoord ) {
+			vOffset[ 0 ] = texcoord.xyxy + resolution.xyxy * vec4( -1.0, 0.0, 0.0,  1.0 ); // WebGL port note: Changed sign in W component
+			vOffset[ 1 ] = texcoord.xyxy + resolution.xyxy * vec4(  1.0, 0.0, 0.0, -1.0 ); // WebGL port note: Changed sign in W component
+			vOffset[ 2 ] = texcoord.xyxy + resolution.xyxy * vec4( -2.0, 0.0, 0.0,  2.0 ); // WebGL port note: Changed sign in W component
+		}
 
-        void main() {
+		void main() {
 
-            vUv = uv;
+			vUv = uv;
 
-            SMAAEdgeDetectionVS( vUv );
+			SMAAEdgeDetectionVS( vUv );
 
-            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
-        }`,
+		}`,
   fragmentShader: `
 
-        uniform sampler2D tDiffuse;
+		uniform sampler2D tDiffuse;
 
-        varying vec2 vUv;
-        varying vec4 vOffset[ 3 ];
+		varying vec2 vUv;
+		varying vec4 vOffset[ 3 ];
 
-        vec4 SMAAColorEdgeDetectionPS( vec2 texcoord, vec4 offset[3], sampler2D colorTex ) {
-            vec2 threshold = vec2( SMAA_THRESHOLD, SMAA_THRESHOLD );
+		vec4 SMAAColorEdgeDetectionPS( vec2 texcoord, vec4 offset[3], sampler2D colorTex ) {
+			vec2 threshold = vec2( SMAA_THRESHOLD, SMAA_THRESHOLD );
 
-            // Calculate color deltas:
-            vec4 delta;
-            vec3 C = texture2D( colorTex, texcoord ).rgb;
+			// Calculate color deltas:
+			vec4 delta;
+			vec3 C = texture2D( colorTex, texcoord ).rgb;
 
-            vec3 Cleft = texture2D( colorTex, offset[0].xy ).rgb;
-            vec3 t = abs( C - Cleft );
-            delta.x = max( max( t.r, t.g ), t.b );
+			vec3 Cleft = texture2D( colorTex, offset[0].xy ).rgb;
+			vec3 t = abs( C - Cleft );
+			delta.x = max( max( t.r, t.g ), t.b );
 
-            vec3 Ctop = texture2D( colorTex, offset[0].zw ).rgb;
-            t = abs( C - Ctop );
-            delta.y = max( max( t.r, t.g ), t.b );
+			vec3 Ctop = texture2D( colorTex, offset[0].zw ).rgb;
+			t = abs( C - Ctop );
+			delta.y = max( max( t.r, t.g ), t.b );
 
-            // We do the usual threshold:
-            vec2 edges = step( threshold, delta.xy );
+			// We do the usual threshold:
+			vec2 edges = step( threshold, delta.xy );
 
-            // Then discard if there is no edge:
-            if ( dot( edges, vec2( 1.0, 1.0 ) ) == 0.0 )
-                discard;
+			// Then discard if there is no edge:
+			if ( dot( edges, vec2( 1.0, 1.0 ) ) == 0.0 )
+				discard;
 
-            // Calculate right and bottom deltas:
-            vec3 Cright = texture2D( colorTex, offset[1].xy ).rgb;
-            t = abs( C - Cright );
-            delta.z = max( max( t.r, t.g ), t.b );
+			// Calculate right and bottom deltas:
+			vec3 Cright = texture2D( colorTex, offset[1].xy ).rgb;
+			t = abs( C - Cright );
+			delta.z = max( max( t.r, t.g ), t.b );
 
-            vec3 Cbottom  = texture2D( colorTex, offset[1].zw ).rgb;
-            t = abs( C - Cbottom );
-            delta.w = max( max( t.r, t.g ), t.b );
+			vec3 Cbottom  = texture2D( colorTex, offset[1].zw ).rgb;
+			t = abs( C - Cbottom );
+			delta.w = max( max( t.r, t.g ), t.b );
 
-            // Calculate the maximum delta in the direct neighborhood:
-            float maxDelta = max( max( max( delta.x, delta.y ), delta.z ), delta.w );
+			// Calculate the maximum delta in the direct neighborhood:
+			float maxDelta = max( max( max( delta.x, delta.y ), delta.z ), delta.w );
 
-            // Calculate left-left and top-top deltas:
-            vec3 Cleftleft  = texture2D( colorTex, offset[2].xy ).rgb;
-            t = abs( C - Cleftleft );
-            delta.z = max( max( t.r, t.g ), t.b );
+			// Calculate left-left and top-top deltas:
+			vec3 Cleftleft  = texture2D( colorTex, offset[2].xy ).rgb;
+			t = abs( C - Cleftleft );
+			delta.z = max( max( t.r, t.g ), t.b );
 
-            vec3 Ctoptop = texture2D( colorTex, offset[2].zw ).rgb;
-            t = abs( C - Ctoptop );
-            delta.w = max( max( t.r, t.g ), t.b );
+			vec3 Ctoptop = texture2D( colorTex, offset[2].zw ).rgb;
+			t = abs( C - Ctoptop );
+			delta.w = max( max( t.r, t.g ), t.b );
 
-            // Calculate the final maximum delta:
-            maxDelta = max( max( maxDelta, delta.z ), delta.w );
+			// Calculate the final maximum delta:
+			maxDelta = max( max( maxDelta, delta.z ), delta.w );
 
-            // Local contrast adaptation in action:
-            edges.xy *= step( 0.5 * maxDelta, delta.xy );
+			// Local contrast adaptation in action:
+			edges.xy *= step( 0.5 * maxDelta, delta.xy );
 
-            return vec4( edges, 0.0, 0.0 );
-        }
+			return vec4( edges, 0.0, 0.0 );
+		}
 
-        void main() {
+		void main() {
 
-            gl_FragColor = SMAAColorEdgeDetectionPS( vUv, vOffset, tDiffuse );
+			gl_FragColor = SMAAColorEdgeDetectionPS( vUv, vOffset, tDiffuse );
 
-        }`
+		}`
 };
 const SMAAWeightsShader = {
   defines: {
@@ -1361,235 +1128,234 @@ const SMAAWeightsShader = {
   },
   vertexShader: `
 
-        uniform vec2 resolution;
+		uniform vec2 resolution;
 
-        varying vec2 vUv;
-        varying vec4 vOffset[ 3 ];
-        varying vec2 vPixcoord;
+		varying vec2 vUv;
+		varying vec4 vOffset[ 3 ];
+		varying vec2 vPixcoord;
 
-        void SMAABlendingWeightCalculationVS( vec2 texcoord ) {
-            vPixcoord = texcoord / resolution;
+		void SMAABlendingWeightCalculationVS( vec2 texcoord ) {
+			vPixcoord = texcoord / resolution;
 
-            // We will use these offsets for the searches later on (see @PSEUDO_GATHER4):
-            vOffset[ 0 ] = texcoord.xyxy + resolution.xyxy * vec4( -0.25, 0.125, 1.25, 0.125 ); // WebGL port note: Changed sign in Y and W components
-            vOffset[ 1 ] = texcoord.xyxy + resolution.xyxy * vec4( -0.125, 0.25, -0.125, -1.25 ); // WebGL port note: Changed sign in Y and W components
+			// We will use these offsets for the searches later on (see @PSEUDO_GATHER4):
+			vOffset[ 0 ] = texcoord.xyxy + resolution.xyxy * vec4( -0.25, 0.125, 1.25, 0.125 ); // WebGL port note: Changed sign in Y and W components
+			vOffset[ 1 ] = texcoord.xyxy + resolution.xyxy * vec4( -0.125, 0.25, -0.125, -1.25 ); // WebGL port note: Changed sign in Y and W components
 
-            // And these for the searches, they indicate the ends of the loops:
-            vOffset[ 2 ] = vec4( vOffset[ 0 ].xz, vOffset[ 1 ].yw ) + vec4( -2.0, 2.0, -2.0, 2.0 ) * resolution.xxyy * float( SMAA_MAX_SEARCH_STEPS );
+			// And these for the searches, they indicate the ends of the loops:
+			vOffset[ 2 ] = vec4( vOffset[ 0 ].xz, vOffset[ 1 ].yw ) + vec4( -2.0, 2.0, -2.0, 2.0 ) * resolution.xxyy * float( SMAA_MAX_SEARCH_STEPS );
 
-        }
-        
+		}
 
-        void main() {
+		void main() {
 
-            vUv = uv;
+			vUv = uv;
 
-            SMAABlendingWeightCalculationVS( vUv );
+			SMAABlendingWeightCalculationVS( vUv );
 
-            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
-        }`,
+		}`,
   fragmentShader: `
 
-        #define SMAASampleLevelZeroOffset( tex, coord, offset ) texture2D( tex, coord + float( offset ) * resolution, 0.0 )
+		#define SMAASampleLevelZeroOffset( tex, coord, offset ) texture2D( tex, coord + float( offset ) * resolution, 0.0 )
 
-        uniform sampler2D tDiffuse;
-        uniform sampler2D tArea;
-        uniform sampler2D tSearch;
-        uniform vec2 resolution;
+		uniform sampler2D tDiffuse;
+		uniform sampler2D tArea;
+		uniform sampler2D tSearch;
+		uniform vec2 resolution;
 
-        varying vec2 vUv;
-        varying vec4 vOffset[3];
-        varying vec2 vPixcoord;
+		varying vec2 vUv;
+		varying vec4 vOffset[3];
+		varying vec2 vPixcoord;
 
-        #if __VERSION__ == 100
-        vec2 round( vec2 x ) {
-            return sign( x ) * floor( abs( x ) + 0.5 );
-        }
-        #endif
+		#if __VERSION__ == 100
+		vec2 round( vec2 x ) {
+			return sign( x ) * floor( abs( x ) + 0.5 );
+		}
+		#endif
 
-        float SMAASearchLength( sampler2D searchTex, vec2 e, float bias, float scale ) {
-            // Not required if searchTex accesses are set to point:
-            // float2 SEARCH_TEX_PIXEL_SIZE = 1.0 / float2(66.0, 33.0);
-            // e = float2(bias, 0.0) + 0.5 * SEARCH_TEX_PIXEL_SIZE +
-            //     e * float2(scale, 1.0) * float2(64.0, 32.0) * SEARCH_TEX_PIXEL_SIZE;
-            e.r = bias + e.r * scale;
-            return 255.0 * texture2D( searchTex, e, 0.0 ).r;
-        }
+		float SMAASearchLength( sampler2D searchTex, vec2 e, float bias, float scale ) {
+			// Not required if searchTex accesses are set to point:
+			// float2 SEARCH_TEX_PIXEL_SIZE = 1.0 / float2(66.0, 33.0);
+			// e = float2(bias, 0.0) + 0.5 * SEARCH_TEX_PIXEL_SIZE +
+			//     e * float2(scale, 1.0) * float2(64.0, 32.0) * SEARCH_TEX_PIXEL_SIZE;
+			e.r = bias + e.r * scale;
+			return 255.0 * texture2D( searchTex, e, 0.0 ).r;
+		}
 
-        float SMAASearchXLeft( sampler2D edgesTex, sampler2D searchTex, vec2 texcoord, float end ) {
-            /**
-                * @PSEUDO_GATHER4
-                * This texcoord has been offset by (-0.25, -0.125) in the vertex shader to
-                * sample between edge, thus fetching four edges in a row.
-                * Sampling with different offsets in each direction allows to disambiguate
-                * which edges are active from the four fetched ones.
-                */
-            vec2 e = vec2( 0.0, 1.0 );
+		float SMAASearchXLeft( sampler2D edgesTex, sampler2D searchTex, vec2 texcoord, float end ) {
+			/**
+				* @PSEUDO_GATHER4
+				* This texcoord has been offset by (-0.25, -0.125) in the vertex shader to
+				* sample between edge, thus fetching four edges in a row.
+				* Sampling with different offsets in each direction allows to disambiguate
+				* which edges are active from the four fetched ones.
+				*/
+			vec2 e = vec2( 0.0, 1.0 );
 
-            for ( int i = 0; i < SMAA_MAX_SEARCH_STEPS; i ++ ) { // WebGL port note: Changed while to for
-                e = texture2D( edgesTex, texcoord, 0.0 ).rg;
-                texcoord -= vec2( 2.0, 0.0 ) * resolution;
-                if ( ! ( texcoord.x > end && e.g > 0.8281 && e.r == 0.0 ) ) break;
-            }
+			for ( int i = 0; i < SMAA_MAX_SEARCH_STEPS; i ++ ) { // WebGL port note: Changed while to for
+				e = texture2D( edgesTex, texcoord, 0.0 ).rg;
+				texcoord -= vec2( 2.0, 0.0 ) * resolution;
+				if ( ! ( texcoord.x > end && e.g > 0.8281 && e.r == 0.0 ) ) break;
+			}
 
-            // We correct the previous (-0.25, -0.125) offset we applied:
-            texcoord.x += 0.25 * resolution.x;
+			// We correct the previous (-0.25, -0.125) offset we applied:
+			texcoord.x += 0.25 * resolution.x;
 
-            // The searches are bias by 1, so adjust the coords accordingly:
-            texcoord.x += resolution.x;
+			// The searches are bias by 1, so adjust the coords accordingly:
+			texcoord.x += resolution.x;
 
-            // Disambiguate the length added by the last step:
-            texcoord.x += 2.0 * resolution.x; // Undo last step
-            texcoord.x -= resolution.x * SMAASearchLength(searchTex, e, 0.0, 0.5);
+			// Disambiguate the length added by the last step:
+			texcoord.x += 2.0 * resolution.x; // Undo last step
+			texcoord.x -= resolution.x * SMAASearchLength(searchTex, e, 0.0, 0.5);
 
-            return texcoord.x;
-        }
+			return texcoord.x;
+		}
 
-        float SMAASearchXRight( sampler2D edgesTex, sampler2D searchTex, vec2 texcoord, float end ) {
-            vec2 e = vec2( 0.0, 1.0 );
+		float SMAASearchXRight( sampler2D edgesTex, sampler2D searchTex, vec2 texcoord, float end ) {
+			vec2 e = vec2( 0.0, 1.0 );
 
-            for ( int i = 0; i < SMAA_MAX_SEARCH_STEPS; i ++ ) { // WebGL port note: Changed while to for
-                e = texture2D( edgesTex, texcoord, 0.0 ).rg;
-                texcoord += vec2( 2.0, 0.0 ) * resolution;
-                if ( ! ( texcoord.x < end && e.g > 0.8281 && e.r == 0.0 ) ) break;
-            }
+			for ( int i = 0; i < SMAA_MAX_SEARCH_STEPS; i ++ ) { // WebGL port note: Changed while to for
+				e = texture2D( edgesTex, texcoord, 0.0 ).rg;
+				texcoord += vec2( 2.0, 0.0 ) * resolution;
+				if ( ! ( texcoord.x < end && e.g > 0.8281 && e.r == 0.0 ) ) break;
+			}
 
-            texcoord.x -= 0.25 * resolution.x;
-            texcoord.x -= resolution.x;
-            texcoord.x -= 2.0 * resolution.x;
-            texcoord.x += resolution.x * SMAASearchLength( searchTex, e, 0.5, 0.5 );
+			texcoord.x -= 0.25 * resolution.x;
+			texcoord.x -= resolution.x;
+			texcoord.x -= 2.0 * resolution.x;
+			texcoord.x += resolution.x * SMAASearchLength( searchTex, e, 0.5, 0.5 );
 
-            return texcoord.x;
-        }
+			return texcoord.x;
+		}
 
-        float SMAASearchYUp( sampler2D edgesTex, sampler2D searchTex, vec2 texcoord, float end ) {
-            vec2 e = vec2( 1.0, 0.0 );
+		float SMAASearchYUp( sampler2D edgesTex, sampler2D searchTex, vec2 texcoord, float end ) {
+			vec2 e = vec2( 1.0, 0.0 );
 
-            for ( int i = 0; i < SMAA_MAX_SEARCH_STEPS; i ++ ) { // WebGL port note: Changed while to for
-                e = texture2D( edgesTex, texcoord, 0.0 ).rg;
-                texcoord += vec2( 0.0, 2.0 ) * resolution; // WebGL port note: Changed sign
-                if ( ! ( texcoord.y > end && e.r > 0.8281 && e.g == 0.0 ) ) break;
-            }
+			for ( int i = 0; i < SMAA_MAX_SEARCH_STEPS; i ++ ) { // WebGL port note: Changed while to for
+				e = texture2D( edgesTex, texcoord, 0.0 ).rg;
+				texcoord += vec2( 0.0, 2.0 ) * resolution; // WebGL port note: Changed sign
+				if ( ! ( texcoord.y > end && e.r > 0.8281 && e.g == 0.0 ) ) break;
+			}
 
-            texcoord.y -= 0.25 * resolution.y; // WebGL port note: Changed sign
-            texcoord.y -= resolution.y; // WebGL port note: Changed sign
-            texcoord.y -= 2.0 * resolution.y; // WebGL port note: Changed sign
-            texcoord.y += resolution.y * SMAASearchLength( searchTex, e.gr, 0.0, 0.5 ); // WebGL port note: Changed sign
+			texcoord.y -= 0.25 * resolution.y; // WebGL port note: Changed sign
+			texcoord.y -= resolution.y; // WebGL port note: Changed sign
+			texcoord.y -= 2.0 * resolution.y; // WebGL port note: Changed sign
+			texcoord.y += resolution.y * SMAASearchLength( searchTex, e.gr, 0.0, 0.5 ); // WebGL port note: Changed sign
 
-            return texcoord.y;
-        }
+			return texcoord.y;
+		}
 
-        float SMAASearchYDown( sampler2D edgesTex, sampler2D searchTex, vec2 texcoord, float end ) {
-            vec2 e = vec2( 1.0, 0.0 );
+		float SMAASearchYDown( sampler2D edgesTex, sampler2D searchTex, vec2 texcoord, float end ) {
+			vec2 e = vec2( 1.0, 0.0 );
 
-            for ( int i = 0; i < SMAA_MAX_SEARCH_STEPS; i ++ ) { // WebGL port note: Changed while to for
-                e = texture2D( edgesTex, texcoord, 0.0 ).rg;
-                texcoord -= vec2( 0.0, 2.0 ) * resolution; // WebGL port note: Changed sign
-                if ( ! ( texcoord.y < end && e.r > 0.8281 && e.g == 0.0 ) ) break;
-            }
+			for ( int i = 0; i < SMAA_MAX_SEARCH_STEPS; i ++ ) { // WebGL port note: Changed while to for
+				e = texture2D( edgesTex, texcoord, 0.0 ).rg;
+				texcoord -= vec2( 0.0, 2.0 ) * resolution; // WebGL port note: Changed sign
+				if ( ! ( texcoord.y < end && e.r > 0.8281 && e.g == 0.0 ) ) break;
+			}
 
-            texcoord.y += 0.25 * resolution.y; // WebGL port note: Changed sign
-            texcoord.y += resolution.y; // WebGL port note: Changed sign
-            texcoord.y += 2.0 * resolution.y; // WebGL port note: Changed sign
-            texcoord.y -= resolution.y * SMAASearchLength( searchTex, e.gr, 0.5, 0.5 ); // WebGL port note: Changed sign
+			texcoord.y += 0.25 * resolution.y; // WebGL port note: Changed sign
+			texcoord.y += resolution.y; // WebGL port note: Changed sign
+			texcoord.y += 2.0 * resolution.y; // WebGL port note: Changed sign
+			texcoord.y -= resolution.y * SMAASearchLength( searchTex, e.gr, 0.5, 0.5 ); // WebGL port note: Changed sign
 
-            return texcoord.y;
-        }
+			return texcoord.y;
+		}
 
-        vec2 SMAAArea( sampler2D areaTex, vec2 dist, float e1, float e2, float offset ) {
-            // Rounding prevents precision errors of bilinear filtering:
-            vec2 texcoord = float( SMAA_AREATEX_MAX_DISTANCE ) * round( 4.0 * vec2( e1, e2 ) ) + dist;
+		vec2 SMAAArea( sampler2D areaTex, vec2 dist, float e1, float e2, float offset ) {
+			// Rounding prevents precision errors of bilinear filtering:
+			vec2 texcoord = float( SMAA_AREATEX_MAX_DISTANCE ) * round( 4.0 * vec2( e1, e2 ) ) + dist;
 
-            // We do a scale and bias for mapping to texel space:
-            texcoord = SMAA_AREATEX_PIXEL_SIZE * texcoord + ( 0.5 * SMAA_AREATEX_PIXEL_SIZE );
+			// We do a scale and bias for mapping to texel space:
+			texcoord = SMAA_AREATEX_PIXEL_SIZE * texcoord + ( 0.5 * SMAA_AREATEX_PIXEL_SIZE );
 
-            // Move to proper place, according to the subpixel offset:
-            texcoord.y += SMAA_AREATEX_SUBTEX_SIZE * offset;
+			// Move to proper place, according to the subpixel offset:
+			texcoord.y += SMAA_AREATEX_SUBTEX_SIZE * offset;
 
-            return texture2D( areaTex, texcoord, 0.0 ).rg;
-        }
+			return texture2D( areaTex, texcoord, 0.0 ).rg;
+		}
 
-        vec4 SMAABlendingWeightCalculationPS( vec2 texcoord, vec2 pixcoord, vec4 offset[ 3 ], sampler2D edgesTex, sampler2D areaTex, sampler2D searchTex, ivec4 subsampleIndices ) {
-            vec4 weights = vec4( 0.0, 0.0, 0.0, 0.0 );
+		vec4 SMAABlendingWeightCalculationPS( vec2 texcoord, vec2 pixcoord, vec4 offset[ 3 ], sampler2D edgesTex, sampler2D areaTex, sampler2D searchTex, ivec4 subsampleIndices ) {
+			vec4 weights = vec4( 0.0, 0.0, 0.0, 0.0 );
 
-            vec2 e = texture2D( edgesTex, texcoord ).rg;
+			vec2 e = texture2D( edgesTex, texcoord ).rg;
 
-            if ( e.g > 0.0 ) { // Edge at north
-                vec2 d;
+			if ( e.g > 0.0 ) { // Edge at north
+				vec2 d;
 
-                // Find the distance to the left:
-                vec2 coords;
-                coords.x = SMAASearchXLeft( edgesTex, searchTex, offset[ 0 ].xy, offset[ 2 ].x );
-                coords.y = offset[ 1 ].y; // offset[1].y = texcoord.y - 0.25 * resolution.y (@CROSSING_OFFSET)
-                d.x = coords.x;
+				// Find the distance to the left:
+				vec2 coords;
+				coords.x = SMAASearchXLeft( edgesTex, searchTex, offset[ 0 ].xy, offset[ 2 ].x );
+				coords.y = offset[ 1 ].y; // offset[1].y = texcoord.y - 0.25 * resolution.y (@CROSSING_OFFSET)
+				d.x = coords.x;
 
-                // Now fetch the left crossing edges, two at a time using bilinear
-                // filtering. Sampling at -0.25 (see @CROSSING_OFFSET) enables to
-                // discern what value each edge has:
-                float e1 = texture2D( edgesTex, coords, 0.0 ).r;
+				// Now fetch the left crossing edges, two at a time using bilinear
+				// filtering. Sampling at -0.25 (see @CROSSING_OFFSET) enables to
+				// discern what value each edge has:
+				float e1 = texture2D( edgesTex, coords, 0.0 ).r;
 
-                // Find the distance to the right:
-                coords.x = SMAASearchXRight( edgesTex, searchTex, offset[ 0 ].zw, offset[ 2 ].y );
-                d.y = coords.x;
+				// Find the distance to the right:
+				coords.x = SMAASearchXRight( edgesTex, searchTex, offset[ 0 ].zw, offset[ 2 ].y );
+				d.y = coords.x;
 
-                // We want the distances to be in pixel units (doing this here allow to
-                // better interleave arithmetic and memory accesses):
-                d = d / resolution.x - pixcoord.x;
+				// We want the distances to be in pixel units (doing this here allow to
+				// better interleave arithmetic and memory accesses):
+				d = d / resolution.x - pixcoord.x;
 
-                // SMAAArea below needs a sqrt, as the areas texture is compressed
-                // quadratically:
-                vec2 sqrt_d = sqrt( abs( d ) );
+				// SMAAArea below needs a sqrt, as the areas texture is compressed
+				// quadratically:
+				vec2 sqrt_d = sqrt( abs( d ) );
 
-                // Fetch the right crossing edges:
-                coords.y -= 1.0 * resolution.y; // WebGL port note: Added
-                float e2 = SMAASampleLevelZeroOffset( edgesTex, coords, ivec2( 1, 0 ) ).r;
+				// Fetch the right crossing edges:
+				coords.y -= 1.0 * resolution.y; // WebGL port note: Added
+				float e2 = SMAASampleLevelZeroOffset( edgesTex, coords, ivec2( 1, 0 ) ).r;
 
-                // Ok, we know how this pattern looks like, now it is time for getting
-                // the actual area:
-                weights.rg = SMAAArea( areaTex, sqrt_d, e1, e2, float( subsampleIndices.y ) );
-            }
+				// Ok, we know how this pattern looks like, now it is time for getting
+				// the actual area:
+				weights.rg = SMAAArea( areaTex, sqrt_d, e1, e2, float( subsampleIndices.y ) );
+			}
 
-            if ( e.r > 0.0 ) { // Edge at west
-                vec2 d;
+			if ( e.r > 0.0 ) { // Edge at west
+				vec2 d;
 
-                // Find the distance to the top:
-                vec2 coords;
+				// Find the distance to the top:
+				vec2 coords;
 
-                coords.y = SMAASearchYUp( edgesTex, searchTex, offset[ 1 ].xy, offset[ 2 ].z );
-                coords.x = offset[ 0 ].x; // offset[1].x = texcoord.x - 0.25 * resolution.x;
-                d.x = coords.y;
+				coords.y = SMAASearchYUp( edgesTex, searchTex, offset[ 1 ].xy, offset[ 2 ].z );
+				coords.x = offset[ 0 ].x; // offset[1].x = texcoord.x - 0.25 * resolution.x;
+				d.x = coords.y;
 
-                // Fetch the top crossing edges:
-                float e1 = texture2D( edgesTex, coords, 0.0 ).g;
+				// Fetch the top crossing edges:
+				float e1 = texture2D( edgesTex, coords, 0.0 ).g;
 
-                // Find the distance to the bottom:
-                coords.y = SMAASearchYDown( edgesTex, searchTex, offset[ 1 ].zw, offset[ 2 ].w );
-                d.y = coords.y;
+				// Find the distance to the bottom:
+				coords.y = SMAASearchYDown( edgesTex, searchTex, offset[ 1 ].zw, offset[ 2 ].w );
+				d.y = coords.y;
 
-                // We want the distances to be in pixel units:
-                d = d / resolution.y - pixcoord.y;
+				// We want the distances to be in pixel units:
+				d = d / resolution.y - pixcoord.y;
 
-                // SMAAArea below needs a sqrt, as the areas texture is compressed
-                // quadratically:
-                vec2 sqrt_d = sqrt( abs( d ) );
+				// SMAAArea below needs a sqrt, as the areas texture is compressed
+				// quadratically:
+				vec2 sqrt_d = sqrt( abs( d ) );
 
-                // Fetch the bottom crossing edges:
-                coords.y -= 1.0 * resolution.y; // WebGL port note: Added
-                float e2 = SMAASampleLevelZeroOffset( edgesTex, coords, ivec2( 0, 1 ) ).g;
+				// Fetch the bottom crossing edges:
+				coords.y -= 1.0 * resolution.y; // WebGL port note: Added
+				float e2 = SMAASampleLevelZeroOffset( edgesTex, coords, ivec2( 0, 1 ) ).g;
 
-                // Get the area for this direction:
-                weights.ba = SMAAArea( areaTex, sqrt_d, e1, e2, float( subsampleIndices.x ) );
-            }
+				// Get the area for this direction:
+				weights.ba = SMAAArea( areaTex, sqrt_d, e1, e2, float( subsampleIndices.x ) );
+			}
 
-            return weights;
-        }
+			return weights;
+		}
 
-        void main() {
+		void main() {
 
-            gl_FragColor = SMAABlendingWeightCalculationPS( vUv, vPixcoord, vOffset, tDiffuse, tArea, tSearch, ivec4( 0.0 ) );
+			gl_FragColor = SMAABlendingWeightCalculationPS( vUv, vPixcoord, vOffset, tDiffuse, tArea, tSearch, ivec4( 0.0 ) );
 
-        }`
+		}`
 };
 const SMAABlendShader = {
   uniforms: {
@@ -1599,80 +1365,80 @@ const SMAABlendShader = {
   },
   vertexShader: `
 
-        uniform vec2 resolution;
+		uniform vec2 resolution;
 
-        varying vec2 vUv;
-        varying vec4 vOffset[ 2 ];
+		varying vec2 vUv;
+		varying vec4 vOffset[ 2 ];
 
-        void SMAANeighborhoodBlendingVS( vec2 texcoord ) {
-            vOffset[ 0 ] = texcoord.xyxy + resolution.xyxy * vec4( -1.0, 0.0, 0.0, 1.0 ); // WebGL port note: Changed sign in W component
-            vOffset[ 1 ] = texcoord.xyxy + resolution.xyxy * vec4( 1.0, 0.0, 0.0, -1.0 ); // WebGL port note: Changed sign in W component
-        }
+		void SMAANeighborhoodBlendingVS( vec2 texcoord ) {
+			vOffset[ 0 ] = texcoord.xyxy + resolution.xyxy * vec4( -1.0, 0.0, 0.0, 1.0 ); // WebGL port note: Changed sign in W component
+			vOffset[ 1 ] = texcoord.xyxy + resolution.xyxy * vec4( 1.0, 0.0, 0.0, -1.0 ); // WebGL port note: Changed sign in W component
+		}
 
-        void main() {
+		void main() {
 
-            vUv = uv;
+			vUv = uv;
 
-            SMAANeighborhoodBlendingVS( vUv );
+			SMAANeighborhoodBlendingVS( vUv );
 
-            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
-        }`,
+		}`,
   fragmentShader: `
 
-        uniform sampler2D tDiffuse;
-        uniform sampler2D tColor;
-        uniform vec2 resolution;
+		uniform sampler2D tDiffuse;
+		uniform sampler2D tColor;
+		uniform vec2 resolution;
 
-        varying vec2 vUv;
-        varying vec4 vOffset[ 2 ];
+		varying vec2 vUv;
+		varying vec4 vOffset[ 2 ];
 
-        vec4 SMAANeighborhoodBlendingPS( vec2 texcoord, vec4 offset[ 2 ], sampler2D colorTex, sampler2D blendTex ) {
-            // Fetch the blending weights for current pixel:
-            vec4 a;
-            a.xz = texture2D( blendTex, texcoord ).xz;
-            a.y = texture2D( blendTex, offset[ 1 ].zw ).g;
-            a.w = texture2D( blendTex, offset[ 1 ].xy ).a;
+		vec4 SMAANeighborhoodBlendingPS( vec2 texcoord, vec4 offset[ 2 ], sampler2D colorTex, sampler2D blendTex ) {
+			// Fetch the blending weights for current pixel:
+			vec4 a;
+			a.xz = texture2D( blendTex, texcoord ).xz;
+			a.y = texture2D( blendTex, offset[ 1 ].zw ).g;
+			a.w = texture2D( blendTex, offset[ 1 ].xy ).a;
 
-            // Is there any blending weight with a value greater than 0.0?
-            if ( dot(a, vec4( 1.0, 1.0, 1.0, 1.0 )) < 1e-5 ) {
-                return texture2D( colorTex, texcoord, 0.0 );
-            } else {
-                // Up to 4 lines can be crossing a pixel (one through each edge). We
-                // favor blending by choosing the line with the maximum weight for each
-                // direction:
-                vec2 offset;
-                offset.x = a.a > a.b ? a.a : -a.b; // left vs. right
-                offset.y = a.g > a.r ? -a.g : a.r; // top vs. bottom // WebGL port note: Changed signs
+			// Is there any blending weight with a value greater than 0.0?
+			if ( dot(a, vec4( 1.0, 1.0, 1.0, 1.0 )) < 1e-5 ) {
+				return texture2D( colorTex, texcoord, 0.0 );
+			} else {
+				// Up to 4 lines can be crossing a pixel (one through each edge). We
+				// favor blending by choosing the line with the maximum weight for each
+				// direction:
+				vec2 offset;
+				offset.x = a.a > a.b ? a.a : -a.b; // left vs. right
+				offset.y = a.g > a.r ? -a.g : a.r; // top vs. bottom // WebGL port note: Changed signs
 
-                // Then we go in the direction that has the maximum weight:
-                if ( abs( offset.x ) > abs( offset.y )) { // horizontal vs. vertical
-                    offset.y = 0.0;
-                } else {
-                    offset.x = 0.0;
-                }
+				// Then we go in the direction that has the maximum weight:
+				if ( abs( offset.x ) > abs( offset.y )) { // horizontal vs. vertical
+					offset.y = 0.0;
+				} else {
+					offset.x = 0.0;
+				}
 
-                // Fetch the opposite color and lerp by hand:
-                vec4 C = texture2D( colorTex, texcoord, 0.0 );
-                texcoord += sign( offset ) * resolution;
-                vec4 Cop = texture2D( colorTex, texcoord, 0.0 );
-                float s = abs( offset.x ) > abs( offset.y ) ? abs( offset.x ) : abs( offset.y );
+				// Fetch the opposite color and lerp by hand:
+				vec4 C = texture2D( colorTex, texcoord, 0.0 );
+				texcoord += sign( offset ) * resolution;
+				vec4 Cop = texture2D( colorTex, texcoord, 0.0 );
+				float s = abs( offset.x ) > abs( offset.y ) ? abs( offset.x ) : abs( offset.y );
 
-                // WebGL port note: Added gamma correction
-                C.xyz = pow(C.xyz, vec3(2.2));
-                Cop.xyz = pow(Cop.xyz, vec3(2.2));
-                vec4 mixed = mix(C, Cop, s);
-                mixed.xyz = pow(mixed.xyz, vec3(1.0 / 2.2));
+				// WebGL port note: Added gamma correction
+				C.xyz = pow(C.xyz, vec3(2.2));
+				Cop.xyz = pow(Cop.xyz, vec3(2.2));
+				vec4 mixed = mix(C, Cop, s);
+				mixed.xyz = pow(mixed.xyz, vec3(1.0 / 2.2));
 
-                return mixed;
-            }
-        }
+				return mixed;
+			}
+		}
 
-        void main() {
+		void main() {
 
-            gl_FragColor = SMAANeighborhoodBlendingPS( vUv, vOffset, tColor, tDiffuse );
+			gl_FragColor = SMAANeighborhoodBlendingPS( vUv, vOffset, tColor, tDiffuse );
 
-        }`
+		}`
 };
 class SMAAPass extends Pass {
   constructor(width, height) {
@@ -1787,7 +1553,11 @@ class SMAAPass extends Pass {
     return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAAhCAAAAABIXyLAAAAAOElEQVRIx2NgGAWjYBSMglEwEICREYRgFBZBqDCSLA2MGPUIVQETE9iNUAqLR5gIeoQKRgwXjwAAGn4AtaFeYLEAAAAASUVORK5CYII=";
   }
 }
-const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
+const renderer = new THREE.WebGLRenderer({
+  antialias: false,
+  preserveDrawingBuffer: true,
+  powerPreference: "high-performance"
+});
 const screenSize = new THREE.Vector2();
 renderer.extensions.get("EXT_color_buffer_float");
 let element;
@@ -1797,10 +1567,11 @@ function init(selector) {
     return;
   renderer.setSize(element.clientWidth, element.clientHeight);
   element.appendChild(renderer.domElement);
+  renderer.domElement.style.position = "absolute";
   const observer = new ResizeObserver(() => {
     if (!element)
       return;
-    screenSize.set(element.clientWidth * window.devicePixelRatio, element.clientHeight * window.devicePixelRatio);
+    screenSize.set(element.clientWidth - 1, element.clientHeight - 1);
     const canvasSize = new THREE.Vector2();
     renderer.getSize(canvasSize);
     const divisor = Math.max(canvasSize.x / screenSize.x, canvasSize.y / screenSize.y);
@@ -1810,13 +1581,22 @@ function init(selector) {
   observer.observe(element);
   return renderer.domElement;
 }
+function fullscreen() {
+  init("body");
+  document.body.style.width = "100%";
+  document.body.style.height = "100%";
+  document.body.style.margin = "0";
+  document.body.style.overflow = "hidden";
+  document.documentElement.style.width = "100%";
+  document.documentElement.style.height = "100%";
+  document.documentElement.style.margin = "0";
+  document.documentElement.style.overflow = "hidden";
+}
 function setResolution(width, height, fixed = true) {
   renderer.setSize(width, height);
   effectsComposer.setSize(width, height);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  if (controls instanceof FirstPersonControls)
-    controls.handleResize();
   if (!fixed)
     return;
   const divisor = Math.max(width / screenSize.x, height / screenSize.y);
@@ -1834,7 +1614,7 @@ quadScene.add(quad);
 function setShader(shader) {
   quad.material = shader;
 }
-function createShader(code, uniforms = {}) {
+function createShader(code2, uniforms = {}) {
   const shader = new THREE.ShaderMaterial({
     uniforms: __spreadValues({
       resolution: { value: new THREE.Vector2() },
@@ -1845,10 +1625,9 @@ function createShader(code, uniforms = {}) {
       projection: { value: new THREE.Matrix4() }
     }, uniforms),
     vertexShader: "void main(){\ngl_Position = vec4(position, 1.0);\n}\n",
-    fragmentShader: code
+    fragmentShader: code2
   });
   setShader(shader);
-  renderer.compile(quadScene, ortho);
   return shader;
 }
 const effectsComposer = new EffectComposer(renderer);
@@ -1905,7 +1684,162 @@ class Utils {
   }
 }
 new THREE.Scene();
-var realtimeRenderer = "#include <packing>\n\nuniform vec2 resolution;\nuniform vec3 cameraPos;\nuniform vec3 cameraDirection;\n\nuniform float fov;\n\nuniform bool enableShadows;\nuniform float shadowHardness;\nuniform float epsilonScale;\n\nuniform bool farIsBlack;\n\nuniform float time;\n\nfloat sdf(vec3 position);\n\nconst int maximumRaySteps = 2048;\n\nfloat rand(vec2 n) { \n    return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);\n}\n\nvec3 march(vec3 direction) {\n    float minDist = 0.0;\n\n    float totalDistance = 0.0;\n    for (int steps = 0; steps < maximumRaySteps; ++steps) {\n        vec3 p = cameraPos + totalDistance * direction;\n\n        if(length(p) > 100.0)\n            break;\n        \n        float dist = sdf(p);\n        totalDistance += (steps < 1 ? rand(gl_FragCoord.xy / resolution * 100.0) * dist : dist);\n       \n        if(steps == 0) {\n            if(dist < 0.0) return vec3(farIsBlack ? 1.0 : 0.0);\n            minDist = dist * epsilonScale;\n        }\n        else if(dist < minDist) {\n            float depth = 1.0 / totalDistance;\n\n            return vec3(farIsBlack ? depth : 1.0 - depth);\n        }\n    }   \n    return vec3(farIsBlack ? 0.0 : 1.0);\n}\n\nmat3 cameraMatrix() {\n    vec3 cw = cameraDirection;\n    vec3 cp = vec3(0.0, 1.0, 0.0);\n    vec3 cu = normalize(cross(cw, cp));\n    vec3 cv = cross(cu, cw);\n    return mat3(cu, cv, cw);\n}\n\nvoid main() {        \n    vec2 uv = (2.0 * gl_FragCoord.xy - resolution) / resolution.y;\n    mat3 view = cameraMatrix();\n\n    vec3 rayDirection = view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));\n\n    vec3 color = march(rayDirection);\n\n    gl_FragColor = vec4(color.xyz, 1);\n}";
+var functions = 'const _ANIMATION = "clamp(step - (steps -= 1.0), 0.0, 1.0)";\r\nconst _STEPS = [];\n\nfunction float(arg) {\r\n  return String(arg).replace(/(?<![a-zA-Z\\.\\d])(\\d+)(?![\\.\\d])/g, "$1.0");\r\n}\n\nfunction isNumber(n) {\r\n  return !isNaN(parseFloat(n)) && isFinite(n);\r\n}\n\n/*function union(objects, radius = 0) {\r\n  if (!isNumber(radius)) throw new Error("Union: Radius must be a number");\r\n  if (radius < 0) throw new Error("Union: Radius must be greater than or equal to 0");\n\n  const invalid = objects.findIndex((object) => typeof object !== "string" || !object.startsWith(_VERIFY));\n\n  if (invalid !== -1) {\r\n    throw new Error("Union: Invalid object at index ${invalid}");\r\n  }\n\n  if (objects.length === 1) throw new Error("Intersection requires at least 2 objects");\r\n  if (objects.length === 2) return radius > 0 ? `smoothUnion(${objects[0]}, ${objects[1]}, ${float(radius)} / data.s)` : `_union(${objects[0]}, ${objects[1]})`;\n\n  const [firstObject, ...otherObjects] = objects;\n\n  if (otherObjects.length === 0) return firstObject;\n\n  return _VERIFY + (radius > 0 ? `smoothUnion(${firstObject}, ${union(otherObjects)}, ${float(radius)} / data.s)` : `_union(${firstObject}, ${union(otherObjects)})`);\r\n}\n\nfunction intersection(objects, radius = 0) {\r\n  if (!isNumber(radius)) throw new Error("Intersection: Radius must be a number");\r\n  if (radius < 0) throw new Error("Intersection: Radius must be greater than or equal to 0");\n\n  const invalid = objects.findIndex((object) => typeof object !== "string" || !object.startsWith(_VERIFY));\n\n  if (invalid !== -1) {\r\n    throw new Error("Union: Invalid object at index ${invalid}");\r\n  }\n\n  if (objects.length === 1) throw new Error("Intersection requires at least 2 objects");\r\n  if (objects.length === 2) return radius > 0 ? `smoothIntersection(${objects[0]}, ${objects[1]}, ${float(radius)} / data.s)` : `intersection(${objects[0]}, ${objects[1]})`;\n\n  const [firstObject, ...otherObjects] = objkects;\n\n  if (otherObjects.length === 0) return firstObject;\n\n  return _VERIFY + (radius > 0 ? `smoothIntersection(${firstObject}, ${intersection(otherObjects)}, ${float(radius)} / data.s)` : `intersection(${firstObject}, ${intersection(otherObjects)})`);\r\n}\n\nfunction difference(objects, radius = 0) {\r\n  if (!isNumber(radius)) throw new Error("Difference: Radius must be a number");\r\n  if (radius < 0) throw new Error("Difference: Radius must be greater than or equal to 0");\n\n  const invalid = objects.findIndex((object) => typeof object !== "string" || !object.startsWith(_VERIFY));\n\n  if (invalid !== -1) {\r\n    throw new Error("Union: Invalid object at index ${invalid}");\r\n  }\n\n  if (objects.length !== 2) throw new Error("Difference requires exactly 2 objects");\n\n  return _VERIFY + (radius > 0 ? `smoothDifference(${objects[0]}, ${objects[1]}, ${float(radius)} / data.s)` : `difference(${objects[0]}, ${objects[1]})`);\r\n}*/\n\nfunction shape(u) {\r\n  _STEPS.push(`dist = min(dist, ${u})`);\r\n}\n\nfunction sphere(properties = {}) {\r\n  properties.radius = properties.radius ?? 1;\n\n  shape(`sphere(data.z, ${float(properties.radius)}) * data.s`);\r\n}\n\nfunction tetrahedron(properties = {}) {\r\n  properties.radius = properties.radius ?? 1;\n\n  shape(`tetrahedron(data.z, ${float(properties.radius)}) * data.s`);\r\n}\n\nfunction box(properties = {}) {\r\n  properties.size = properties.size ?? [1, 1, 1];\n\n  shape(`box(data.z, vec3(${properties.size\r\n    .map((coord) => `${float(coord)}`)\r\n    .join(", ")})) * data.s`);\r\n}\n\nfunction cube(properties = {}) {\r\n  properties.center = properties.center ?? [0, 0, 0];\r\n  properties.size = properties.size ?? 1;\n\n  box({ center: properties.center, size: [properties.size, properties.size, properties.size] });\r\n}\n\nfunction torus(properties = {}) {\r\n  properties.center = properties.center ?? [0, 0, 0];\r\n  properties.radius = properties.radius ?? 1;\r\n  properties.tube = properties.tube ?? 0.25;\n\n  shape(`torus(data.z, vec2(${float(properties.radius)}, ${float(properties.tube)})) * data.s`);\r\n}\n\nfunction scale(value) {\r\n  if(arguments.length !== 1) throw new Error("Scale: Requires 1 argument");\n\n  _STEPS.push(`scale(data, ${float(value)}, ${_ANIMATION})`);\r\n}\n\nfunction translate(x, y, z) {\r\n  if(arguments.length !== 3) throw new Error("Translate: Requires 3 arguments");\n\n  _STEPS.push(`translate(data, ${float(x)}, ${float(y)}, ${float(z)}, ${_ANIMATION})`);\r\n}\n\nfunction translateX(value) {\r\n  if(arguments.length !== 1) throw new Error("TranslateX: Requires 1 argument");\n\n  _STEPS.push(`translateX(data, ${float(value)}, ${_ANIMATION})`);\r\n}\n\nfunction translateY(value) {\r\n  if(arguments.length !== 1) throw new Error("TranslateY: Requires 1 argument");\n\n  _STEPS.push(`translateY(data, ${float(value)}, ${_ANIMATION})`);\r\n}\n\nfunction translateZ(value) {\r\n  if(arguments.length !== 1) throw new Error("TranslateZ: Requires 1 argument");\n\n  _STEPS.push(`translateZ(data, ${float(value)}, ${_ANIMATION})`);\r\n}\n\nfunction rotateX(value) {\r\n  if(arguments.length !== 1) throw new Error("RotateX: Requires 1 argument");\n\n  _STEPS.push(`rotateX(data, ${float(value)}, ${_ANIMATION})`);\r\n}\n\nfunction rotateY(value) {\r\n  if(arguments.length !== 1) throw new Error("RotateY: Requires 1 argument");\n\n  _STEPS.push(`rotateY(data, ${float(value)}, ${_ANIMATION})`);\r\n}\n\nfunction rotateZ(value) {\r\n  if(arguments.length !== 1) throw new Error("RotateZ: Requires 1 argument");\n\n  _STEPS.push(`rotateZ(data, ${float(value)}, ${_ANIMATION})`);\r\n}\n\nfunction mirror(nx, ny, nz) {\r\n  if(arguments.length !== 3) throw new Error("Mirror: Requires 3 arguments");\n\n  const s = Math.sqrt(nx * nx + ny * ny + nz * nz);\n\n  _STEPS.push(`mirror(data, ${float(nx / s)}, ${float(ny / s)}, ${float(nz / s)}, ${_ANIMATION})`);\r\n}\n\nfunction mirrorUp() {\r\n  mirror(0, 1, 0);\r\n}\n\nfunction mirrorDown() {\r\n  mirror(0, -1, 0);\r\n}\n\nfunction mirrorLeft() {\r\n  mirror(-1, 0, 0);\r\n}\n\nfunction mirrorRight() {\r\n  mirror(1, 0, 0);\r\n}\n\nfunction mirrorFront() {\r\n  mirror(0, 0, 1);\r\n}\n\nfunction mirrorBack() {\r\n  mirror(0, 0, -1);\r\n}';
+let getRandomValues;
+const rnds8 = new Uint8Array(16);
+function rng() {
+  if (!getRandomValues) {
+    getRandomValues = typeof crypto !== "undefined" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
+    if (!getRandomValues) {
+      throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+    }
+  }
+  return getRandomValues(rnds8);
+}
+const byteToHex = [];
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 256).toString(16).slice(1));
+}
+function unsafeStringify(arr, offset = 0) {
+  return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+}
+const randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+var native = {
+  randomUUID
+};
+function v4(options, buf, offset) {
+  if (native.randomUUID && !buf && !options) {
+    return native.randomUUID();
+  }
+  options = options || {};
+  const rnds = options.random || (options.rng || rng)();
+  rnds[6] = rnds[6] & 15 | 64;
+  rnds[8] = rnds[8] & 63 | 128;
+  if (buf) {
+    offset = offset || 0;
+    for (let i = 0; i < 16; ++i) {
+      buf[offset + i] = rnds[i];
+    }
+    return buf;
+  }
+  return unsafeStringify(rnds);
+}
+function limitEval(code2, fnOnStop, opt_timeoutInMS) {
+  let id = Math.random() + 1, blob = new Blob(["onmessage=function(a){a=a.data;postMessage({i:a.i+1});postMessage({r:eval.call(this,a.c),i:a.i});};"], { type: "text/javascript" }), myWorker = new Worker(URL.createObjectURL(blob));
+  function onDone(argument) {
+    URL.revokeObjectURL(blob);
+    fnOnStop(argument);
+  }
+  myWorker.onmessage = function(data) {
+    data = data.data;
+    if (data) {
+      if (data.i === id) {
+        id = 0;
+        onDone(data.r);
+      } else if (data.i === id + 1) {
+        setTimeout(function() {
+          if (id) {
+            myWorker.terminate();
+            onDone(void 0);
+          }
+        }, opt_timeoutInMS || 1e3);
+      }
+    }
+  };
+  myWorker.postMessage({ c: code2, i: id });
+}
+function iteratize(steps2) {
+  const stepIndices = {};
+  const stepNames = [];
+  let i = 0;
+  let string = "";
+  steps2.forEach((step) => {
+    if (stepIndices[step] === void 0) {
+      stepIndices[step] = i++;
+      stepNames.push(step);
+    }
+    string += String.fromCharCode(stepIndices[step] + 65);
+  });
+  function convertBack(string2) {
+    let result = "";
+    for (let i2 = 0; i2 < string2.length; i2++) {
+      if (string2[i2] === "@")
+        result += "@";
+      else
+        result += stepNames[string2.charCodeAt(i2) - 65] + "\n";
+    }
+    return result;
+  }
+  let stepsString;
+  for (let i2 = 32; i2 > 1; i2--) {
+    const matches = string.match(new RegExp(`(.+)(?=\\1{${i2}})`, "g"));
+    if (matches) {
+      const otherSteps = convertBack(string.replace(new RegExp(`(${matches[0]}){${i2 + 1}}`, "g"), "@"));
+      const uuid = v4();
+      stepsString = otherSteps.replace("@", `/* BEGIN ITERATION ${uuid} */ for(int i = 0; i < ${i2 + 1}; i++) {
+${convertBack(matches[0])}
+} /* END ITERATION ${uuid} */
+`);
+      break;
+    }
+  }
+  const success = stepsString !== void 0;
+  if (!stepsString)
+    stepsString = convertBack(string);
+  const array = stepsString.split("\n");
+  return {
+    success,
+    steps: array.slice(0, array.length - 1)
+  };
+}
+class UncompiledSDF {
+  constructor(instructions) {
+    this.instructions = instructions;
+  }
+}
+class __SDF {
+  constructor(code = "") {
+    __publicField(this, "glsl");
+    __publicField(this, "stepCount");
+    if (code instanceof Function)
+      code = __SDF.stripFunction(code);
+    const steps = code instanceof UncompiledSDF ? code.instructions.reverse() : eval(`${functions} ;; ${code} ;;  _STEPS`).reverse();
+    let iteratization = { success: true, steps };
+    while ((iteratization = iteratize(iteratization.steps)).success)
+      ;
+    this.stepCount = iteratization.steps.length;
+    this.glsl = `
+    
+    uniform int iterations;
+    uniform float step;
+
+    float sdf(vec3 z) {
+      SDF data = SDF(z, 1.0);
+
+      float dist = 1000.0;
+
+      float steps = ${iteratization.steps.length}.0;
+      
+      ${iteratization.steps.join(";\n") + ";\n"}
+
+      return dist;
+    }`;
+  }
+  static stripFunction(code2) {
+    const codeStr = code2.toString();
+    return codeStr.slice(codeStr.indexOf("{") + 1, codeStr.lastIndexOf("}"));
+  }
+  static createInSandbox(code2) {
+    if (code2 instanceof Function)
+      code2 = __SDF.stripFunction(code2);
+    return new Promise((resolve) => {
+      limitEval(`${functions} ;; ${code2} ;;  _STEPS`, (code3) => {
+        resolve(new __SDF(new UncompiledSDF(code3)));
+      }, 100);
+    });
+  }
+}
+var simple = "uniform vec3 sunDirection;\r\nuniform vec3 sunColor;\r\nuniform float aoStrength;\r\nuniform bool enableShadows;\r\nuniform float roughness;\n\nuniform vec3 color;\n\nfloat calculateDirectLight(vec3 position, vec3 normal, float epsilon) {\r\n    if(enableShadows) {\r\n        Ray shadowRay = raycastEpsilon(position + normal * 2.0 * epsilon, -sunDirection, epsilon);\r\n        return shadowRay.hit ? 0.0 : max(dot(normal, -sunDirection), 0.0);\r\n    }\r\n    else {\r\n        return max(dot(normal, -sunDirection), 0.0);\r\n    }\r\n}\r\n\nfloat statixAO(vec3 p, vec3 n, float k, float delta) {\r\n    float sum = 0.0;\r\n    for(int i = 1; i <= 5; ++i) {\r\n        float fi = float(i);\r\n        sum += pow(2.0, -fi) * (fi * delta - sdf(p + n * fi * delta));\r\n    }\r\n    return 1.0 - k * sum;\r\n}\n\n/*float tracerAO(vec3 position, vec3 normal, float epsilon) {\n\n    float luminance = 1.0;\n\n    for(int i = 0; i < 5; ++i) {\r\n        Ray tracer = raycastEpsilon(position + normal * 2.0 * epsilon, normal, epsilon);\n\n        if(!tracer.hit) break;\n\n        luminance *= 0.5;\r\n        position = tracer.position;\r\n        normal = normalize(tracer.normal);\r\n    }\n\n    return luminance;\r\n    \n\n}*/\n\nuniform int pixelDivisions;\n\nvec3 shading() {\r\n    vec3 total = vec3(0);\n\n    for(int x = 0; x < pixelDivisions; x++) {\r\n        for(int y = 0; y < pixelDivisions; y++) {\r\n            seed = subpixelCoord(x, y, pixelDivisions);\r\n            vec3 rayDirection = subpixelDirection(x, x, pixelDivisions);\n\n            Ray ray = raycast(cameraPos, rayDirection);\n\n            if(ray.hit) {\r\n                if(ray.steps == 0.0) {\r\n                    return vec3(0);\r\n                }\n\n                const int samples = 4;\r\n                vec3 backgroundAverage = vec3(0);\r\n                float lerpFactor = roughness * roughness;\n\n                vec3 reflected = reflect(ray.direction, ray.normal);\n\n                for(int i = 0; i < samples; ++i)  {\r\n                    vec3 random = normalize(rand3() * 2.0 - 1.0); \n                    backgroundAverage += linear(background(normalize(mix(reflected, random, lerpFactor)))) * mix(max(dot(reflected, ray.normal), 0.0), 1.0, lerpFactor);\r\n                }\n\n                vec3 scolor = linear(color);\r\n\n                vec3 indirect = (backgroundAverage / float(samples)) * scolor * pow(ray.steps, -0.6);\r\n                vec3 direct = calculateDirectLight(ray.position, ray.normal, ray.epsilon) * scolor;\r\n            \r\n                total += indirect + direct;\r\n            }\r\n            else {\r\n                total += background(ray.direction);\r\n            }\r\n        }\r\n    }\n\n    return total / float(pixelDivisions * pixelDivisions);\r\n    \r\n    \n    \r\n    \r\n}";
 let autoResize = false;
 function setAutoResize(value) {
   autoResize = value;
@@ -1946,115 +1880,14 @@ function animator() {
   Queue.callback();
 }
 animator();
-class DepthRenderer {
-  constructor(sdf) {
-    __publicField(this, "shader");
-    __publicField(this, "sdf");
-    __publicField(this, "epsilonScale", 1e-3);
-    __publicField(this, "clock");
-    __publicField(this, "farIsBlack", false);
-    this.sdf = sdf;
-    const size = new THREE.Vector2();
-    renderer.getSize(size);
-    this.clock = new THREE.Clock();
-    this.shader = createShader(realtimeRenderer + sdf.getCode(), __spreadValues(__spreadValues({
-      time: { value: 0 }
-    }, Utils.createUniformsFromVariables(this, "epsilonScale", "farIsBlack")), Utils.objectToUniforms(this.sdf, "sdf_")));
-  }
-  start() {
-    setAutoResize(true);
-    Queue.loop(() => {
-      Utils.setUniformsFromObject(this.shader, this.sdf, "sdf_");
-      this.shader.uniforms.time.value = this.clock.getElapsedTime();
-      Utils.setUniformsFromVariables(this.shader, this, "epsilonScale", "farIsBlack");
-      render(this.shader, null);
-    });
-  }
-}
-var menger = "uniform int sdf_iterations;\nuniform float sdf_scale;\n\nfloat sdf(vec3 z) {\n    for(int i = 0; i < sdf_iterations; ++i) {\n        \n        TRANSFORM0\n\n        z = abs(z);\n        \n        if(z.x - z.y < 0.0) z.xy = z.yx;\n        if(z.x - z.z < 0.0) z.xz = z.zx;\n        if(z.y - z.z < 0.0) z.zy = z.yz;\n        if(z.x + z.y < 0.0) z.xy = -z.yx;\n        if(z.x + z.z < 0.0) z.xz = -z.zx;\n        if(z.y + z.z < 0.0) z.zy = -z.yz;\n\n        z.z -= 1.0 / 3.0;\n        z.z = -abs(z.z);\n        z.z += 1.0 / 3.0;\n\n        TRANSFORM1\n\n        z *= sdf_scale;\n        z += vec3(-2, -2, 0);\n\n        \n\n    }\n\n    return box(z * pow(sdf_scale, float(-sdf_iterations)), vec3(pow(sdf_scale, float(-sdf_iterations))));\n}";
-var sierpinski = "uniform int sdf_iterations;\nuniform float sdf_scale;\n\nfloat sdf(vec3 z) {\n\n    for(int i = 0; i < sdf_iterations; ++i) {\n        TRANSFORM0\n\n        if(z.x + z.y < 0.0) z.xy = -z.yx;\n        if(z.x + z.z < 0.0) z.xz = -z.zx;\n        if(z.y + z.z < 0.0) z.zy = -z.yz;\n\n        TRANSFORM1\n\n        z *= sdf_scale;\n        z += 1.0 - sdf_scale;\n    }\n\n    return tetrahedron(z * pow(sdf_scale, -float(sdf_iterations)), pow(sdf_scale, -float(sdf_iterations)));\n}";
-var mandelbulb = "uniform int sdf_iterations;\nuniform float sdf_power;\n\n/*float sdf(vec3 pos) {\n    const int sdf_iterations = 6;\n    const float sdf_power = 4.0;\n\n    vec3 z = pos;\n    float dr = 1.0;\n    float r = 0.0;\n\n    for (int i = 0; i < sdf_iterations; ++i) {\n        r = length(z);\n        if (r > 2.0) break;\n        \n        \n        float theta = acos(z.z/r);\n        float phi = atan(z.y,z.x);\n        dr = pow(r, sdf_power - 1.0) * sdf_power * dr + 1.0;\n        \n        \n        float zr = pow(r, sdf_power);\n        theta = theta * sdf_power;\n        phi = phi * sdf_power;\n        \n        \n        z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));\n        z += pos;\n    }\n\n    return 0.5 * log(r) * r / dr;\n}*/\n\nfloat sdf(vec3 position) {\n    vec3 z = position;\n    float dr = 1.0;\n    float r = 0.0;\n    for (int i = 0; i < sdf_iterations; i++) {\n        r = length(z);\n        if (r > 2.0) break;\n        \n        \n        float theta = acos(z.z / r);\n        float phi = atan(z.y, z.x);\n        dr =  pow(r, sdf_power - 1.0) * sdf_power * dr + 1.0;\n        \n        \n        float zr = pow(r, sdf_power);\n        theta = theta * sdf_power;\n        phi = phi * sdf_power;\n        \n        \n        z = zr*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));\n        z += position;\n    }\n    \n    return 0.5 * log(r) * r / dr;\n}\n\nvec3 csdf(vec3 z) {\n    return vec3(1);\n}";
-class SDF {
-}
-function transform(shaderCode, index, steps) {
-  const possibleTransforms = ["rotate", "translate", "scale", "rotateX", "rotateY", "rotateZ", "abs", "absX", "absY", "absZ"];
-  steps = steps.map((step) => {
-    if (!step.trim())
-      return "// Empty transform step";
-    const match = step.match(/([^\(]*)\((.*)\)/);
-    const name = match ? match[1] : step;
-    if (!possibleTransforms.includes(name))
-      throw new Error(`Invalid transform step: ${step}`);
-    step = step.replace(/([^a-zA-Z\.\d])(\d+)([^\.\d])/g, "$1$2.0$3");
-    if (!match)
-      return `z = ${step}(z);`;
-    else if (match[2].trim() === "")
-      return "z = " + step.replace(/\(/, "(z") + ";";
-    else
-      return "z = " + step.replace(/\(/, "(z, ") + ";";
-  });
-  return shaderCode.replace(new RegExp(`TRANSFORM${index}`), steps.join("\n"));
-}
-class Menger extends SDF {
-  constructor(iterations, scale = 3) {
-    super();
-    __publicField(this, "iterations");
-    __publicField(this, "scale");
-    __publicField(this, "transform", []);
-    __publicField(this, "transform2", []);
-    this.iterations = iterations;
-    this.scale = scale;
-  }
-  getCode() {
-    return transform(transform(menger, 0, this.transform), 1, this.transform2);
-  }
-}
-class Sierpinski extends SDF {
-  constructor(iterations, scale = 2) {
-    super();
-    __publicField(this, "iterations");
-    __publicField(this, "scale");
-    __publicField(this, "transform", []);
-    __publicField(this, "transform2", []);
-    this.iterations = iterations;
-    this.scale = scale;
-  }
-  getCode() {
-    return transform(transform(sierpinski, 0, this.transform), 1, this.transform2);
-  }
-}
-class Mandelbulb extends SDF {
-  constructor(iterations, power) {
-    super();
-    __publicField(this, "iterations");
-    __publicField(this, "power");
-    this.iterations = iterations;
-    this.power = power;
-  }
-  getCode() {
-    return mandelbulb;
-  }
-}
-class CustomSDF extends SDF {
-  constructor(code) {
-    super();
-    __publicField(this, "code");
-    this.code = code;
-  }
-  getCode() {
-    return this.code;
-  }
-}
+var _core = "uniform vec2 resolution;\r\nuniform vec3 cameraPos;\r\nuniform vec3 cameraDirection;\r\nuniform float fov;\r\nuniform float time;\n\nuniform bool adaptiveEpsilon;\r\nuniform float epsilonScale;\r\nuniform float epsilon;\n\nconst float PI = 3.1415926535897932384626433832795;\r\nconst float DEG_TO_RAD = PI / 180.0;\r\n\nconst int maximumRaySteps = 16536;\n\nfloat sdf(vec3 position);\r\nvec3 background(vec3 direction);\n\nvec3 calculateNormal(vec3 position, float minDist) {\r\n    vec2 h = vec2(minDist, 0.0);\r\n    return normalize(vec3(sdf(position + h.xyy) - sdf(position - h.xyy),\r\n                           sdf(position + h.yxy) - sdf(position - h.yxy),\r\n                           sdf(position + h.yyx) - sdf(position - h.yyx)));\r\n}\n\nvec3 trap;\n\nvec2 seed = vec2(0);\r\nfloat rand() { \r\n    seed += vec2(-0.1, 0.1);\r\n    return fract(sin(dot(seed, vec2(12.9898, 4.1414))) * 43758.5453);\r\n}\n\nvec2 rand2() {\r\n    return vec2(rand(), rand());\r\n}\n\nvec3 rand3() {\r\n    return vec3(rand(), rand(), rand());\r\n}\n\nvec3 sphericalRand() {\r\n    float z = rand() * 2.0 - 1.0;\r\n    float rxy = sqrt(1.0 - z * z);\r\n    float phi = rand() * 2.0 * PI;\r\n    float x = rxy * cos(phi);\r\n    float y = rxy * sin(phi);\n\n    return vec3(x, y, z);\r\n}\r\n\nstruct Ray {\r\n    vec3 origin;\r\n    vec3 direction;\n\n    float closest;\n\n    vec3 closestPoint;\n\n    bool hit;\r\n    vec3 position;\r\n    vec3 normal;\r\n    float steps;\n\n    float epsilon;\r\n};\n\nmat3 cameraMatrix(vec3 direction) {\r\n    vec3 cw = direction;\r\n    vec3 cp = vec3(0.0, 1.0, 0.0);\r\n    vec3 cu = normalize(cross(cw, cp));\r\n    vec3 cv = cross(cu, cw);\r\n    return mat3(cu, cv, cw);\r\n}\n\nvec2 subpixelCoord(int x, int y, int divisions) {\r\n    float subpixelSize = 1.0 / float(divisions);\r\n    vec2 offset = vec2(subpixelSize * (float(x) + 0.5) - 0.5, subpixelSize * (float(y) + 0.5) - 0.5);\r\n    return gl_FragCoord.xy + offset;\r\n}\n\nvec3 subpixelDirection(int x, int y, int divisions) {\r\n    mat3 view = cameraMatrix(cameraDirection);\r\n    vec2 uv = (subpixelCoord(x, y, divisions) / resolution) * 2.0 - 1.0;\r\n    uv.x *= resolution.x / resolution.y;\r\n    return view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));\r\n}\r\n\nvec3 pixelDirection() {\r\n    mat3 view = cameraMatrix(cameraDirection);\r\n    vec2 uv = (gl_FragCoord.xy / resolution) * 2.0 - 1.0;\r\n    uv.x *= resolution.x / resolution.y;\r\n    return view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));\r\n}\n\nvec2 directionPixel(vec3 position, vec3 cameraPos, vec3 cameraDir) {\r\n    mat3 inverseView = inverse(cameraMatrix(cameraDir));\r\n    vec3 toPos = normalize(position - cameraPos);\r\n    vec3 fromCameraDir = inverseView * toPos;\n\n    float zDistance = 1.0 / tan(fov / 2.0);\r\n    vec2 uv = (fromCameraDir * zDistance / fromCameraDir.z).xy;\r\n    uv /= resolution.x / resolution.y;\r\n    return (uv + 1.0) / 2.0;\r\n}\r\n\n/*uniform int orbitSampler;\r\nuniform int orbitMapping;\n\nvec3 sampleOrbit(vec3 a, vec3 b) {\r\n    switch (orbitSampler) {\r\n    case 0:\r\n        return min(a, b);\r\n    case 1:\r\n        return max(a, b);\r\n    case 2:\r\n        return a + b;\r\n    case 3:\r\n        return min(abs(a), abs(b));\r\n    case 4:\r\n        return max(abs(a), abs(b));\r\n    case 5:\r\n        return abs(a) + abs(b);\r\n    }\r\n}\n\nfloat mapOrbit(float x) {\r\n    switch (orbitMapping) {\r\n    case 0:\r\n        return 1.0 / 3.0;\r\n    case 1:\r\n        return x;\r\n    case 2:\r\n        return 1.0 / (1.0 + pow(2.71828182846, -x));\r\n    case 3:\r\n        return x / (x + 1.0);\r\n    }\r\n}\n\nvec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {\r\n    return (mapOrbit(map.x) * color1 + mapOrbit(map.y) * color2 + mapOrbit(map.z) * color3);\r\n}*/\r\n\nRay raycast(vec3 origin, vec3 direction) {\r\n    Ray data;\r\n    data.origin = origin;\r\n    data.direction = direction;\n\n    if(!adaptiveEpsilon)\r\n        data.epsilon = epsilon;\n\n    float totalDistance = 0.0;\r\n    float closest = 100.0;\r\n    float closestT = 0.0;\n\n    for (int steps = 0; steps < maximumRaySteps; ++steps) {\r\n        vec3 currentPosition = origin + totalDistance * direction;\n\n        if(totalDistance > 100.0)\r\n            break;\n\n        float currentDistance = sdf(currentPosition);\n\n        if(currentDistance < closest) {\r\n            closest = currentDistance;\r\n            closestT = totalDistance;\r\n        }\n\n        \n        totalDistance += max(0.0, (steps < 1 ? rand() * currentDistance : currentDistance));\n\n        if(steps == 0) {\r\n            if(currentDistance < 0.0) {\r\n                data.hit = true;\r\n                data.position = origin;\r\n                data.normal = vec3(0);\r\n                data.steps = 0.0;\r\n                data.closest = 0.0;\r\n                data.closestPoint = data.position;\n\n                return data;\r\n            }\n\n            if(adaptiveEpsilon)\r\n                data.epsilon = currentDistance * epsilonScale;\r\n        }\r\n        else if(currentDistance < data.epsilon) {\r\n            data.hit = true;\r\n            data.position = origin + totalDistance * direction;\r\n            data.normal = calculateNormal(data.position, data.epsilon);\r\n            data.steps = float(steps) + currentDistance / data.epsilon;\r\n            data.closest = 0.0;\r\n            data.closestPoint = data.position;\n\n            return data;\r\n        }\r\n    }\n\n    float l = closestT - closest;\r\n    float r = closestT + closest;\n\n    for(int i = 0; i < 10; i++) {\r\n        float ld = sdf(origin + l * direction);\r\n        float rd = sdf(origin + r * direction);\n\n        if(ld < rd) {\r\n            r = (l + r) / 2.0;\r\n        }\r\n        else {\r\n            l = (l + r) / 2.0;\r\n        }\r\n    }\n\n    data.closestPoint = origin + (l + r) / 2.0 * direction;\n\n    data.closest = sdf(origin + (l + r) / 2.0 * direction);\r\n    data.hit = false;\r\n    return data;\r\n}\n\nfloat linear(float x) {\r\n    if (x <= 0.04045)\r\n        return x / 12.92;\r\n    else\r\n        return pow((x + 0.055) / 1.055, 2.4);\r\n}\n\nvec3 linear(vec3 color) {\r\n    return vec3(linear(color.r), linear(color.g), linear(color.b));\r\n}\n\nRay raycastEpsilon(vec3 origin, vec3 direction, float epsilon) {\r\n    Ray data;\r\n    data.origin = origin;\r\n    data.direction = direction;\r\n    data.epsilon = epsilon;\n\n    float totalDistance = 0.0;\r\n      float closest = 100.0;\r\n    for (int steps = 0; steps < maximumRaySteps; ++steps) {\r\n        vec3 currentPosition = origin + totalDistance * direction;\n\n        if(totalDistance > 100.0)\r\n            break;\n\n        float currentDistance = sdf(currentPosition);\r\n        closest = min(closest, currentDistance);\n\n        \n        totalDistance += max(0.0, (steps < 1 ? rand() * currentDistance : currentDistance));\n\n        if(steps == 0) {\r\n            if(currentDistance < 0.0) {\r\n                data.hit = true;\r\n                data.position = origin;\r\n                data.normal = vec3(0);\r\n                data.steps = 0.0;\n\n                return data;\r\n            }\n\n        }\r\n        else if(currentDistance < data.epsilon) {\r\n            data.hit = true;\r\n            data.position = origin + totalDistance * direction;\r\n            data.normal = calculateNormal(data.position, data.epsilon);\r\n            data.steps = float(steps) + currentDistance / data.epsilon;\n\n            return data;\r\n        }\r\n    }\n\n    data.closest = closest;\r\n    data.hit = false;\r\n    return data;\r\n}\n\nRay pixelRaycast() {\r\n    return raycast(cameraPos, pixelDirection());\r\n}\r\n\nvec3 shading();\n\nvoid main() {        \r\n    gl_FragColor = vec4(shading(), 1);\r\n}";
+var primitives = "float smoothUnion( float d1, float d2, float k ) {\r\n    float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );\r\n    return mix( d2, d1, h ) - k*h*(1.0-h); }\n\nfloat smoothDifference( float d1, float d2, float k ) {\r\n    float h = clamp( 0.5 - 0.5*(d1+d2)/k, 0.0, 1.0 );\r\n    return mix( d1, -d2, h ) + k*h*(1.0-h);\r\n}\n\nfloat smoothIntersection( float d1, float d2, float k ) {\r\n    float h = clamp( 0.5 - 0.5*(d2-d1)/k, 0.0, 1.0 );\r\n    return mix( d2, d1, h ) + k*h*(1.0-h);\r\n}\n\nfloat _union(float a, float b) {\r\n    return min(a, b);\r\n}\n\nfloat difference(float a, float b) {\r\n    return max(a, -b);\r\n}\n\nfloat intersection(float a, float b) {\r\n    return max(a, b);\r\n}\n\nmat4 rotationMatrix(vec3 axis, float angle) {\r\n    axis = normalize(axis);\r\n    float s = sin(angle);\r\n    float c = cos(angle);\r\n    float oc = 1.0 - c;\r\n    \r\n    return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,\r\n                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,\r\n                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,\r\n                0.0,                                0.0,                                0.0,                                1.0);\r\n}\r\n\nfloat between(float a, float b) {\r\n    return mix(a, b, mod(time, 1.0));\r\n}\n\nvec3 between(vec3 a, vec3 b) {\r\n    return mix(a, b, mod(time, 1.0));\r\n}\r\n\nfloat sphere(vec3 p, float r) {\r\n    return length(p) - r;\r\n}\n\nfloat box(vec3 p, vec3 b) {\r\n    vec3 q = abs(p) - b;\r\n    return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)), 0.0);\r\n}\n\nfloat cube(vec3 p, float b) {\r\n    return box(p, vec3(b));\r\n}\n\nfloat torus(vec3 p, vec2 t){\r\n  vec2 q = vec2(length(p.xz)-t.x,p.y);\r\n  return length(q)-t.y;\r\n}\r\n\nfloat tetrahedron(vec3 p, float r) {\r\n    float md = max(max(-p.x + p.y - p.z, p.x - p.y - p.z),\r\n              max(-p.x - p.y + p.z, p.x + p.y + p.z));\r\n    return (md - r) / sqrt(3.0);\r\n}\n\nfloat octahedron(vec3 p, float s) {\r\n    p = abs(p);\r\n    float m = p.x + p.y + p.z - s;\r\n    vec3 q;\r\n        if(3.0 * p.x < m) q = p.xyz;\r\n    else if(3.0 * p.y < m) q = p.yzx;\r\n    else if(3.0 * p.z < m) q = p.zxy;\r\n    else return m*0.57735027;\r\n        \r\n    float k = clamp(0.5 * (q.z - q.y + s), 0.0, s); \r\n    return length(vec3(q.x, q.y - s + k, q.z - k)); \r\n}\r\n\nstruct SDF {\r\n    vec3 z;\r\n    float s;\r\n};\n\nvoid translate(inout SDF sdf, float x, float y, float z, float animation) {\r\n    sdf.z += animation * vec3(x, -y, z);\r\n}\n\nvoid translateX(inout SDF sdf, float x, float animation) {\r\n    sdf.z.x += animation * x;\r\n}\n\nvoid translateY(inout SDF sdf, float y, float animation) {\r\n    sdf.z.y -= animation * y;\r\n}\n\nvoid translateZ(inout SDF sdf, float z, float animation) {\r\n    sdf.z.z += animation * z;\r\n}\n\nvoid scale(inout SDF sdf, float v, float animation) {\r\n    sdf.z /= mix(1.0, v, animation);\r\n    sdf.s *= mix(1.0, v, animation);\r\n}\n\nvoid mirror(inout SDF sdf, float x, float y, float z, float animation) {\r\n    vec3 n = vec3(x, -y, z);\n\n    float d = min(0.0, dot(sdf.z, n));\r\n    sdf.z = sdf.z - animation * 2.0 * d * n;\r\n}\n\nvoid rotateX(inout SDF sdf, float angle, float animation) {\r\n    sdf.z = (vec4(sdf.z, 1) * rotationMatrix(vec3(1, 0, 0), angle * DEG_TO_RAD * animation)).xyz;\r\n}\r\nvoid rotateY(inout SDF sdf, float angle, float animation) {\r\n    sdf.z = (vec4(sdf.z, 1) * rotationMatrix(vec3(0, 1, 0), angle * DEG_TO_RAD * animation)).xyz;\r\n}\r\nvoid rotateZ(inout SDF sdf, float angle, float animation) {\r\n    sdf.z = (vec4(sdf.z, 1) * rotationMatrix(vec3(0, 0, 1), angle * DEG_TO_RAD * animation)).xyz;\r\n}\n\nvoid rotate(inout SDF sdf, float ax, float ay, float az, float angle, float animation) {\r\n    vec3 a = normalize(vec3(ax, ay, az));\r\n    sdf.z = (vec4(sdf.z, 1) * rotationMatrix(a, angle * DEG_TO_RAD * animation)).xyz;\r\n}";
+const core = _core + primitives;
+var postprocess = "uniform vec2 resolution;\nuniform sampler2D data;\n\nvec3 reinhard(vec3 x) {\n    return x / (1.0 + x);\n}\n\nvec3 uchimura(vec3 x, float P, float a, float m, float l, float c, float b) {\n    float l0 = ((P - m) * l) / a;\n    float L0 = m - m / a;\n    float L1 = m + (1.0 - m) / a;\n    float S0 = m + l0;\n    float S1 = m + a * l0;\n    float C2 = (a * P) / (P - S1);\n    float CP = -C2 / P;\n\n    vec3 w0 = vec3(1.0 - smoothstep(0.0, m, x));\n    vec3 w2 = vec3(step(m + l0, x));\n    vec3 w1 = vec3(1.0 - w0 - w2);\n\n    vec3 T = vec3(m * pow(x / m, vec3(c)) + b);\n    vec3 S = vec3(P - (P - S1) * exp(CP * (x - S0)));\n    vec3 L = vec3(m + a * (x - m));\n\n    return T * w0 + L * w1 + S * w2;\n}\n\nvec3 uchimura(vec3 x) {\n    const float P = 1.0;  \n    const float a = 1.0;  \n    const float m = 0.22; \n    const float l = 0.4;  \n    const float c = 1.33; \n    const float b = 0.0;  \n\n    return uchimura(x, P, a, m, l, c, b);\n}\n\nvec3 aces(vec3 x) {\n    const float a = 2.51;\n    const float b = 0.03;\n    const float c = 2.43;\n    const float d = 0.59;\n    const float e = 0.14;\n    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);\n}\n\nvec3 contrast(vec3 color, float contrast) {\n    return (color - 0.5) * max(contrast, 0.0) + 0.5;\n}\n\nvec3 brightness(vec3 color, float brightness) {\n    return color * max(brightness, 0.0);\n}\n\nvec3 add(vec3 color, float r, float g, float b) {\n    return color + vec3(r, g, b);\n}\n\nvec3 add(vec3 color, float l) {\n    return color + l;\n}\n\nvec3 filmic(vec3 x) {\n    vec3 X = max(vec3(0.0), x - 0.004);\n    vec3 result = (X * (6.2 * X + 0.5)) / (X * (6.2 * X + 1.7) + 0.06);\n    return pow(result, vec3(2.2));\n}\n\nvec3 vignette(vec3 color, float radius, float smoothness) {\n    vec2 uv = gl_FragCoord.xy / resolution.xy;\n\n    float diff = radius - distance(uv, vec2(0.5, 0.5));\n    return color * smoothstep(-smoothness, smoothness, diff);\n}\n\nvec3 hsv2rgb(vec3 c) {\n    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);\n    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);\n    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);\n}\n\nvec3 rgb2hsv(vec3 c) {\n    vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\n    float d = q.x - min(q.w, q.y);\n    float e = 1.0e-10;\n    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n}\n\nvec3 saturation(vec3 color, float saturation) {\n    if(color.r == color.g && color.r == color.b) return color;\n    vec3 hsv = rgb2hsv(color);\n    hsv.y *= saturation;\n    return hsv2rgb(hsv); \n}\n\nfloat sRGB(float x) {\n    if (x <= 0.00031308)\n        return 12.92 * x;\n    else\n        return 1.055*pow(x,(1.0 / 2.4) ) - 0.055;\n}\n\nvec3 sRGB(vec3 c) {\n    return vec3(sRGB(c.x), sRGB(c.y), sRGB(c.z));\n}\n\nvoid main() {\n    vec2 uv = gl_FragCoord.xy / resolution.xy;\n    vec3 color = texture2D(data, uv).xyz;\n\n    POSTPROCESS\n\n    gl_FragColor = vec4(color, 1);\n}";
 var copyGLSL = "uniform vec2 resolution;\nuniform sampler2D data;\n\nvoid main() {\n    gl_FragColor = texture(data, gl_FragCoord.xy / resolution);\n}";
 const copyShader = createShader(copyGLSL, {
   data: { value: null }
 });
-function copy(from, to) {
-  if (from instanceof THREE.WebGLRenderTarget)
-    from = from.texture;
-  copyShader.uniforms.data.value = from;
-  render(copyShader, to);
-}
 function copyAA(from, to) {
   if (from instanceof THREE.WebGLRenderTarget)
     from = from.texture;
@@ -2075,11 +1908,6 @@ function downloadJSON(data, name) {
   link.click();
   link.remove();
 }
-var pathTracer = "uniform vec2 offset;\nuniform vec2 size;\n\nuniform sampler2D previousFrame;\nuniform int sampleIndex;\nuniform int pixelDivisions;\n\nuniform int rayDepth;\nuniform float roughness;\nuniform vec3 sunDirection;\nuniform float sunStrength;\nuniform float backgroundMultiplier;\n\nuniform vec3 color;\n\nuniform vec3 emissionR;\nuniform vec3 emissionG;\nuniform vec3 emissionB;\n\n#define PI 3.141592653589\n\nvec3 ortho(vec3 v) {\n    return abs(v.x) > abs(v.z) ? vec3(-v.y, v.x, 0.0)  : vec3(0.0, -v.z, v.y);\n}\n\nvec3 getSampleBiased(vec3 dir, float power) {\n    dir = normalize(dir);\n    vec3 o1 = normalize(ortho(dir));\n    vec3 o2 = normalize(cross(dir, o1));\n    vec2 r = rand2();\n    r.x = r.x * 2.0 * PI;\n    r.y = pow(r.y, 1.0 / (power + 1.0));\n    float oneminus = sqrt(1.0 - r.y * r.y);\n    return cos(r.x) * oneminus * o1 + sin(r.x) * oneminus * o2 + r.y * dir;\n} \n\nvec3 getCosineWeightedSample(vec3 dir) {\n    return getSampleBiased(dir, 1.0);\n}\n\nvec3 sampleBiased(vec3 normal) {\n    return normalize(normal + sphericalRand());\n}\n\nvec3 sampleUnbiased(vec3 normal) {\n    while(true) {\n        vec3 dir = sphericalRand();\n        if(dot(normal, dir) > 0.0) return dir;\n    }\n\n    return vec3(0);\n}\n\nvec3 raytrace(vec3 from, vec3 direction) {\n    vec3 direct = vec3(0.0);\n    vec3 luminance = vec3(1.0);\n\n    for (int i = 0; i < rayDepth; i++) {\n        Ray ray = raycast(from, direction);\n\n        if(ray.hit) {\n            \n            vec3 reflected = reflect(direction, ray.normal);\n            vec3 sampleDir = sampleBiased(ray.normal);\n            float lerpFactor = roughness * roughness;\n\n            direction = normalize(mix(reflected, sampleDir, lerpFactor)); \n            luminance *= clamp(color, 0.0, 1.0) * mix(max(dot(ray.normal, direction), 0.0), 1.0, lerpFactor);\n\n            from = ray.position + ray.normal * epsilon;\n\n            \n            vec3 sunSampleDir = normalize(-sunDirection);\n            float sunLight = dot(ray.normal, sunSampleDir);\n\n            Ray directLightRay = raycast(from, sunSampleDir);\n\n            if (sunLight > 0.0 && !directLightRay.hit) {\n                direct += luminance * sunLight * sunStrength;\n            }\n        }\n        else {\n            return direct + luminance * background(direction) * backgroundMultiplier;\n        }\n    }\n    return vec3(0.0);\n}\n\nvec3 shading() {\n    vec3 previousColor = texture2D(previousFrame, gl_FragCoord.xy / resolution).xyz;\n\n    if(\n        gl_FragCoord.x < offset.x ||\n        gl_FragCoord.y < offset.y ||\n        gl_FragCoord.x > offset.x + size.x ||\n        gl_FragCoord.y > offset.y + size.y\n    ) {\n        return previousColor;\n    }\n\n   \n\n    int subpixelIndex = sampleIndex % (pixelDivisions * pixelDivisions);\n    int subX = subpixelIndex % pixelDivisions;\n    int subY = subpixelIndex / pixelDivisions;\n\n    seed = (subpixelCoord(subX, subY, pixelDivisions)) * (1.0 + float(sampleIndex) * 0.001);\n\n    vec3 rayDirection = subpixelDirection(subX, subY, pixelDivisions);\n\n    vec3 pixelColor = raytrace(cameraPos, rayDirection);\n\n    return previousColor * float(sampleIndex) / float(sampleIndex + 1) + pixelColor / float(sampleIndex + 1);\n\n    /*vec3 rayDirection = pixelDirection();\n\n    \n    vec3 pixelColor = vec3(0);\n\n    for(int i = 0; i < samplesPerDrawCall; ++i) {\n        seed = (1.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex) * 0.1);\n        pixelColor += raytrace(cameraPos, rayDirection);\n    }\n\n    \n    return previousColor * float(sampleIndex) / float(sampleIndex + samplesPerDrawCall) + pixelColor / float(sampleIndex + samplesPerDrawCall);*/\n}";
-var _core = "uniform vec2 resolution;\nuniform vec3 cameraPos;\nuniform vec3 cameraDirection;\nuniform float fov;\nuniform float time;\n\nuniform bool adaptiveEpsilon;\nuniform float epsilonScale;\nuniform float epsilon;\n\nconst float PI = 3.1415926535897932384626433832795;\nconst float DEG_TO_RAD = PI / 180.0;\n\nconst int maximumRaySteps = 16536;\n\nfloat sdf(vec3 position);\nvec3 background(vec3 direction);\n\nvec3 calculateNormal(vec3 position, float minDist) {\n    vec2 h = vec2(minDist, 0.0);\n    return normalize(vec3(sdf(position + h.xyy) - sdf(position - h.xyy),\n                           sdf(position + h.yxy) - sdf(position - h.yxy),\n                           sdf(position + h.yyx) - sdf(position - h.yyx)));\n}\n\nvec3 trap;\n\nvec2 seed = vec2(0);\nfloat rand() { \n    seed += vec2(-0.1, 0.1);\n    return fract(sin(dot(seed, vec2(12.9898, 4.1414))) * 43758.5453);\n}\n\n/*float seed = 10.0;\n\nfloat PHI = 1.61803398874989484820459;\n\nfloat rand() {\n    vec2 xy = gl_FragCoord.xy;\n    seed += 1.0;\n    return fract(tan(distance(xy * PHI, xy) * seed) * xy.x);\n}*/\n\nvec2 rand2() {\n    return vec2(rand(), rand());\n}\n\nvec3 rand3() {\n    return vec3(rand(), rand(), rand());\n}\n\nvec3 sphericalRand() {\n    float z = rand() * 2.0 - 1.0;\n    float rxy = sqrt(1.0 - z * z);\n    float phi = rand() * 2.0 * PI;\n    float x = rxy * cos(phi);\n    float y = rxy * sin(phi);\n\n    return vec3(x, y, z);\n}\n\nstruct Ray {\n    vec3 origin;\n    vec3 direction;\n\n    float closest;\n\n    bool hit;\n    vec3 position;\n    vec3 normal;\n    float steps;\n\n    float epsilon;\n};\n\nmat3 cameraMatrix(vec3 direction) {\n    vec3 cw = direction;\n    vec3 cp = vec3(0.0, 1.0, 0.0);\n    vec3 cu = normalize(cross(cw, cp));\n    vec3 cv = cross(cu, cw);\n    return mat3(cu, cv, cw);\n}\n\nvec2 subpixelCoord(int x, int y, int divisions) {\n    float subpixelSize = 1.0 / float(divisions);\n    vec2 offset = vec2(subpixelSize * (float(x) + 0.5) - 0.5, subpixelSize * (float(y) + 0.5) - 0.5);\n    return gl_FragCoord.xy + offset;\n}\n\nvec3 subpixelDirection(int x, int y, int divisions) {\n    mat3 view = cameraMatrix(cameraDirection);\n    vec2 uv = (subpixelCoord(x, y, divisions) / resolution) * 2.0 - 1.0;\n    uv.x *= resolution.x / resolution.y;\n    return view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));\n}\n\nvec3 pixelDirection() {\n    mat3 view = cameraMatrix(cameraDirection);\n    vec2 uv = (gl_FragCoord.xy / resolution) * 2.0 - 1.0;\n    uv.x *= resolution.x / resolution.y;\n    return view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));\n}\n\nvec2 directionPixel(vec3 position, vec3 cameraPos, vec3 cameraDir) {\n    mat3 inverseView = inverse(cameraMatrix(cameraDir));\n    vec3 toPos = normalize(position - cameraPos);\n    vec3 fromCameraDir = inverseView * toPos;\n\n    float zDistance = 1.0 / tan(fov / 2.0);\n    vec2 uv = (fromCameraDir * zDistance / fromCameraDir.z).xy;\n    uv /= resolution.x / resolution.y;\n    return (uv + 1.0) / 2.0;\n}\n\nuniform int orbitSampler;\nuniform int orbitMapping;\n\nvec3 sampleOrbit(vec3 a, vec3 b) {\n    switch (orbitSampler) {\n    case 0:\n        return min(a, b);\n    case 1:\n        return max(a, b);\n    case 2:\n        return a + b;\n    case 3:\n        return min(abs(a), abs(b));\n    case 4:\n        return max(abs(a), abs(b));\n    case 5:\n        return abs(a) + abs(b);\n    }\n}\n\nfloat mapOrbit(float x) {\n    switch (orbitMapping) {\n    case 0:\n        return 1.0 / 3.0;\n    case 1:\n        return x;\n    case 2:\n        return 1.0 / (1.0 + pow(2.71828182846, -x));\n    case 3:\n        return x / (x + 1.0);\n    }\n}\n\nvec3 mapToChannels(vec3 color1, vec3 color2, vec3 color3, vec3 map) {\n    return (mapOrbit(map.x) * color1 + mapOrbit(map.y) * color2 + mapOrbit(map.z) * color3);\n}\n\nRay raycast(vec3 origin, vec3 direction) {\n    Ray data;\n    data.origin = origin;\n    data.direction = direction;\n\n    if(!adaptiveEpsilon)\n        data.epsilon = epsilon;\n\n    float totalDistance = 0.0;\n    float closest = 100.0;\n    for (int steps = 0; steps < maximumRaySteps; ++steps) {\n        vec3 currentPosition = origin + totalDistance * direction;\n\n        if(totalDistance > 100.0)\n            break;\n\n        float currentDistance = sdf(currentPosition);\n        closest = min(closest, currentDistance);\n\n        \n        totalDistance += max(0.0, (steps < 1 ? rand() * currentDistance : currentDistance));\n\n        if(steps == 0) {\n            if(currentDistance < 0.0) {\n                data.hit = true;\n                data.position = origin;\n                data.normal = vec3(0);\n                data.steps = 0.0;\n\n                return data;\n            }\n\n            if(adaptiveEpsilon)\n                data.epsilon = currentDistance * epsilonScale;\n        }\n        else if(currentDistance < data.epsilon) {\n            data.hit = true;\n            data.position = origin + totalDistance * direction;\n            data.normal = calculateNormal(data.position, data.epsilon);\n            data.steps = float(steps) + currentDistance / data.epsilon;\n\n            return data;\n        }\n    }\n\n    data.closest = closest;\n    data.hit = false;\n    return data;\n}\n\nRay raycastEpsilon(vec3 origin, vec3 direction, float epsilon) {\n    Ray data;\n    data.origin = origin;\n    data.direction = direction;\n    data.epsilon = epsilon;\n\n    float totalDistance = 0.0;\n      float closest = 100.0;\n    for (int steps = 0; steps < maximumRaySteps; ++steps) {\n        vec3 currentPosition = origin + totalDistance * direction;\n\n        if(totalDistance > 100.0)\n            break;\n\n        float currentDistance = sdf(currentPosition);\n        closest = min(closest, currentDistance);\n\n        \n        totalDistance += max(0.0, (steps < 1 ? rand() * currentDistance : currentDistance));\n\n        if(steps == 0) {\n            if(currentDistance < 0.0) {\n                data.hit = true;\n                data.position = origin;\n                data.normal = vec3(0);\n                data.steps = 0.0;\n\n                return data;\n            }\n\n        }\n        else if(currentDistance < data.epsilon) {\n            data.hit = true;\n            data.position = origin + totalDistance * direction;\n            data.normal = calculateNormal(data.position, data.epsilon);\n            data.steps = float(steps) + currentDistance / data.epsilon;\n\n            return data;\n        }\n    }\n\n    data.closest = closest;\n    data.hit = false;\n    return data;\n}\n\nRay pixelRaycast() {\n    return raycast(cameraPos, pixelDirection());\n}\n\nvec3 shading();\n\nvoid main() {        \n    gl_FragColor = vec4(shading(), 1);\n}";
-var primitives = "float merge(float a, float b, float k){\r\n    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);\r\n    return mix(b, a, h) - k * h * (1.0 - h);\r\n}\n\nfloat merge(float a, float b) {\r\n    return min(a, b);\r\n}\n\nfloat subtract(float a, float b) {\r\n    return max(a, -b);\r\n}\n\nfloat intersect(float a, float b) {\r\n    return max(a, b);\r\n}\n\nmat4 rotationMatrix(vec3 axis, float angle) {\r\n    axis = normalize(axis);\r\n    float s = sin(angle);\r\n    float c = cos(angle);\r\n    float oc = 1.0 - c;\r\n    \r\n    return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,\r\n                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,\r\n                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,\r\n                0.0,                                0.0,                                0.0,                                1.0);\r\n}\n\nvec3 rotate(vec3 z, float axisX, float axisY, float axisZ, float angle) {\r\n    vec4 u = vec4(z, 1);\r\n    u *= rotationMatrix(vec3(axisX, axisY, axisZ), angle * DEG_TO_RAD);\r\n    return u.xyz;\r\n}\n\nvec3 rotateX(vec3 z, float angle) {\r\n    return (vec4(z, 1) * rotationMatrix(vec3(1, 0, 0), angle * DEG_TO_RAD)).xyz;\r\n}\r\nvec3 rotateY(vec3 z, float angle) {\r\n    return (vec4(z, 1) * rotationMatrix(vec3(0, 1, 0), angle * DEG_TO_RAD)).xyz;\r\n}\r\nvec3 rotateZ(vec3 z, float angle) {\r\n    return (vec4(z, 1) * rotationMatrix(vec3(0, 0, 1), angle * DEG_TO_RAD)).xyz;\r\n}\n\nvec3 absX(vec3 z) {\r\n    return vec3(abs(z.x), z.y, z.z);\r\n}\r\nvec3 absY(vec3 z) {\r\n    return vec3(z.x, abs(z.y), z.z);\r\n}\r\nvec3 absZ(vec3 z) {\r\n    return vec3(z.x, z.y, abs(z.z));\r\n}\n\nvec3 translate(vec3 p, float x, float y, float z) {\r\n    return p + vec3(x, y, z);\r\n}\n\nvec3 scale(vec3 p, float x, float y, float z) {\r\n    return p * vec3(x, y, z);\r\n}\n\nvec3 scale(vec3 p, float s) {\r\n    return p * s;\r\n}\r\n\nfloat between(float a, float b) {\r\n    return mix(a, b, mod(time, 1.0));\r\n}\n\nvec3 between(vec3 a, vec3 b) {\r\n    return mix(a, b, mod(time, 1.0));\r\n}\r\n\nfloat sphere(vec3 p, float r) {\r\n    return length(p) - r;\r\n}\n\nfloat box(vec3 p, vec3 b) {\r\n    vec3 q = abs(p) - b;\r\n    return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)), 0.0);\r\n}\n\nfloat tetrahedron(vec3 p, float r) {\r\n    float md = max(max(-p.x - p.y - p.z, p.x + p.y - p.z),\r\n              max(-p.x + p.y + p.z, p.x - p.y + p.z));\r\n    return (md - r) / sqrt(3.0);\r\n}\n\nfloat octahedron(vec3 p, float s) {\r\n    p = abs(p);\r\n    float m = p.x + p.y + p.z - s;\r\n    vec3 q;\r\n        if(3.0 * p.x < m) q = p.xyz;\r\n    else if(3.0 * p.y < m) q = p.yzx;\r\n    else if(3.0 * p.z < m) q = p.zxy;\r\n    else return m*0.57735027;\r\n        \r\n    float k = clamp(0.5 * (q.z - q.y + s), 0.0, s); \r\n    return length(vec3(q.x, q.y - s + k, q.z - k)); \r\n}";
-const core = _core + primitives;
-var postprocess = "uniform vec2 resolution;\nuniform sampler2D data;\n\nvec3 reinhard(vec3 x) {\n    return x / (1.0 + x);\n}\n\nvec3 uchimura(vec3 x, float P, float a, float m, float l, float c, float b) {\n    float l0 = ((P - m) * l) / a;\n    float L0 = m - m / a;\n    float L1 = m + (1.0 - m) / a;\n    float S0 = m + l0;\n    float S1 = m + a * l0;\n    float C2 = (a * P) / (P - S1);\n    float CP = -C2 / P;\n\n    vec3 w0 = vec3(1.0 - smoothstep(0.0, m, x));\n    vec3 w2 = vec3(step(m + l0, x));\n    vec3 w1 = vec3(1.0 - w0 - w2);\n\n    vec3 T = vec3(m * pow(x / m, vec3(c)) + b);\n    vec3 S = vec3(P - (P - S1) * exp(CP * (x - S0)));\n    vec3 L = vec3(m + a * (x - m));\n\n    return T * w0 + L * w1 + S * w2;\n}\n\nvec3 uchimura(vec3 x) {\n    const float P = 1.0;  \n    const float a = 1.0;  \n    const float m = 0.22; \n    const float l = 0.4;  \n    const float c = 1.33; \n    const float b = 0.0;  \n\n    return uchimura(x, P, a, m, l, c, b);\n}\n\nvec3 aces(vec3 x) {\n    const float a = 2.51;\n    const float b = 0.03;\n    const float c = 2.43;\n    const float d = 0.59;\n    const float e = 0.14;\n    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);\n}\n\nvec3 contrast(vec3 color, float contrast) {\n    return (color - 0.5) * max(contrast, 0.0) + 0.5;\n}\n\nvec3 brightness(vec3 color, float brightness) {\n    return color * max(brightness, 0.0);\n}\n\nvec3 add(vec3 color, float r, float g, float b) {\n    return color + vec3(r, g, b);\n}\n\nvec3 add(vec3 color, float l) {\n    return color + l;\n}\n\nvec3 filmic(vec3 x) {\n    vec3 X = max(vec3(0.0), x - 0.004);\n    vec3 result = (X * (6.2 * X + 0.5)) / (X * (6.2 * X + 1.7) + 0.06);\n    return pow(result, vec3(2.2));\n}\n\nvec3 vignette(vec3 color, float radius, float smoothness) {\n    vec2 uv = gl_FragCoord.xy / resolution.xy;\n\n    float diff = radius - distance(uv, vec2(0.5, 0.5));\n    return color * smoothstep(-smoothness, smoothness, diff);\n}\n\nvec3 hsv2rgb(vec3 c) {\n    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);\n    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);\n    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);\n}\n\nvec3 rgb2hsv(vec3 c) {\n    vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\n    float d = q.x - min(q.w, q.y);\n    float e = 1.0e-10;\n    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n}\n\nvec3 saturation(vec3 color, float saturation) {\n    if(color.r == color.g && color.r == color.b) return color;\n    vec3 hsv = rgb2hsv(color);\n    hsv.y *= saturation;\n    return hsv2rgb(hsv); \n}\n\nfloat sRGB(float x) {\n    if (x <= 0.00031308)\n        return 12.92 * x;\n    else\n        return 1.055*pow(x,(1.0 / 2.4) ) - 0.055;\n}\nvec3 sRGB(vec3 c) {\n    return vec3(sRGB(c.x), sRGB(c.y), sRGB(c.z));\n}\n\nvoid main() {\n    vec2 uv = gl_FragCoord.xy / resolution.xy;\n    vec3 color = texture2D(data, uv).xyz;\n\n    POSTPROCESS\n\n    gl_FragColor = vec4(color, 1);\n}";
 class TemporaryImage {
   constructor(texture) {
     __publicField(this, "texture");
@@ -2088,12 +1916,23 @@ class TemporaryImage {
       texture = texture.texture;
     this.texture = texture;
   }
-  postprocess(...steps) {
-    this.postprocessing.push(...steps);
+  postprocess(...steps2) {
+    this.postprocessing.push(...steps2);
     return this;
   }
   renderToScreen() {
-    const possibleEffects = ["reinhard", "filmic", "aces", "uchimura", "contrast", "brightness", "saturation", "vignette", "add", "sRGB"];
+    const possibleEffects = [
+      "reinhard",
+      "filmic",
+      "aces",
+      "uchimura",
+      "contrast",
+      "brightness",
+      "saturation",
+      "vignette",
+      "add",
+      "sRGB"
+    ];
     const shaderSteps = this.postprocessing.map((step) => {
       if (!step.trim())
         return "// Empty postprocessing step";
@@ -2124,163 +1963,6 @@ class TemporaryImage {
     return this;
   }
 }
-function autoBufferSize(width, heigth) {
-  let owidth = width;
-  let oheight = heigth;
-  let widthDiv = 1;
-  let heightDiv = 1;
-  while (width * heigth > 16e5) {
-    if (width > heigth) {
-      width = owidth / ++widthDiv;
-    } else {
-      heigth = oheight / ++heightDiv;
-    }
-  }
-  return { x: width, y: heigth };
-}
-function humanReadableTime(ms) {
-  const milliseconds = Math.floor(ms % 1e3);
-  const seconds = Math.floor(ms / 1e3 % 60);
-  const minutes = Math.floor(seconds / 60 % 60);
-  const hours = Math.floor(minutes / 60);
-  return `${hours > 0 ? `${hours}h ` : ""}${minutes > 0 ? `${minutes}m ` : ""}${seconds > 0 ? `${seconds}s ` : ""}${milliseconds > 0 ? `${milliseconds % 1e3}ms` : ""}`;
-}
-class PathTracer {
-  constructor(sdf, background) {
-    __publicField(this, "textures", []);
-    __publicField(this, "shader");
-    __publicField(this, "sdf");
-    __publicField(this, "background");
-    __publicField(this, "pixelDivisions", 1);
-    __publicField(this, "roughness", 1);
-    __publicField(this, "sunDirection", new THREE.Vector3(-0.5, -2, -1));
-    __publicField(this, "sunStrength", 1);
-    __publicField(this, "backgroundMultiplier", 1);
-    __publicField(this, "rayDepth", 5);
-    __publicField(this, "epsilon", 1e-6);
-    __publicField(this, "bufferSize");
-    __publicField(this, "lastImage", null);
-    __publicField(this, "color", new THREE.Color(1, 1, 1));
-    this.sdf = sdf;
-    this.background = background;
-    const size = new THREE.Vector2();
-    renderer.getSize(size);
-    this.textures = [
-      new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
-      new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType })
-    ];
-    this.shader = createShader(core + pathTracer + sdf.getCode() + background.getCode(), __spreadValues(__spreadValues(__spreadValues({
-      previousFrame: { value: this.textures[0].texture },
-      sampleIndex: { value: 0 },
-      offset: { value: new THREE.Vector2(0, 0) },
-      size: { value: new THREE.Vector2(0, 0) },
-      adaptiveEpsilon: { value: false },
-      time: { value: 0 }
-    }, Utils.createUniformsFromVariables(this, "sunDirection", "sunStrength", "roughness", "rayDepth", "pixelDivisions", "color", "epsilon", "backgroundMultiplier")), Utils.objectToUniforms(this.sdf, "sdf_")), Utils.objectToUniforms(this.background, "bg_")));
-  }
-  renderImage(width, height, time = 0) {
-    const bufferSize = this.bufferSize ? { x: this.bufferSize, y: this.bufferSize } : autoBufferSize(width, height);
-    const start = performance.now();
-    return new Promise((resolve, reject) => {
-      setAutoResize(false);
-      setResolution(width, height);
-      const targetSize = new THREE.Vector2(width, height);
-      const textureSize = new THREE.Vector2(this.textures[0].texture.image.width, this.textures[0].texture.image.height);
-      if (!targetSize.equals(textureSize)) {
-        this.textures[0].dispose();
-        this.textures[1].dispose();
-        this.textures = [
-          new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
-          new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType })
-        ];
-      }
-      renderer.setRenderTarget(this.textures[0]);
-      renderer.clear();
-      renderer.setRenderTarget(this.textures[1]);
-      renderer.clear();
-      Utils.setUniformsFromObject(this.shader, this.sdf, "sdf_");
-      Utils.setUniformsFromObject(this.shader, this.background, "bg_");
-      const widths = Math.ceil(width / bufferSize.x);
-      const heights = Math.ceil(height / bufferSize.y);
-      let x = 0, y = 0;
-      let sample = 0;
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === "hidden")
-          console.log("Render task paused");
-        else
-          console.log("Render task resumed");
-      };
-      const timer = setInterval(() => {
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-        if (document.visibilityState === "visible")
-          console.log(`Render task: ${Math.floor(sample / (this.pixelDivisions * this.pixelDivisions) * 100)}%`);
-      }, 1e3);
-      Queue.loop(() => {
-        this.shader.uniforms.adaptiveEpsilon.value = false;
-        this.shader.uniforms.previousFrame.value = this.textures[1].texture;
-        this.shader.uniforms.sampleIndex.value = sample;
-        this.shader.uniforms.offset.value = new THREE.Vector2(x * bufferSize.x, y * bufferSize.y);
-        this.shader.uniforms.size.value = new THREE.Vector2(bufferSize.x, bufferSize.y);
-        this.shader.uniforms.time.value = time;
-        Utils.setUniformsFromVariables(this.shader, this, "sunDirection", "sunStrength", "roughness", "rayDepth", "pixelDivisions", "color", "epsilon", "backgroundMultiplier");
-        render(this.shader, this.textures[0]);
-        copy(this.textures[0], null);
-        this.textures = [this.textures[1], this.textures[0]];
-        ++x;
-        if (x >= widths) {
-          x = 0;
-          ++y;
-        }
-        if (y >= heights) {
-          y = 0;
-          sample += 1;
-        }
-        if (sample >= this.pixelDivisions * this.pixelDivisions) {
-          const durationMs = performance.now() - start;
-          console.log("Render task: 100%");
-          console.log(`Rendering done in ${humanReadableTime(durationMs)}`);
-          console.log(`Render Size: ${Math.floor(this.pixelDivisions * this.pixelDivisions * width * height / 1e5) / 10} megapixels`);
-          console.log(`Render Speed: ${Math.floor(this.pixelDivisions * this.pixelDivisions * width * height / durationMs / 10) / 100} megapixels per second`);
-          Queue.cancel();
-        }
-      }, () => {
-        clearInterval(timer);
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-        this.lastImage = new TemporaryImage(this.textures[1]);
-        if (sample >= this.pixelDivisions * this.pixelDivisions)
-          resolve(this.lastImage);
-        else
-          reject(new Error("Render task cancelled"));
-      });
-    });
-  }
-  async renderAnimation(width, height, path, postprocess2) {
-    const frames = [];
-    const files = [];
-    function downloadCurrent() {
-      const filename = `${index}-${index + frames.length - 1}.json`;
-      downloadJSON(frames, filename);
-      files.push(filename);
-      index += frames.length;
-      frames.length = 0;
-    }
-    let index = 1;
-    for (let i = 0; i < path.length; i++) {
-      if (frames.length === 50)
-        downloadCurrent();
-      const point = path[i];
-      camera.position.copy(point.position);
-      camera.lookAt(point.position.clone().add(point.direction));
-      const image = await this.renderImage(width, height, point.time);
-      image.postprocess(...postprocess2).show();
-      frames.push(renderer.domElement.toDataURL());
-      console.log(`Frame ${i + 1}/${path.length} done`);
-    }
-    downloadCurrent();
-    downloadJSON({ files, totalFrames: path.length }, "header.json");
-  }
-}
-var simple = "uniform vec3 sunDirection;\nuniform vec3 sunColor;\nuniform float aoStrength;\nuniform bool enableShadows;\nuniform float roughness;\n\nuniform vec3 color;\n\nfloat calculateDirectLight(vec3 position, vec3 normal, float epsilon) {\n    if(enableShadows) {\n        Ray shadowRay = raycastEpsilon(position + normal * 2.0 * epsilon, -sunDirection, epsilon);\n        return shadowRay.hit ? 0.0 : max(dot(normal, -sunDirection), 0.0);\n    }\n    else {\n        return max(dot(normal, -sunDirection), 0.0);\n    }\n}\n\nfloat statixAO(vec3 p, vec3 n, float k, float delta) {\n    float sum = 0.0;\n    for(int i = 1; i <= 5; ++i) {\n        float fi = float(i);\n        sum += pow(2.0, -fi) * (fi * delta - sdf(p + n * fi * delta));\n    }\n    return k * sum;\n}\n\nfloat tracerAO(vec3 position, vec3 normal, float epsilon) {\n\n    float luminance = 1.0;\n\n    for(int i = 0; i < 5; ++i) {\n        Ray tracer = raycastEpsilon(position + normal * 2.0 * epsilon, normal, epsilon);\n\n        if(!tracer.hit) break;\n\n        luminance *= 0.5;\n        position = tracer.position;\n        normal = normalize(tracer.normal);\n    }\n\n    return luminance;\n    \n\n}\n\nvec3 shading() {\n    Ray ray = pixelRaycast();\n    \n    if(ray.hit) {\n        if(ray.steps == 0.0) {\n            return vec3(0);\n        }\n\n        const int samples = 4;\n        vec3 backgroundAverage = vec3(0);\n        float lerpFactor = roughness * roughness;\n\n        for(int i = 0; i < samples; ++i)  {\n            vec3 random = normalize(rand3() * 2.0 - 1.0); \n            vec3 reflected = reflect(ray.direction, ray.normal);\n            backgroundAverage += background(normalize(mix(reflected, random, lerpFactor))) * mix(max(dot(reflected, ray.normal), 0.0), 1.0, lerpFactor);\n        }\n\n        \n        vec3 scolor = clamp(color, 0.0, 1.0);\n\n        vec3 indirect = (backgroundAverage / float(samples)) * scolor * pow(ray.steps, -0.2);\n        vec3 direct = calculateDirectLight(ray.position, ray.normal, ray.epsilon) * sunColor * scolor;\n      \n        return indirect + direct;\n    }\n    else {\n        return background(ray.direction);\n    }\n}";
 class Timer {
   constructor() {
     __publicField(this, "startTime", this.time());
@@ -2332,12 +2014,11 @@ function normalize(vector) {
   return vector;
 }
 class RealtimeRenderer {
-  constructor(sdf, background) {
+  constructor(fractal = new __SDF("cube()"), background = new ColorBackground(new THREE.Color("white"))) {
     __publicField(this, "shader");
     __publicField(this, "target");
-    __publicField(this, "targetFinal");
-    __publicField(this, "sdf");
-    __publicField(this, "background");
+    __publicField(this, "_background");
+    __publicField(this, "_sdf");
     __publicField(this, "enableShadows", true);
     __publicField(this, "aoStrength", 1);
     __publicField(this, "sunDirection", new THREE.Vector3(-0.5, -2, -1));
@@ -2345,32 +2026,52 @@ class RealtimeRenderer {
     __publicField(this, "roughness", 1);
     __publicField(this, "epsilon", 1e-4);
     __publicField(this, "adaptiveEpsilon", true);
-    __publicField(this, "epsilonScale", 1e-3);
+    __publicField(this, "epsilonScale", 5e-4);
     __publicField(this, "color", new THREE.Color(1, 1, 1));
+    __publicField(this, "pixelDivisions", 1);
     __publicField(this, "timer", new Timer());
     __publicField(this, "animationDuration", 1);
-    __publicField(this, "clock", new THREE.Clock());
-    __publicField(this, "framerate", 0);
     __publicField(this, "lastImage", null);
     __publicField(this, "postprocess", []);
-    this.sdf = sdf;
-    this.background = background;
+    __publicField(this, "step");
     const size = new THREE.Vector2();
     renderer.getSize(size);
     this.target = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-    this.targetFinal = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-    this.shader = createShader(core + simple + sdf.getCode() + background.getCode(), __spreadValues(__spreadValues(__spreadValues({
-      rasterizerColor: { value: null },
-      rasterizerDepth: { value: null },
-      sunDirection: { value: normalize(this.sunDirection) },
-      time: { value: 0 }
-    }, Utils.createUniformsFromVariables(this, "enableShadows", "aoStrength", "sunColor", "sunDirection", "epsilon", "adaptiveEpsilon", "epsilonScale", "roughness", "color")), Utils.objectToUniforms(this.sdf, "sdf_")), Utils.objectToUniforms(this.background, "bg_")));
+    this._sdf = fractal;
+    this._background = background;
+    this.step = this._sdf.stepCount;
+    this.shader = this.initShader();
+  }
+  set sdf(value) {
+    this._sdf = value;
+    this.step = value.stepCount;
+    this.shader.fragmentShader = core + simple + this._sdf.glsl + this._background.glsl;
+    this.shader.needsUpdate = true;
+  }
+  set background(value) {
+    this._background = value;
+    this.shader.fragmentShader = core + simple + this._sdf.glsl + this._background.glsl;
+    this.shader.needsUpdate = true;
+  }
+  get sdf() {
+    return this._sdf;
+  }
+  get background() {
+    return this._background;
   }
   get time() {
     return this.timer.get();
   }
   set time(value) {
     this.timer.set(value);
+  }
+  initShader() {
+    return createShader(core + simple + this._sdf.glsl + this._background.glsl, __spreadValues(__spreadValues({
+      rasterizerColor: { value: null },
+      rasterizerDepth: { value: null },
+      sunDirection: { value: normalize(this.sunDirection) },
+      time: { value: 0 }
+    }, Utils.createUniformsFromVariables(this, "enableShadows", "aoStrength", "sunColor", "sunDirection", "epsilon", "adaptiveEpsilon", "epsilonScale", "roughness", "color", "step", "pixelDivisions")), Utils.objectToUniforms(this._background, "bg_")));
   }
   renderImage(width, height, time = 0) {
     Queue.cancel();
@@ -2380,61 +2081,264 @@ class RealtimeRenderer {
     const textureSize = new THREE.Vector2(this.target.texture.image.width, this.target.texture.image.height);
     if (!targetSize.equals(textureSize)) {
       this.target.dispose();
-      this.targetFinal.dispose();
-      this.target = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-      this.targetFinal = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
+      this.target = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, {
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType
+      });
     }
-    Utils.setUniformsFromObject(this.shader, this.sdf, "sdf_");
     Utils.setUniformsFromObject(this.shader, this.background, "bg_");
     this.shader.uniforms.time.value = time;
-    this.shader.uniforms.rasterizerColor.value = this.target.texture;
     this.shader.uniforms.sunDirection.value = normalize(this.sunDirection);
-    Utils.setUniformsFromVariables(this.shader, this, "enableShadows", "aoStrength", "sunColor", "sunDirection", "epsilon", "adaptiveEpsilon", "epsilonScale", "roughness", "color");
-    render(this.shader, this.targetFinal);
-    this.lastImage = new TemporaryImage(this.targetFinal);
+    Utils.setUniformsFromVariables(this.shader, this, "enableShadows", "aoStrength", "sunColor", "sunDirection", "epsilon", "adaptiveEpsilon", "epsilonScale", "roughness", "color", "step", "pixelDivisions");
+    render(this.shader, this.target);
+    this.lastImage = new TemporaryImage(this.target);
     return this.lastImage;
   }
   start(onFrame = () => {
   }) {
     setAutoResize(true);
-    let accumulatedTime = 0;
     Queue.loop(() => {
-      const interval = 1 / this.framerate;
-      const delta = this.clock.getDelta();
-      accumulatedTime += delta;
-      if (controls instanceof FirstPersonControls)
-        controls.update(delta);
-      if (this.framerate !== 0 && accumulatedTime < interval)
-        return;
-      accumulatedTime = accumulatedTime - interval;
       onFrame();
       const size = new THREE.Vector2();
       renderer.getSize(size);
       const targetSize = new THREE.Vector2(this.target.texture.image.width, this.target.texture.image.height);
       if (!size.equals(targetSize)) {
         this.target.dispose();
-        this.targetFinal.dispose();
         this.target = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-        this.targetFinal = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
       }
-      Utils.setUniformsFromObject(this.shader, this.sdf, "sdf_");
       Utils.setUniformsFromObject(this.shader, this.background, "bg_");
       this.shader.uniforms.time.value = this.time / this.animationDuration;
       this.shader.uniforms.rasterizerColor.value = this.target.texture;
       this.shader.uniforms.sunDirection.value = normalize(this.sunDirection);
-      Utils.setUniformsFromVariables(this.shader, this, "enableShadows", "aoStrength", "sunColor", "sunDirection", "epsilon", "adaptiveEpsilon", "epsilonScale", "roughness", "color");
-      render(this.shader, this.targetFinal);
-      this.lastImage = new TemporaryImage(this.targetFinal);
-      this.lastImage.postprocess(...this.postprocess).show();
+      Utils.setUniformsFromVariables(this.shader, this, "enableShadows", "aoStrength", "sunColor", "sunDirection", "epsilon", "adaptiveEpsilon", "epsilonScale", "roughness", "color", "step", "pixelDivisions");
+      render(this.shader, this.target);
+      this.lastImage = new TemporaryImage(this.target);
+      this.lastImage.postprocess("sRGB", ...this.postprocess).show();
     });
+  }
+}
+var pathTracer = "uniform vec2 offset;\nuniform vec2 size;\n\nuniform sampler2D previousFrame;\nuniform int sampleIndex;\nuniform int pixelDivisions;\n\nuniform int rayDepth;\nuniform float roughness;\nuniform vec3 sunDirection;\nuniform float sunStrength;\nuniform float backgroundMultiplier;\n\nuniform vec3 color;\n\nuniform vec3 emissionR;\nuniform vec3 emissionG;\nuniform vec3 emissionB;\n\n#define PI 3.141592653589\n#define E 2.718281828459\n\nvec3 ortho(vec3 v) {\n    return abs(v.x) > abs(v.z) ? vec3(-v.y, v.x, 0.0)  : vec3(0.0, -v.z, v.y);\n}\n\nvec3 getSampleBiased(vec3 dir, float power) {\n    dir = normalize(dir);\n    vec3 o1 = normalize(ortho(dir));\n    vec3 o2 = normalize(cross(dir, o1));\n    vec2 r = rand2();\n    r.x = r.x * 2.0 * PI;\n    r.y = pow(r.y, 1.0 / (power + 1.0));\n    float oneminus = sqrt(1.0 - r.y * r.y);\n    return cos(r.x) * oneminus * o1 + sin(r.x) * oneminus * o2 + r.y * dir;\n} \n\nvec3 getCosineWeightedSample(vec3 dir) {\n    return getSampleBiased(dir, 1.0);\n}\n\nvec3 sampleBiased(vec3 normal) {\n    return normalize(normal + sphericalRand());\n}\n\nvec3 sampleUnbiased(vec3 normal) {\n    while(true) {\n        vec3 dir = sphericalRand();\n        if(dot(normal, dir) > 0.0) return dir;\n    }\n\n    return vec3(0);\n}\n\nvec3 raytrace(vec3 from, vec3 direction) {\n    vec3 direct = vec3(0.0);\n    vec3 luminance = vec3(1.0);\n\n    for (int i = 0; i < rayDepth; i++) {\n        Ray ray = raycast(from, direction);\n\n        if(ray.hit) {\n            \n            vec3 reflected = reflect(direction, ray.normal);\n            vec3 sampleDir = sampleBiased(ray.normal);\n            float lerpFactor = roughness * roughness;\n\n            vec3 c = linear(color);\n\n            direction = normalize(mix(reflected, sampleDir, lerpFactor)); \n            luminance *= clamp(c, 0.0, 1.0) * mix(max(dot(ray.normal, direction), 0.0), 1.0, lerpFactor);\n\n            from = ray.position + ray.normal * epsilon;\n\n            \n            vec3 sunSampleDir = normalize(-sunDirection);\n            float sunLight = dot(ray.normal, sunSampleDir);\n\n            Ray directLightRay = raycast(from, sunSampleDir);\n\n            if (sunLight > 0.0 && !directLightRay.hit) {\n                direct += luminance * sunLight * sunStrength;\n            }\n        }\n\n        else {\n            return direct + luminance * linear(background(direction));\n        }\n    }\n    return direct;\n}\n\nvec3 shading() {\n    vec3 previousColor = texture2D(previousFrame, gl_FragCoord.xy / resolution).xyz;\n\n    if(\n        gl_FragCoord.x < offset.x ||\n        gl_FragCoord.y < offset.y ||\n        gl_FragCoord.x > offset.x + size.x ||\n        gl_FragCoord.y > offset.y + size.y\n    ) {\n        return previousColor;\n    }\n\n   \n\n    int subpixelIndex = sampleIndex % (pixelDivisions * pixelDivisions);\n    int subX = subpixelIndex % pixelDivisions;\n    int subY = subpixelIndex / pixelDivisions;\n\n    seed = (subpixelCoord(subX, subY, pixelDivisions)) * (1.0 + float(sampleIndex) * 0.001);\n\n    vec3 rayDirection = subpixelDirection(subX, subY, pixelDivisions);\n\n    vec3 pixelColor = raytrace(cameraPos, rayDirection);\n\n    return previousColor * float(sampleIndex) / float(sampleIndex + 1) + pixelColor / float(sampleIndex + 1);\n\n    /*vec3 rayDirection = pixelDirection();\n\n    \n    vec3 pixelColor = vec3(0);\n\n    for(int i = 0; i < samplesPerDrawCall; ++i) {\n        seed = (1.0 * gl_FragCoord.xy) * (1.0 + float(sampleIndex) * 0.1);\n        pixelColor += raytrace(cameraPos, rayDirection);\n    }\n\n    \n    return previousColor * float(sampleIndex) / float(sampleIndex + samplesPerDrawCall) + pixelColor / float(sampleIndex + samplesPerDrawCall);*/\n}";
+function autoBufferSize(width, heigth) {
+  let owidth = width;
+  let oheight = heigth;
+  let widthDiv = 1;
+  let heightDiv = 1;
+  while (width * heigth > 16e5) {
+    if (width > heigth) {
+      width = owidth / ++widthDiv;
+    } else {
+      heigth = oheight / ++heightDiv;
+    }
+  }
+  return { x: width, y: heigth };
+}
+function humanReadableTime(ms) {
+  const milliseconds = Math.floor(ms % 1e3);
+  const seconds = Math.floor(ms / 1e3 % 60);
+  const minutes = Math.floor(seconds / 60 % 60);
+  const hours = Math.floor(minutes / 60);
+  return `${hours > 0 ? `${hours}h ` : ""}${minutes > 0 ? `${minutes}m ` : ""}${seconds > 0 ? `${seconds}s ` : ""}${milliseconds > 0 ? `${milliseconds % 1e3}ms` : ""}`;
+}
+class PathTracer {
+  constructor(sdf = new __SDF("cube()"), background = new ColorBackground(new THREE.Color("white"))) {
+    __publicField(this, "textures", []);
+    __publicField(this, "shader");
+    __publicField(this, "_background");
+    __publicField(this, "_sdf");
+    __publicField(this, "pixelDivisions", 1);
+    __publicField(this, "roughness", 1);
+    __publicField(this, "sunDirection", new THREE.Vector3(-0.5, -2, -1));
+    __publicField(this, "sunStrength", 1);
+    __publicField(this, "backgroundMultiplier", 1);
+    __publicField(this, "rayDepth", 5);
+    __publicField(this, "epsilon", 1e-6);
+    __publicField(this, "bufferSize");
+    __publicField(this, "lastImage", null);
+    __publicField(this, "color", new THREE.Color(1, 1, 1));
+    __publicField(this, "step");
+    const size = new THREE.Vector2();
+    renderer.getSize(size);
+    this.textures = [
+      new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
+      new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType })
+    ];
+    this._sdf = sdf;
+    this._background = background;
+    this.step = this._sdf.stepCount;
+    this.shader = this.initShader();
+  }
+  set sdf(value) {
+    this._sdf = value;
+    this.step = value.stepCount;
+    this.shader.fragmentShader = core + pathTracer + this._sdf.glsl + this._background.glsl;
+    this.shader.needsUpdate = true;
+  }
+  set background(value) {
+    this.shader.fragmentShader = core + pathTracer + this._sdf.glsl + this._background.glsl;
+    this.shader.needsUpdate = true;
+    this._background = value;
+  }
+  get sdf() {
+    return this._sdf;
+  }
+  get background() {
+    return this._background;
+  }
+  initShader() {
+    return createShader(core + pathTracer + this._sdf.glsl + this._background.glsl, __spreadValues(__spreadValues({
+      previousFrame: { value: this.textures[0].texture },
+      sampleIndex: { value: 0 },
+      offset: { value: new THREE.Vector2(0, 0) },
+      size: { value: new THREE.Vector2(0, 0) },
+      adaptiveEpsilon: { value: false },
+      time: { value: 0 }
+    }, Utils.createUniformsFromVariables(this, "sunDirection", "sunStrength", "roughness", "rayDepth", "pixelDivisions", "color", "epsilon", "backgroundMultiplier", "step")), Utils.objectToUniforms(this._background, "bg_")));
+  }
+  renderImage(width, height, time = 0) {
+    const bufferSize = this.bufferSize ? { x: this.bufferSize, y: this.bufferSize } : autoBufferSize(width, height);
+    const start = performance.now();
+    return new Promise((resolve, reject) => {
+      setAutoResize(false);
+      setResolution(width, height);
+      const targetSize = new THREE.Vector2(width, height);
+      const textureSize = new THREE.Vector2(this.textures[0].texture.image.width, this.textures[0].texture.image.height);
+      if (!targetSize.equals(textureSize)) {
+        this.textures[0].dispose();
+        this.textures[1].dispose();
+        this.textures = [
+          new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType }),
+          new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType })
+        ];
+      }
+      renderer.setRenderTarget(this.textures[0]);
+      renderer.clear();
+      renderer.setRenderTarget(this.textures[1]);
+      renderer.clear();
+      Utils.setUniformsFromObject(this.shader, this.background, "bg_");
+      const widths = Math.ceil(width / bufferSize.x);
+      const heights = Math.ceil(height / bufferSize.y);
+      let x = 0, y = 0;
+      let sample = 0;
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "hidden")
+          console.log("Render task paused");
+        else
+          console.log("Render task resumed");
+      };
+      const timer = setInterval(() => {
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        if (document.visibilityState === "visible")
+          console.log(`Render task: ${Math.floor(sample / (this.pixelDivisions * this.pixelDivisions) * 100)}%`);
+      }, 1e3);
+      Queue.loop(() => {
+        this.shader.uniforms.adaptiveEpsilon.value = false;
+        this.shader.uniforms.previousFrame.value = this.textures[1].texture;
+        this.shader.uniforms.sampleIndex.value = sample;
+        this.shader.uniforms.offset.value = new THREE.Vector2(x * bufferSize.x, y * bufferSize.y);
+        this.shader.uniforms.size.value = new THREE.Vector2(bufferSize.x, bufferSize.y);
+        this.shader.uniforms.time.value = time;
+        Utils.setUniformsFromVariables(this.shader, this, "sunDirection", "sunStrength", "roughness", "rayDepth", "pixelDivisions", "color", "epsilon", "backgroundMultiplier", "step");
+        render(this.shader, this.textures[0]);
+        new TemporaryImage(this.textures[0]).postprocess("sRGB").show();
+        this.textures = [this.textures[1], this.textures[0]];
+        ++x;
+        if (x >= widths) {
+          x = 0;
+          ++y;
+        }
+        if (y >= heights) {
+          y = 0;
+          sample += 1;
+        }
+        if (sample >= this.pixelDivisions * this.pixelDivisions) {
+          const durationMs = performance.now() - start;
+          console.log("Render task: 100%");
+          console.log(`Rendering done in ${humanReadableTime(durationMs)}`);
+          console.log(`Render Size: ${Math.floor(this.pixelDivisions * this.pixelDivisions * width * height / 1e5) / 10} megapixels`);
+          console.log(`Render Speed: ${Math.floor(this.pixelDivisions * this.pixelDivisions * width * height / durationMs / 10) / 100} megapixels per second`);
+          Queue.cancel();
+        }
+      }, () => {
+        clearInterval(timer);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        this.lastImage = new TemporaryImage(this.textures[1]).postprocess("sRGB");
+        if (sample >= this.pixelDivisions * this.pixelDivisions)
+          resolve(this.lastImage);
+        else
+          reject(new Error("Render task cancelled"));
+      });
+    });
+  }
+  async renderAnimation(width, height, path, postprocess2) {
+    const frames = [];
+    const files = [];
+    function downloadCurrent() {
+      const filename = `${index}-${index + frames.length - 1}.json`;
+      downloadJSON(frames, filename);
+      files.push(filename);
+      index += frames.length;
+      frames.length = 0;
+    }
+    let index = 1;
+    for (let i = 0; i < path.length; i++) {
+      if (frames.length === 50)
+        downloadCurrent();
+      const point = path[i];
+      camera.position.copy(point.position);
+      camera.lookAt(point.position.clone().add(point.direction));
+      const image = await this.renderImage(width, height, point.time);
+      image.postprocess(...postprocess2).show();
+      frames.push(renderer.domElement.toDataURL());
+      console.log(`Frame ${i + 1}/${path.length} done`);
+    }
+    downloadCurrent();
+    downloadJSON({ files, totalFrames: path.length }, "header.json");
+  }
+}
+class Menger extends __SDF {
+  constructor(iterations) {
+    super(`
+      cube();
+      for (let i = 0; i < ${iterations}; i++) {
+          scale(1 / 3);
+          translate(0, 0, -1 / 3);
+          mirror(0, 0, 1);
+          translate(0, 0, 1 / 3);
+
+          translate(-2 / 3, 2 / 3, 0);
+
+          mirror(0, -1, 1);
+          mirror(1, 0, 1);
+          mirror(0, 0, -1);
+          mirror(1, 0, 0);
+          mirror(0, -1, 0);
+      }
+    `);
+    this.iterations = iterations;
+  }
+}
+class Sierpinski extends __SDF {
+  constructor(iterations) {
+    super(`
+        tetrahedron();
+
+        for (let i = 0; i < ${iterations}; i++) {
+            translate(-1, -1, -1);
+            
+            scale(1 / 2);
+            
+            translate(1, 1, 1);
+        }
+    `);
+    this.iterations = iterations;
   }
 }
 var position = "vec3 shading() {\n    return pixelRaycast().position;\n}";
 var normal = "vec3 shading() {\n    return pixelRaycast().normal;\n}";
-var edges = "uniform sampler2D positionTexture;\nuniform sampler2D normalTexture;\n\nuniform vec3 backgroundColor;\nuniform vec3 lineColor;\n\nstruct Pixel {\n    vec3 position;\n    vec3 normal;\n};\n\nPixel pixel(int x, int y) {\n    vec2 uv = (gl_FragCoord.xy + vec2(x, y)) / resolution;\n\n    Pixel pixel;\n    pixel.position = texture2D(positionTexture, uv).xyz;\n    pixel.normal = texture2D(normalTexture, uv).xyz;\n\n    return pixel;\n}\n\nvec3 shading() {\n    \n\n    Pixel center = pixel(0, 0);\n\n    float distanceFromCamera = length(center.position - cameraPos);\n\n    if(distanceFromCamera < 2.0 * epsilon) return backgroundColor; \n\n    bool edge = false;\n\n    for(int x = 0; x <= 1; ++x) {\n        for(int y = 0; y <= 1; ++y) {\n            Pixel nearby = pixel(x, y);\n\n            float dist = length(nearby.position - center.position);\n            vec3 towards = normalize(nearby.position - center.position);\n\n            if(\n                dot(center.normal, nearby.normal) < 0.9 && center.normal != vec3(0)||\n                abs(dot(center.normal, towards)) > max(distanceFromCamera * 0.1, 0.1) && dist > 2.0 * epsilon ||\n                center.normal == vec3(0) && nearby.normal != vec3(0)\n            )\n                edge = true;\n        }\n    }\n\n    \n    return edge ? lineColor : backgroundColor;\n}";
+var edges = "uniform sampler2D positionTexture;\nuniform sampler2D normalTexture;\n\nuniform vec3 backgroundColor;\nuniform vec3 lineColor;\n\nstruct Pixel {\n    vec3 position;\n    vec3 normal;\n};\n\nPixel pixel(int x, int y) {\n    vec2 uv = (gl_FragCoord.xy + vec2(x, y)) / resolution;\n\n    Pixel pixel;\n    pixel.position = texture2D(positionTexture, uv).xyz;\n    pixel.normal = texture2D(normalTexture, uv).xyz;\n\n    return pixel;\n}\n\nvec3 shading() {\n    \n\n    Pixel center = pixel(0, 0);\n\n    float distanceFromCamera = length(center.position - cameraPos);\n\n    if(distanceFromCamera < 2.0 * epsilon) return backgroundColor; \n\n    bool edge = false;\n\n    for(int x = 0; x <= 1; ++x) {\n        for(int y = 0; y <= 1; ++y) {\n            Pixel nearby = pixel(x, y);\n\n            float dist = length(nearby.position - center.position);\n            vec3 towards = normalize(nearby.position - center.position);\n\n            if(\n                dot(center.normal, nearby.normal) < 0.5 && center.normal != vec3(0)||\n                abs(dot(center.normal, towards)) > max(distanceFromCamera * 0.3, 0.1) && dist > 2.0 * epsilon ||\n                center.normal == vec3(0) && nearby.normal != vec3(0)\n            )\n                edge = true;\n        }\n    }\n\n    \n    return edge ? lineColor : backgroundColor;\n}";
 var expandLines = "uniform float lineWidth;\nuniform vec3 lineColor;\nuniform vec3 backgroundColor;\nuniform sampler2D linesTexture;\n\nvec3 pixel(int x, int y) {\n    return texture2D(linesTexture, (gl_FragCoord.xy + vec2(x, y)) / resolution).xyz;\n}\n\nvec3 shading() {\n    float radius = max(0.0, (min(lineWidth, 10.0) - 1.0) * 0.5);\n    int grid = int(ceil(radius));\n\n    for(int x = -grid; x <= grid; ++x) {\n        for(int y = -grid; y <= grid; ++y) {\n            if(sqrt(float(x * x + y * y)) <= radius && pixel(x, y) == lineColor) {\n                return lineColor;\n            } \n        }\n    }\n    return backgroundColor;\n}";
 class EdgeRenderer {
-  constructor(sdf) {
+  constructor(sdf = new __SDF("cube()")) {
     __publicField(this, "positionShader");
     __publicField(this, "normalShader");
     __publicField(this, "edgesShader");
@@ -2443,36 +2347,45 @@ class EdgeRenderer {
     __publicField(this, "normal");
     __publicField(this, "edges");
     __publicField(this, "expanded");
-    __publicField(this, "sdf");
+    __publicField(this, "_sdf");
+    __publicField(this, "step");
     __publicField(this, "epsilon", 1e-5);
     __publicField(this, "backgroundColor", new THREE.Color(1, 1, 1));
     __publicField(this, "lineColor", new THREE.Color(0, 0, 0));
     __publicField(this, "lineWidth", 1);
-    __publicField(this, "clock");
-    this.sdf = sdf;
     const size = new THREE.Vector2();
     renderer.getSize(size);
-    this.clock = new THREE.Clock();
     this.position = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
     this.normal = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
     this.edges = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
     this.expanded = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-    const uniforms = __spreadValues({
-      epsilon: { value: this.epsilon }
-    }, Utils.objectToUniforms(this.sdf, "sdf_"));
-    this.positionShader = createShader(core + position + sdf.getCode(), uniforms);
-    this.normalShader = createShader(core + normal + sdf.getCode(), uniforms);
-    this.edgesShader = createShader(core + edges + sdf.getCode(), __spreadProps(__spreadValues({}, Utils.createUniformsFromVariables(this, "backgroundColor", "lineColor")), {
+    this._sdf = sdf;
+    this.step = sdf.stepCount;
+    const uniforms = {
+      epsilon: { value: this.epsilon },
+      step: { value: this.step }
+    };
+    this.positionShader = createShader(core + position + sdf.glsl, uniforms);
+    this.normalShader = createShader(core + normal + sdf.glsl, uniforms);
+    this.edgesShader = createShader(core + edges + sdf.glsl, __spreadProps(__spreadValues({}, Utils.createUniformsFromVariables(this, "backgroundColor", "lineColor")), {
       positionTexture: { value: this.position.texture },
       normalTexture: { value: this.normal.texture }
     }));
-    this.expandShader = createShader(core + expandLines + sdf.getCode(), __spreadProps(__spreadValues({}, Utils.createUniformsFromVariables(this, "backgroundColor", "lineColor", "lineWidth")), {
+    this.expandShader = createShader(core + expandLines + sdf.glsl, __spreadProps(__spreadValues({}, Utils.createUniformsFromVariables(this, "backgroundColor", "lineColor", "lineWidth")), {
       linesTexture: { value: this.edges.texture }
     }));
   }
+  set sdf(value) {
+    this._sdf = value;
+    this.step = value.stepCount;
+    this.positionShader.fragmentShader = core + position + this._sdf.glsl;
+    this.normalShader.fragmentShader = core + normal + this._sdf.glsl;
+    this.positionShader.needsUpdate = true;
+    this.normalShader.needsUpdate = true;
+  }
   setUniforms(shader) {
-    Utils.setUniformsFromObject(shader, this.sdf, "sdf_");
     shader.uniforms.epsilon.value = this.epsilon;
+    shader.uniforms.step.value = this.step;
   }
   renderImage(width, height) {
     return new Promise((resolve) => {
@@ -2486,10 +2399,22 @@ class EdgeRenderer {
           this.normal.dispose();
           this.edges.dispose();
           this.expanded.dispose();
-          this.position = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-          this.normal = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-          this.edges = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-          this.expanded = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
+          this.position = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, {
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType
+          });
+          this.normal = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, {
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType
+          });
+          this.edges = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, {
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType
+          });
+          this.expanded = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, {
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType
+          });
         }
         this.setUniforms(this.positionShader);
         render(this.positionShader, this.position);
@@ -2518,10 +2443,16 @@ class EdgeRenderer {
         this.expanded.dispose();
         const floorX = Math.floor(screenSize2.x);
         const floorY = Math.floor(screenSize2.y);
-        this.position = new THREE.WebGLRenderTarget(floorX, floorY, { format: THREE.RGBAFormat, type: THREE.FloatType });
+        this.position = new THREE.WebGLRenderTarget(floorX, floorY, {
+          format: THREE.RGBAFormat,
+          type: THREE.FloatType
+        });
         this.normal = new THREE.WebGLRenderTarget(floorX, floorY, { format: THREE.RGBAFormat, type: THREE.FloatType });
         this.edges = new THREE.WebGLRenderTarget(floorX, floorY, { format: THREE.RGBAFormat, type: THREE.FloatType });
-        this.expanded = new THREE.WebGLRenderTarget(floorX, floorY, { format: THREE.RGBAFormat, type: THREE.FloatType });
+        this.expanded = new THREE.WebGLRenderTarget(floorX, floorY, {
+          format: THREE.RGBAFormat,
+          type: THREE.FloatType
+        });
       }
       this.setUniforms(this.positionShader);
       render(this.positionShader, this.position);
@@ -2536,4 +2467,4 @@ class EdgeRenderer {
     });
   }
 }
-export { ColorBackground, CustomSDF, DepthRenderer, EdgeRenderer, HemisphereBackground, ImageBackground, Mandelbulb, Menger, PathTracer, Queue, RealtimeRenderer, Sierpinski, camera, controls, init };
+export { ColorBackground, EdgeRenderer, HemisphereBackground, ImageBackground, Menger, PathTracer, Queue, RealtimeRenderer, __SDF as SDF, Sierpinski, camera, controls, fullscreen, init };

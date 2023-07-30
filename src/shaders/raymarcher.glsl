@@ -10,9 +10,6 @@ uniform float shadowHardness;
 #define CAMERA_NEAR         0.000001
 #define CAMERA_FAR          1000.0
 
-
-
-
 const float epsilon = 0.00002;
 
 float sdf(vec3 position);
@@ -20,11 +17,8 @@ vec3 background(vec3 direction);
 
 vec3 calculateNormal(vec3 position) {
     vec2 h = vec2(epsilon, 0.0);
-    return normalize(vec3(sdf(position + h.xyy) - sdf(position - h.xyy),
-                           sdf(position + h.yxy) - sdf(position - h.yxy),
-                           sdf(position + h.yyx) - sdf(position - h.yyx)));
+    return normalize(vec3(sdf(position + h.xyy) - sdf(position - h.xyy), sdf(position + h.yxy) - sdf(position - h.yxy), sdf(position + h.yyx) - sdf(position - h.yyx)));
 }
-
 
 uniform vec3 sunDirection;
 uniform float sunStrength;
@@ -32,15 +26,13 @@ uniform float ambientLightStrength;
 uniform float ambientOcclusionStrength;
 uniform vec3 color;
 
-
 const int maximumRaySteps = 512;
 
 float shadowRay(vec3 position, vec3 normal) {
     float minDist = 1.0;
 
-
     float totalDistance = 2.0 * epsilon;
-    for (int steps = 0; steps < maximumRaySteps; steps++) {
+    for(int steps = 0; steps < maximumRaySteps; steps++) {
         vec3 p = position + totalDistance * (-sunDirection);
         if(totalDistance > 100.0)
             return max(dot(normal, -sunDirection), 0.0) * minDist;
@@ -50,17 +42,14 @@ float shadowRay(vec3 position, vec3 normal) {
 
         minDist = min(shadowHardness * dist / totalDistance, minDist);
 
-       
-        if (dist < 0.000001 && steps > 4)
+        if(dist < 0.000001 && steps > 4)
             return 0.0;
     }
 
     return max(dot(normal, -sunDirection), 0.0) * minDist;
 }
 
-
-
-float rand(vec2 n) { 
+float rand(vec2 n) {
     return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
 }
 
@@ -69,10 +58,8 @@ vec2 seed = vec2(0);
 vec2 rand2n() {
     seed += vec2(-1, 1);
     // implementation based on: lumina.sourceforge.net/Tutorials/Noise.html
-    return vec2(fract(sin(dot(seed.xy ,vec2(12.9898,78.233))) * 43758.5453),
-        fract(cos(dot(seed.xy ,vec2(4.898,7.23))) * 23421.631));
+    return vec2(fract(sin(dot(seed.xy, vec2(12.9898, 78.233))) * 43758.5453), fract(cos(dot(seed.xy, vec2(4.898, 7.23))) * 23421.631));
 }
-
 
 struct MarchData {
     bool hit;
@@ -85,7 +72,7 @@ MarchData march(vec3 direction) {
     MarchData data;
 
     float totalDistance = 0.0;
-    for (int steps = 0; steps < maximumRaySteps; ++steps) {
+    for(int steps = 0; steps < maximumRaySteps; ++steps) {
         vec3 p = cameraPos + totalDistance * direction;
 
         if(totalDistance > 100.0)
@@ -93,7 +80,7 @@ MarchData march(vec3 direction) {
 
         float dist = sdf(p);
         totalDistance += (steps < 4 ? rand(gl_FragCoord.xy / resolution * 100.0) * dist : dist);
-       
+
         if(dist < epsilon) {
             vec3 position = cameraPos + totalDistance * direction;
             vec3 normal = calculateNormal(position);
@@ -107,14 +94,14 @@ MarchData march(vec3 direction) {
             vec3 bg = vec3(0);
             for(int i = 0; i < samples; ++i) {
                 bg += background(normalize(vec3(rand2n(), rand2n().x)));
-            }   
+            }
 
             vec3 pixel = diffuse * color + ao * (bg / float(samples)) * color * ambientLightStrength;
 
             data.hit = true;
             data.position = position;
             data.normal = normal;
-            data.color = pixel;          
+            data.color = pixel;
 
             return data;
         }
@@ -122,7 +109,7 @@ MarchData march(vec3 direction) {
 
     data.hit = false;
     data.color = background(direction);
-   
+
     return data;
 }
 
@@ -142,7 +129,7 @@ vec3 ray(int x, int y) {
     return view * normalize(vec3(uv, 1.0 / tan(fov / 2.0)));
 }
 
-void main() {        
+void main() {
     MarchData center = march(ray(0, 0));
 
     /*gl_FragColor = vec4(center.color, 1);*/

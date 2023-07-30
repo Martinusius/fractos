@@ -1,64 +1,71 @@
-import * as THREE from 'three';
-import { createShader, render } from './renderer';
+import * as THREE from "three";
+import { createShader, render } from "./setup";
 
 // @ts-ignore
-import postprocess from './shaders/postprocess.glsl';
-import { downloadCanvas } from './util';
-
+import postprocess from "./shaders/postprocess.glsl";
+import { downloadCanvas } from "./util";
 
 // Gets reset on render
 export class TemporaryImage {
-    private texture: THREE.Texture;
-    private postprocessing: string[] = [];
+  private texture: THREE.Texture;
+  private postprocessing: string[] = [];
 
-    constructor(texture: THREE.WebGLRenderTarget | THREE.Texture) {
-        if(texture instanceof THREE.WebGLRenderTarget) texture = texture.texture;
-        this.texture = texture;
-    }
+  constructor(texture: THREE.WebGLRenderTarget | THREE.Texture) {
+    if (texture instanceof THREE.WebGLRenderTarget) texture = texture.texture;
+    this.texture = texture;
+  }
 
-    postprocess(...steps: string[]) {
-        this.postprocessing.push(...steps);
-        return this;
-    }
+  postprocess(...steps: string[]) {
+    this.postprocessing.push(...steps);
+    return this;
+  }
 
-    private renderToScreen() {
-        const possibleEffects = ['reinhard', 'filmic', 'aces', 'uchimura', 'contrast', 'brightness', 'saturation', 'vignette', 'add', 'sRGB'];
+  private renderToScreen() {
+    const possibleEffects = [
+      "reinhard",
+      "filmic",
+      "aces",
+      "uchimura",
+      "contrast",
+      "brightness",
+      "saturation",
+      "vignette",
+      "add",
+      "sRGB",
+    ];
 
-        const shaderSteps = this.postprocessing.map(step => {
-            if(!step.trim()) return '// Empty postprocessing step';
+    const shaderSteps = this.postprocessing.map((step) => {
+      if (!step.trim()) return "// Empty postprocessing step";
 
-            const match = step.match(/(.*)\((.*)\)/);
+      const match = step.match(/(.*)\((.*)\)/);
 
-            const name = match ? match[1] : step;
-    
-            if(!possibleEffects.includes(name)) throw new Error(`Invalid postprocessing step: ${step}`);
-    
-            // Allow number without decimal places
-            step = step.replace(/([^a-zA-Z\.\d])(\d+)([^\.\d])/g, '$1$2.0$3');
-    
-            if(!match) 
-                return `color = ${step}(color);`;
-            else if(match[2].trim() === '')
-                return 'color = ' + step.replace(/\(/, '(color') + ';';
-            else
-                return 'color = ' + step.replace(/\(/, '(color, ') + ';';
-        });
+      const name = match ? match[1] : step;
 
-        const shader = createShader(postprocess.replace(/POSTPROCESS/, shaderSteps.join('\n')), {
-            data: { value: this.texture }
-        });
+      if (!possibleEffects.includes(name)) throw new Error(`Invalid postprocessing step: ${step}`);
 
-        render(shader, null);
-    }
+      // Allow number without decimal places
+      step = step.replace(/([^a-zA-Z\.\d])(\d+)([^\.\d])/g, "$1$2.0$3");
 
-    download() {
-        this.renderToScreen();
-        downloadCanvas('image.png');
-        return this;
-    }
+      if (!match) return `color = ${step}(color);`;
+      else if (match[2].trim() === "") return "color = " + step.replace(/\(/, "(color") + ";";
+      else return "color = " + step.replace(/\(/, "(color, ") + ";";
+    });
 
-    show() {
-        this.renderToScreen();
-        return this;
-    }
+    const shader = createShader(postprocess.replace(/POSTPROCESS/, shaderSteps.join("\n")), {
+      data: { value: this.texture },
+    });
+
+    render(shader, null);
+  }
+
+  download() {
+    this.renderToScreen();
+    downloadCanvas("image.png");
+    return this;
+  }
+
+  show() {
+    this.renderToScreen();
+    return this;
+  }
 }

@@ -1,193 +1,210 @@
-import * as THREE from 'three';
-import { controls, createShader, render, renderer, setResolution, Utils } from './renderer';
-import { SDF } from './sdf';
-
+import * as THREE from "three";
+import { createShader, render, renderer, setResolution, Utils } from "./setup";
 
 // @ts-ignore
-import simple from './shaders/simple.glsl';
+import simple from "./shaders/simple.glsl";
 
+import Queue, { setAutoResize } from "./queue";
+import { Background, ColorBackground } from "./background";
+import { core } from "./core";
 
-import Queue, { setAutoResize } from './queue';
-import { Background } from './background';
-import { core } from './core';
-
-import { TemporaryImage } from './postprocessing';
-import Timer from './timer';
-import { FirstPersonControls } from 'three/examples/jsm/controls/FirstPersonControls';
+import { TemporaryImage } from "./postprocessing";
+import Timer from "./timer";
+import SDF from "./sdf";
 
 function normalize(vector: THREE.Vector3) {
-    vector.normalize();
-    return vector;
+  vector.normalize();
+  return vector;
 }
 
 export class RealtimeRenderer {
-    private shader: THREE.ShaderMaterial;
-    private target: THREE.WebGLRenderTarget;
-    private targetFinal: THREE.WebGLRenderTarget;
+  private shader: THREE.ShaderMaterial;
+  private target: THREE.WebGLRenderTarget;
 
-    public readonly sdf: SDF;
-    public readonly background: Background;
+  public set sdf(value: SDF) {
+    this._sdf = value;
 
-    public enableShadows = true;
-    public aoStrength = 1.0;
-    public sunDirection = new THREE.Vector3(-0.5, -2, -1);
-    public sunColor = new THREE.Vector3(1, 1, 1);
-    public roughness = 1.0;
+    this.step = value.stepCount;
 
-    public epsilon = 0.0001;
-    public adaptiveEpsilon = true;
-    public epsilonScale = 0.001;
+    this.shader.fragmentShader = core + simple + this._sdf.glsl + this._background.glsl;
+    this.shader.needsUpdate = true;
+  }
 
-    public color = new THREE.Color(1, 1, 1);
+  public set background(value: Background) {
+    this._background = value;
+    this.shader.fragmentShader = core + simple + this._sdf.glsl + this._background.glsl;
+    this.shader.needsUpdate = true;
+  }
 
+  public get sdf() {
+    return this._sdf;
+  }
 
-    // Animation timer
-    public timer = new Timer();
-    public animationDuration: number = 1;
+  public get background() {
+    return this._background;
+  }
 
-    public get time() {
-        return this.timer.get();
+  private _background: Background;
+  private _sdf: SDF;
+
+  public enableShadows = true;
+  public aoStrength = 1.0;
+  public sunDirection = new THREE.Vector3(-0.5, -2, -1);
+  public sunColor = new THREE.Vector3(1, 1, 1);
+  public roughness = 1.0;
+
+  public epsilon = 0.0001;
+  public adaptiveEpsilon = true;
+  public epsilonScale = 0.0005;
+
+  public color = new THREE.Color(1, 1, 1);
+
+  public pixelDivisions = 1;
+
+  // Animation timer
+  public timer = new Timer();
+  public animationDuration: number = 1;
+
+  public get time() {
+    return this.timer.get();
+  }
+
+  public set time(value: number) {
+    this.timer.set(value);
+  }
+
+  public lastImage: TemporaryImage | null = null;
+
+  // Postprocessing steps
+  public postprocess: string[] = [];
+
+  public step: number;
+
+  constructor(
+    fractal: SDF = new SDF("cube()"),
+    background: Background = new ColorBackground(new THREE.Color("white"))
+  ) {
+    const size = new THREE.Vector2();
+    renderer.getSize(size);
+
+    this.target = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
+
+    this._sdf = fractal;
+    this._background = background;
+
+    this.step = this._sdf.stepCount;
+    this.shader = this.initShader();
+  }
+
+  private initShader() {
+    return createShader(core + simple + this._sdf.glsl + this._background.glsl, {
+      rasterizerColor: { value: null },
+      rasterizerDepth: { value: null },
+      sunDirection: { value: normalize(this.sunDirection) },
+      time: { value: 0 },
+      ...Utils.createUniformsFromVariables<RealtimeRenderer>(
+        this,
+        "enableShadows",
+        "aoStrength",
+        "sunColor",
+        "sunDirection",
+        "epsilon",
+        "adaptiveEpsilon",
+        "epsilonScale",
+        "roughness",
+        "color",
+        "step",
+        "pixelDivisions"
+      ),
+      ...Utils.objectToUniforms(this._background, "bg_"),
+    });
+  }
+
+  renderImage(width: number, height: number, time = 0) {
+    Queue.cancel();
+    setAutoResize(false);
+    setResolution(width, height);
+
+    const targetSize = new THREE.Vector2(width, height);
+    const textureSize = new THREE.Vector2(this.target.texture.image.width, this.target.texture.image.height);
+
+    if (!targetSize.equals(textureSize)) {
+      this.target.dispose();
+
+      this.target = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, {
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType,
+      });
     }
 
-    public set time(value: number) {
-        this.timer.set(value);
-    }
+    Utils.setUniformsFromObject(this.shader, this.background, "bg_");
 
-    // Frame timer
-    private clock = new THREE.Clock();
-    public framerate = 0;
+    this.shader.uniforms.time.value = time;
+    this.shader.uniforms.sunDirection.value = normalize(this.sunDirection);
 
-    public lastImage: TemporaryImage | null = null;
+    Utils.setUniformsFromVariables<RealtimeRenderer>(
+      this.shader,
+      this,
+      "enableShadows",
+      "aoStrength",
+      "sunColor",
+      "sunDirection",
+      "epsilon",
+      "adaptiveEpsilon",
+      "epsilonScale",
+      "roughness",
+      "color",
+      "step",
+      "pixelDivisions"
+    );
 
-    
-    // Postprocessing steps
-    public postprocess: string[] = [];
+    render(this.shader, this.target);
 
-    constructor(sdf: SDF, background: Background) {
-        this.sdf = sdf;
-        this.background = background;
+    this.lastImage = new TemporaryImage(this.target);
+    return this.lastImage;
+  }
 
-        const size = new THREE.Vector2();
-        renderer.getSize(size);
+  start(onFrame = () => {}) {
+    setAutoResize(true);
 
+    Queue.loop(() => {
+      onFrame();
+
+      const size = new THREE.Vector2();
+      renderer.getSize(size);
+      const targetSize = new THREE.Vector2(this.target.texture.image.width, this.target.texture.image.height);
+
+      if (!size.equals(targetSize)) {
+        this.target.dispose();
         this.target = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-        this.targetFinal = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
+      }
 
-        this.shader = createShader(core + simple + sdf.getCode() + background.getCode(), {
-            rasterizerColor: { value: null },
-            rasterizerDepth: { value: null },
-            sunDirection: { value: normalize(this.sunDirection) },
-            time: { value: 0 },
-            ...Utils.createUniformsFromVariables<RealtimeRenderer>(this,
-                'enableShadows',
-                'aoStrength',
-                'sunColor',
-                'sunDirection',
-                'epsilon',
-                'adaptiveEpsilon',
-                'epsilonScale',
-                'roughness',
-                'color'
-            ),
-            ...Utils.objectToUniforms(this.sdf, 'sdf_'),
-            ...Utils.objectToUniforms(this.background, 'bg_'),
-        });            
-    }
+      Utils.setUniformsFromObject(this.shader, this.background, "bg_");
 
-    renderImage(width: number, height: number, time = 0) {
-        Queue.cancel();
-        setAutoResize(false);
-        setResolution(width, height);
+      this.shader.uniforms.time.value = this.time / this.animationDuration;
+      this.shader.uniforms.rasterizerColor.value = this.target.texture;
+      this.shader.uniforms.sunDirection.value = normalize(this.sunDirection);
 
-        const targetSize = new THREE.Vector2(width, height);
-        const textureSize = new THREE.Vector2(this.target.texture.image.width, this.target.texture.image.height);
+      Utils.setUniformsFromVariables<RealtimeRenderer>(
+        this.shader,
+        this,
+        "enableShadows",
+        "aoStrength",
+        "sunColor",
+        "sunDirection",
+        "epsilon",
+        "adaptiveEpsilon",
+        "epsilonScale",
+        "roughness",
+        "color",
+        "step",
+        "pixelDivisions"
+      );
 
-        if(!targetSize.equals(textureSize)) {
-            this.target.dispose();
-            this.targetFinal.dispose();
+      render(this.shader, this.target);
 
-            this.target = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-            this.targetFinal = new THREE.WebGLRenderTarget(targetSize.x, targetSize.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-        }
-
-        Utils.setUniformsFromObject(this.shader, this.sdf, 'sdf_');
-        Utils.setUniformsFromObject(this.shader, this.background, 'bg_');
-        
-        this.shader.uniforms.time.value = time;
-        this.shader.uniforms.rasterizerColor.value = this.target.texture;
-        this.shader.uniforms.sunDirection.value = normalize(this.sunDirection);
-        Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this,
-            'enableShadows',
-            'aoStrength',
-            'sunColor',
-            'sunDirection',
-            'epsilon',
-            'adaptiveEpsilon',
-            'epsilonScale',
-            'roughness',
-            'color'
-        );
-
-        render(this.shader, this.targetFinal);
-
-        this.lastImage = new TemporaryImage(this.targetFinal);
-        return this.lastImage;
-    }
-
-    start(onFrame = () => {}) {
-        setAutoResize(true);
-
-     
-        let accumulatedTime = 0;
-
-
-        Queue.loop(() => {
-            const interval = 1 / this.framerate;
-            const delta = this.clock.getDelta();
-
-            accumulatedTime += delta;
-            if(controls instanceof FirstPersonControls) controls.update(delta);
-
-            if(this.framerate !== 0 && accumulatedTime < interval) return;
-            accumulatedTime = accumulatedTime - interval;
-            
-            onFrame();
-
-            const size = new THREE.Vector2();
-            renderer.getSize(size);
-            const targetSize = new THREE.Vector2(this.target.texture.image.width, this.target.texture.image.height);
-
-            if(!size.equals(targetSize)) {
-                this.target.dispose();
-                this.targetFinal.dispose();
-
-                this.target = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-                this.targetFinal = new THREE.WebGLRenderTarget(size.x, size.y, { format: THREE.RGBAFormat, type: THREE.FloatType });
-            }
-
-            Utils.setUniformsFromObject(this.shader, this.sdf, 'sdf_');
-            Utils.setUniformsFromObject(this.shader, this.background, 'bg_');
-
-            
-            this.shader.uniforms.time.value = this.time / this.animationDuration;
-            this.shader.uniforms.rasterizerColor.value = this.target.texture;
-            this.shader.uniforms.sunDirection.value = normalize(this.sunDirection);
-            Utils.setUniformsFromVariables<RealtimeRenderer>(this.shader, this,
-                'enableShadows',
-                'aoStrength',
-                'sunColor',
-                'sunDirection',
-                'epsilon',
-                'adaptiveEpsilon',
-                'epsilonScale',
-                'roughness',
-                'color'
-            );
-
-            render(this.shader, this.targetFinal);
-
-            this.lastImage = new TemporaryImage(this.targetFinal);
-            this.lastImage.postprocess(...this.postprocess).show();
-        });
-    }
+      this.lastImage = new TemporaryImage(this.target);
+      this.lastImage.postprocess("sRGB", ...this.postprocess).show();
+    });
+  }
 }

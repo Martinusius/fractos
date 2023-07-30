@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script src="./three.min.js"></script>
+  <script src="../dist/fractos.min.js"></script>
+  <script>
+    const canvas = Fractos.fullscreen();
+
+    const fractal = `
+      shape = {
+        box ∪         
+
+      }
+
+
+      iterations = 12
+      
+      downscale 3
+      move 0, 0, -1/3
+      mirror 0, 0, 1
+      move 0, 0, 1/3
+      
+      move -2/3, 2/3, 0
+
+      rotate-z -15
+      
+      mirror 0, -1, 1
+      mirror 1, 0, 1
+      mirror 0, 0, -1
+      mirror 1, 0, 0
+      mirror 0, -1, 0
+
+    `;
+
+    const background = new Fractos.HemisphereBackground(new THREE.Color('#AADDAA'), new THREE.Color('#FFFFFF'), 0.5);
+    const renderer = new Fractos.RealtimeRenderer(fractal, background);
+
+    renderer.animationDuration = 10;
+
+    renderer.start();
+  </script>
+</body>
+
+</html>

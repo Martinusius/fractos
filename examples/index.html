@@ -1,267 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
     <style>
-        html, body {
+        html,
+        body {
             width: 100%;
             height: 100%;
             padding: 0;
             margin: 0;
 
             background-color: black;
+
+            display: flex;
         }
 
         canvas {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
             margin: auto;
+        }
+
+        .editor {
+            width: calc(max(600px, 30%));
+            height: 100%;
+        }
+
+        .editor>* {
+            position: absolute;
+        }
+
+        .screen {
+            flex: 1;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media screen and (max-width: 1400px) {
+            body {
+                flex-direction: column-reverse;
+            }
+
+            .editor {
+                height: calc(max(600px, 30%));
+                width: 100%;
+            }
+        }
+
+        @media screen and (max-width: 600px) {
+            body {
+                flex-direction: column-reverse;
+            }
+
+            .editor {
+                height: calc(max(300px, 30%));
+                width: 100%;
+            }
         }
     </style>
 
-
-    <script type="x-shader/x-fragment" id="sdf">
-        /*float sdf(vec3 z) {
-            const int iterations = 8;
-
-            z *= cos(z.x * -0.8 + z.z * 0.8 - z.y * 0.8) * 0.2 + 0.8;
-
-            for(int i = 0; i < iterations; ++i) {
-                z = abs(z);
-
-                z = rotateX(z, -0.1);
-
-                if(z.x - z.y < 0.0) z.xy = z.yx;
-                if(z.x - z.z < 0.0) z.xz = z.zx;
-                if(z.y - z.z < 0.0) z.zy = z.yz;
-
-                z = rotateY(z, -0.1);
-
-                z.z -= 2.0 / 3.0;
-                z.z = -abs(z.z);
-                z.z += 1.0 / 3.0;
-
-                z *= vec3(3, 3, 3);
-                z += vec3(-2.5, -2, -0.5);
-
-                z = rotateZ(-z, -0.1);
-        
-                //if(z.z > 1.0 * sdf_offset) z.z -= 2.0 * sdf_offset;
-            }
-        
-            return box(z * pow(3.0, float(-iterations)), vec3(pow(3.0, float(-iterations))));
-        }*/
-        
-        /*float sdf(vec3 z) {
-            const int iterations = 12;
-            const float scale = 1.5;
-
-           
-
-            z *= -1.0;
-
-            z *= cos(z.x * -0.4 + z.z * 0.4) * 0.2 + 0.8;
-            z.y *= 0.8;
-
-           
-
-            //z.x = mod(z.x + 1.0, 2.0) - 1.0;
-
-            float minimum = 4.0;
-
-            for(int i = 0; i < iterations; ++i) {
-                minimum = min(minimum,  box(z * pow(scale, float(-i)), vec3(pow(scale, float(-i)))));
-
-                if(z.x - z.y > 0.0) z.xy = z.yx;
-                if(z.x - z.z > 0.0) z.xz = z.zx;
-
-
-                z *= scale;
-                z += vec3(2, -1, -1);
-
-                //z += vec3(2, 0, 0);
-
-               
-
-            }
-
-            minimum = min(minimum,  box(z * pow(scale, float(-iterations)), vec3(pow(scale, float(-iterations)))));
-
-            return minimum * 0.8;
-        }*/
-
-        float sdf(vec3 z) {
-            const int iterations = 16;
-
-            for(int i = 0; i < iterations; i++) {
-                //z = rotateZ(z, 45.0);
-
-                z = abs(z);
-
-                if(z.x - z.y < 0.0) z.xy = z.yx;
-                if(z.x - z.z < 0.0) z.xz = z.zx;
-                if(z.y - z.z < 0.0) z.zy = z.yz;
-
-                /*z.z -= 1.0 / 3.0;
-                z.z = -abs(z.z);
-                z.z += 1.0 / 3.0;*/
-
-
-                z *= vec3(3, 3, 3);
-                z += vec3(-2, -1, 0);
-                
-            }
-        
-            return box(z * pow(3.0, -float(iterations)), vec3(pow(3.0, -float(iterations))));
-        }
-
-        vec3 csdf(vec3 z) {
-            return vec3(1);
-        }
-    </script>
+    <div class="editor"></div>
+    <div class="screen"></div>
 
     <script src="./three.min.js"></script>
     <script src="../dist/fractos.min.js"></script>
-    <script>
-        const canvas = Fractos.init('body');
+    <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
+    <script id="fractal" type="application/x-suppress">
 
-        
-        function getEnvMap(url, positive = 'p', negative = 'n') {
-            const r = url;
-            const urls = [r + positive + "x.jpg", r + negative + "x.jpg", r + positive + "y.jpg", r + negative + "y.jpg", r + positive + "z.jpg", r + negative + "z.jpg"];
+        sphere();
 
-            textureCube = new THREE.CubeTextureLoader().load(urls);
-            textureCube.format = THREE.RGBAFormat;
-            textureCube.mapping = THREE.CubeReflectionMapping;
-            textureCube.encoding = THREE.sRGBEncoding;
+        for (let i = 0; i < 5; i++) {
+            scale(1 / 3);
+            translate(0, 0, -1 / 3);
+            mirror(0, 0, 1);
+            translate(0, 0, 1 / 3);
 
-            return textureCube;
+            translate(-2 / 3, 2 / 3, 0);
+
+            mirror(0, -1, 1);
+            mirror(1, 0, 1);
+            mirror(0, 0, -1);
+            mirror(1, 0, 0);
+            mirror(0, -1, 0);
         }
 
-        //const background = new ImageBackground(getEnvMap('https://playground.babylonjs.com/textures/skybox_'));
-        //const background = new ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
-        const background = new Fractos.ColorBackground(new THREE.Color(1, 1, 1));
 
-        const fractal = new Fractos.Menger(12);
+    </script>
+    <script>
+        (async () => {
+            require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
 
-        fractal.transform = [
-            'rotateX(-45)',
-            'translate(0.5, 0, -0.5)',
-            'absZ',
-            'rotateZ(-45)',
-            'rotateY(45)'
-        ];
+            function correctIndent(code) {
+                const lines = code.split('\n');
 
-        fractal.transform2 = ['rotateX(-20)'];
+                if (lines[0].trim().length === 0) lines.shift();
+                if (lines[lines.length - 1].trim().length === 0) lines.pop();
 
-        // const fractal = new CustomSDF(document.getElementById('sdf').textContent);
+                while (lines.every(l => l.trim().length === 0 || l.startsWith('  ') || l.startsWith('\t'))) {
+                    lines.forEach((l, i) => {
+                        if (l.trim().length === 0) return;
 
-       
-
-        const renderer = new Fractos.RealtimeRenderer(fractal, background);
-        renderer.animationDuration = 100;
-
-        renderer.color = new THREE.Color(0.5, 0.3, 1);
-        renderer.enableShadows = true;
-        renderer.framerate = 0;
-
-        renderer.sunDirection = new THREE.Vector3(-1, -1, -3);
-
-        Fractos.camera.position.set(0, 0, 2);
-        Fractos.camera.lookAt(new THREE.Vector3(0, 0, 0));
-        Fractos.camera.fov = 55;
-
-       
-
-        const pathTracer = new Fractos.PathTracer(fractal, background);
-        pathTracer.color = renderer.color;
-        pathTracer.roughness = 1;
-        pathTracer.sunDirection = renderer.sunDirection;
-        pathTracer.rayDepth = 3;
-
-        renderer.postprocess = [];
-
-        pathTracer.pixelDivisions = 16;
-        pathTracer.sunStrength = 3;
-        pathTracer.backgroundMultiplier = 1;
-        pathTracer.sunColor = new THREE.Color(1, 1, 0.8);
-
-
-        let capturing = false;
-        let recordingPath = false;
-        
-        const animationPath = [];
-
-        renderer.start(() => {});
-        Fractos.controls.enabled = true;
-
-        document.addEventListener('keydown', event => {
-            if(event.key.toLowerCase() === 'c') {
-                capturing = !capturing;
-
-                if(capturing) {
-                    renderer.timer.stop();
-                    pathTracer.renderImage(1080, 1080, renderer.time / renderer.animationDuration)
-                        .then(image => image.postprocess('uchimura').show()).catch(() => {});
-                    Fractos.controls.enabled = true;
+                        lines[i] = l.slice(2)
+                    });
                 }
-                else {
-                    renderer.start();
-                    renderer.timer.start();
+
+                return lines.join('\n');
+            }
+
+            window.MonacoEnvironment = { getWorkerUrl: () => proxy };
+
+            let proxy = URL.createObjectURL(new Blob([`
+    self.MonacoEnvironment = {
+        baseUrl: 'https://unpkg.com/monaco-editor@latest/min/'
+    };
+    importScripts('https://unpkg.com/monaco-editor@latest/min/vs/base/worker/workerMain.js');
+`], { type: 'text/javascript' }));
+
+            let lastValue = correctIndent(document.querySelector('#fractal').innerHTML);
+
+            require(["vs/editor/editor.main"], function () {
+                window.editor = monaco.editor.create(document.querySelector('.editor'), {
+                    value: lastValue,
+                    language: 'javascript',
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    fontSize: window.innerWidth < 600 ? 12 : 16
+                });
+            });
+
+
+            const canvas = Fractos.init('.screen');
+
+            function getEnvMap(url, positive = 'p', negative = 'n') {
+                const r = url;
+                const urls = [r + positive + "x.jpg", r + negative + "x.jpg", r + positive + "y.jpg", r + negative + "y.jpg", r + positive + "z.jpg", r + negative + "z.jpg"];
+
+                textureCube = new THREE.CubeTextureLoader().load(urls);
+                textureCube.format = THREE.RGBAFormat;
+                textureCube.mapping = THREE.CubeReflectionMapping;
+                textureCube.encoding = THREE.sRGBEncoding;
+
+                return textureCube;
+            }
+
+            // const background = new Fractos.ImageBackground(getEnvMap('https://playground.babylonjs.com/textures/skybox_'));
+            // const background = new Fractos.ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
+            const background = new Fractos.ColorBackground(new THREE.Color('#F6F6F6'));
+
+            const fractal = new Fractos.SDF(document.querySelector('#fractal').innerHTML);
+
+            const editor = document.querySelector('.editor');
+
+            const renderer = new Fractos.RealtimeRenderer(fractal, background);
+
+            async function recompile() {
+                if (window.editor.getValue() === lastValue) return;
+
+                lastValue = window.editor.getValue();
+
+                try {
+                    const sdf = await Fractos.SDF.createInSandbox(window.editor.getValue());
+                    renderer.sdf = sdf;
+                    pathTracer.sdf = sdf;
                 }
-            }
-            else if(event.key === ' ') {
-                if(capturing) return;
-
-                Fractos.controls.enabled = !Fractos.controls.enabled;
-            }
-            else if(event.key.toLowerCase() === 'p') {
-                recordingPath = !recordingPath;
-
-                if(recordingPath) animationPath.length = 0;
-
-                renderer.start(recordingPath ? () => {
-                    const point = { position: new THREE.Vector3(), direction: new THREE.Vector3(), time: renderer.time / renderer.animationDuration };
-
-                    Fractos.camera.getWorldPosition(point.position);
-                    Fractos.camera.getWorldDirection(point.direction);
-
-                    animationPath.push(point);
-                } : () => {});
-            }
-            else if(event.key.toLowerCase() === 'f') {
-                capturing = !capturing;
-
-                if(capturing) {
-                    renderer.timer.stop();
-                    
-                    let index = 0;
-
-                    pathTracer.renderAnimation(1080, 1080, animationPath).catch(() => {});
-                    
-                    Fractos.controls.enabled = true;
-                }
-                else {
-                    renderer.start();
-                    renderer.timer.start();
+                catch (e) {
+                    console.log(e);
                 }
             }
-            else if(event.key.toLowerCase() === 'g') {
-                pathTracer.lastImage.download();
-            }
-            else if(event.key.toLowerCase() === 'l') {
-                renderer.sunDirection.set(-Fractos.camera.position.x, -Fractos.camera.position.y, -Fractos.camera.position.z);
-                pathTracer.sunDirection.set(-Fractos.camera.position.x, -Fractos.camera.position.y, -Fractos.camera.position.z);
-            }
-        });
+
+            editor.addEventListener('keyup', recompile);
+
+            editor.addEventListener('keydown', (event) => {
+
+                if (event.key === 's' && event.ctrlKey) {
+                    console.log('saving');
+
+                    //recompile();
+
+                    event.preventDefault();
+                }
+            });
+
+
+
+
+
+
+
+            renderer.step = 1000;
+
+            renderer.color = new THREE.Color(0.8, 0.2, 0.2);
+            renderer.enableShadows = true;
+            renderer.framerate = 0;
+
+            renderer.sunDirection = new THREE.Vector3(1, -1, 3);
+
+            renderer.postprocess = [];
+
+
+            Fractos.camera.position.set(-3, 3, -3);
+            Fractos.camera.lookAt(new THREE.Vector3(0, 0, 0));
+            Fractos.camera.rotation.z = 20;
+            Fractos.camera.fov = 50;
+
+
+
+            const pathTracer = new Fractos.PathTracer(fractal, background);
+            pathTracer.color = renderer.color;
+            pathTracer.roughness = 1;
+            pathTracer.sunDirection = renderer.sunDirection;
+            pathTracer.rayDepth = 5;
+
+
+
+            pathTracer.pixelDivisions = 16;
+            pathTracer.sunStrength = 1;
+            pathTracer.sunColor = new THREE.Color(1, 1, 1);
+
+
+            let capturing = false;
+            let recordingPath = false;
+
+            let pressed = false;
+
+
+            const animationPath = [];
+
+            renderer.start();
+            Fractos.controls.enabled = true;
+
+            document.addEventListener('keydown', event => {
+                if (document.activeElement !== document.body) return;
+
+                if (event.key.toLowerCase() === 'c') {
+                    capturing = !capturing;
+
+                    if (capturing) {
+                        renderer.timer.stop();
+                        pathTracer.renderImage(1080, 1080, renderer.time / renderer.animationDuration)
+                            .then(image => image.show()).catch(() => { });
+                        Fractos.controls.enabled = true;
+                    }
+                    else {
+                        renderer.start();
+                        renderer.timer.start();
+                    }
+                }
+                else if (event.key === ' ') {
+                    if (capturing) return;
+
+                    Fractos.controls.enabled = !Fractos.controls.enabled;
+                }
+                else if (event.key.toLowerCase() === 'p') {
+                    recordingPath = !recordingPath;
+
+                    if (recordingPath) animationPath.length = 0;
+
+                    renderer.start(recordingPath ? () => {
+                        const point = { position: new THREE.Vector3(), direction: new THREE.Vector3(), time: renderer.time / renderer.animationDuration };
+
+                        Fractos.camera.getWorldPosition(point.position);
+                        Fractos.camera.getWorldDirection(point.direction);
+
+                        animationPath.push(point);
+                    } : () => { });
+                }
+                else if (event.key.toLowerCase() === 'f') {
+                    capturing = !capturing;
+
+                    if (capturing) {
+                        renderer.timer.stop();
+
+                        let index = 0;
+
+                        pathTracer.renderAnimation(1080, 1080, animationPath).catch(() => { });
+
+                        Fractos.controls.enabled = true;
+                    }
+                    else {
+                        renderer.start();
+                        renderer.timer.start();
+                    }
+                }
+                else if (event.key.toLowerCase() === 'g') {
+                    pathTracer.lastImage.download();
+                }
+                else if (event.key.toLowerCase() === 'l') {
+                    renderer.sunDirection.set(-Fractos.camera.position.x, -Fractos.camera.position.y, -Fractos.camera.position.z);
+                    pathTracer.sunDirection.set(-Fractos.camera.position.x, -Fractos.camera.position.y, -Fractos.camera.position.z);
+                }
+            });
+
+            Fractos.controls.addEventListener('start', () => {
+                document.activeElement.blur();
+            });
+
+            window.renderer = renderer;
+            window.pathTracer = pathTracer;
+        })();
+
+
     </script>
 </body>
+
 </html>

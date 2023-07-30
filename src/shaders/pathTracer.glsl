@@ -18,6 +18,7 @@ uniform vec3 emissionG;
 uniform vec3 emissionB;
 
 #define PI 3.141592653589
+#define E 2.718281828459
 
 vec3 ortho(vec3 v) {
     return abs(v.x) > abs(v.z) ? vec3(-v.y, v.x, 0.0)  : vec3(0.0, -v.z, v.y);
@@ -52,6 +53,8 @@ vec3 sampleUnbiased(vec3 normal) {
     return vec3(0);
 }
 
+
+
 vec3 raytrace(vec3 from, vec3 direction) {
     vec3 direct = vec3(0.0);
     vec3 luminance = vec3(1.0);
@@ -65,8 +68,10 @@ vec3 raytrace(vec3 from, vec3 direction) {
             vec3 sampleDir = sampleBiased(ray.normal);//normalize(ray.normal + sphericalRand());
             float lerpFactor = roughness * roughness;
 
+            vec3 c = linear(color);
+
             direction = normalize(mix(reflected, sampleDir, lerpFactor)); 
-            luminance *= clamp(color, 0.0, 1.0) * mix(max(dot(ray.normal, direction), 0.0), 1.0, lerpFactor);
+            luminance *= clamp(c, 0.0, 1.0) * mix(max(dot(ray.normal, direction), 0.0), 1.0, lerpFactor);
 
             from = ray.position + ray.normal * epsilon;
 
@@ -80,11 +85,12 @@ vec3 raytrace(vec3 from, vec3 direction) {
                 direct += luminance * sunLight * sunStrength;
             }
         }
+
         else {
-            return direct + luminance * background(direction) * backgroundMultiplier;
+            return direct + luminance * linear(background(direction));
         }
     }
-    return vec3(0.0);
+    return direct;
 }
 
 

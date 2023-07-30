@@ -38,8 +38,8 @@ vec3 shading() {
             vec3 towards = normalize(nearby.position - center.position);
 
             if(
-                dot(center.normal, nearby.normal) < 0.9 && center.normal != vec3(0)||
-                abs(dot(center.normal, towards)) > max(distanceFromCamera * 0.1, 0.1) && dist > 2.0 * epsilon ||
+                dot(center.normal, nearby.normal) < 0.5 && center.normal != vec3(0)||
+                abs(dot(center.normal, towards)) > max(distanceFromCamera * 0.3, 0.1) && dist > 2.0 * epsilon ||
                 center.normal == vec3(0) && nearby.normal != vec3(0)
             )
                 edge = true;
