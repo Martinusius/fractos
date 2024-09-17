@@ -1,69 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <style>
-        html,
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+
+        background-color: black;
+
+        display: flex;
+      }
+
+      canvas {
+        margin: auto;
+      }
+
+      .editor {
+        width: calc(max(600px, 30%));
+        height: 100%;
+      }
+
+      .editor > * {
+        position: absolute;
+      }
+
+      .screen {
+        flex: 1;
+        background-color: black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      @media screen and (max-width: 1400px) {
         body {
-            width: 100%;
-            height: 100%;
-            padding: 0;
-            margin: 0;
-
-            background-color: black;
-
-            display: flex;
-        }
-
-        canvas {
-            margin: auto;
+          flex-direction: column-reverse;
         }
 
         .editor {
-            width: calc(max(600px, 30%));
-            height: 100%;
+          height: calc(max(600px, 30%));
+          width: 100%;
+        }
+      }
+
+      @media screen and (max-width: 600px) {
+        body {
+          flex-direction: column-reverse;
         }
 
-        .editor>* {
-            position: absolute;
+        .editor {
+          height: calc(max(300px, 30%));
+          width: 100%;
         }
-
-        .screen {
-            flex: 1;
-            background-color: black;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        @media screen and (max-width: 1400px) {
-            body {
-                flex-direction: column-reverse;
-            }
-
-            .editor {
-                height: calc(max(600px, 30%));
-                width: 100%;
-            }
-        }
-
-        @media screen and (max-width: 600px) {
-            body {
-                flex-direction: column-reverse;
-            }
-
-            .editor {
-                height: calc(max(300px, 30%));
-                width: 100%;
-            }
-        }
+      }
     </style>
 
     <div class="editor"></div>
@@ -74,240 +73,270 @@
     <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
     <script id="fractal" type="application/x-suppress">
 
-        sphere();
+      cube();
 
-        for (let i = 0; i < 5; i++) {
-            scale(1 / 3);
-            translate(0, 0, -1 / 3);
-            mirror(0, 0, 1);
-            translate(0, 0, 1 / 3);
+      for (let i = 0; i < 5; i++) {
+          scale(1 / 3);
+          translate(0, 0, -1 / 3);
+          mirror(0, 0, 1);
+          translate(0, 0, 1 / 3);
 
-            translate(-2 / 3, 2 / 3, 0);
+          translate(-2 / 3, 2 / 3, 0);
 
-            mirror(0, -1, 1);
-            mirror(1, 0, 1);
-            mirror(0, 0, -1);
-            mirror(1, 0, 0);
-            mirror(0, -1, 0);
-        }
-
-
+          mirror(0, -1, 1);
+          mirror(1, 0, 1);
+          mirror(0, 0, -1);
+          mirror(1, 0, 0);
+          mirror(0, -1, 0);
+      }
     </script>
     <script>
-        (async () => {
-            require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
+      (async () => {
+        require.config({
+          paths: { vs: "https://unpkg.com/monaco-editor@latest/min/vs" },
+        });
 
-            function correctIndent(code) {
-                const lines = code.split('\n');
+        function correctIndent(code) {
+          const lines = code.split("\n");
 
-                if (lines[0].trim().length === 0) lines.shift();
-                if (lines[lines.length - 1].trim().length === 0) lines.pop();
+          if (lines[0].trim().length === 0) lines.shift();
+          if (lines[lines.length - 1].trim().length === 0) lines.pop();
 
-                while (lines.every(l => l.trim().length === 0 || l.startsWith('  ') || l.startsWith('\t'))) {
-                    lines.forEach((l, i) => {
-                        if (l.trim().length === 0) return;
+          while (
+            lines.every(
+              (l) =>
+                l.trim().length === 0 ||
+                l.startsWith("  ") ||
+                l.startsWith("\t")
+            )
+          ) {
+            lines.forEach((l, i) => {
+              if (l.trim().length === 0) return;
 
-                        lines[i] = l.slice(2)
-                    });
-                }
+              lines[i] = l.slice(2);
+            });
+          }
 
-                return lines.join('\n');
-            }
+          return lines.join("\n");
+        }
 
-            window.MonacoEnvironment = { getWorkerUrl: () => proxy };
+        window.MonacoEnvironment = { getWorkerUrl: () => proxy };
 
-            let proxy = URL.createObjectURL(new Blob([`
+        let proxy = URL.createObjectURL(
+          new Blob(
+            [
+              `
     self.MonacoEnvironment = {
         baseUrl: 'https://unpkg.com/monaco-editor@latest/min/'
     };
     importScripts('https://unpkg.com/monaco-editor@latest/min/vs/base/worker/workerMain.js');
-`], { type: 'text/javascript' }));
+`,
+            ],
+            { type: "text/javascript" }
+          )
+        );
 
-            let lastValue = correctIndent(document.querySelector('#fractal').innerHTML);
+        let lastValue = correctIndent(
+          document.querySelector("#fractal").innerHTML
+        );
 
-            require(["vs/editor/editor.main"], function () {
-                window.editor = monaco.editor.create(document.querySelector('.editor'), {
-                    value: lastValue,
-                    language: 'javascript',
-                    theme: 'vs-dark',
-                    automaticLayout: true,
-                    fontSize: window.innerWidth < 600 ? 12 : 16
-                });
-            });
-
-
-            const canvas = Fractos.init('.screen');
-
-            function getEnvMap(url, positive = 'p', negative = 'n') {
-                const r = url;
-                const urls = [r + positive + "x.jpg", r + negative + "x.jpg", r + positive + "y.jpg", r + negative + "y.jpg", r + positive + "z.jpg", r + negative + "z.jpg"];
-
-                textureCube = new THREE.CubeTextureLoader().load(urls);
-                textureCube.format = THREE.RGBAFormat;
-                textureCube.mapping = THREE.CubeReflectionMapping;
-                textureCube.encoding = THREE.sRGBEncoding;
-
-                return textureCube;
+        require(["vs/editor/editor.main"], function () {
+          window.editor = monaco.editor.create(
+            document.querySelector(".editor"),
+            {
+              value: lastValue,
+              language: "javascript",
+              theme: "vs-dark",
+              automaticLayout: true,
+              fontSize: window.innerWidth < 600 ? 12 : 16,
             }
+          );
+        });
 
-            // const background = new Fractos.ImageBackground(getEnvMap('https://playground.babylonjs.com/textures/skybox_'));
-            // const background = new Fractos.ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
-            const background = new Fractos.ColorBackground(new THREE.Color('#F6F6F6'));
+        const canvas = Fractos.init(".screen");
 
-            const fractal = new Fractos.SDF(document.querySelector('#fractal').innerHTML);
+        function getEnvMap(url, positive = "p", negative = "n") {
+          const r = url;
+          const urls = [
+            r + positive + "x.jpg",
+            r + negative + "x.jpg",
+            r + positive + "y.jpg",
+            r + negative + "y.jpg",
+            r + positive + "z.jpg",
+            r + negative + "z.jpg",
+          ];
 
-            const editor = document.querySelector('.editor');
+          textureCube = new THREE.CubeTextureLoader().load(urls);
+          textureCube.format = THREE.RGBAFormat;
+          textureCube.mapping = THREE.CubeReflectionMapping;
+          textureCube.encoding = THREE.sRGBEncoding;
 
-            const renderer = new Fractos.RealtimeRenderer(fractal, background);
+          return textureCube;
+        }
 
-            async function recompile() {
-                if (window.editor.getValue() === lastValue) return;
+        // const background = new Fractos.ImageBackground(getEnvMap('https://playground.babylonjs.com/textures/skybox_'));
+        // const background = new Fractos.ImageBackground(getEnvMap('https://threejs.org/examples/textures/cube/skyboxsun25deg/'));
+        const background = new Fractos.ColorBackground(
+          new THREE.Color("#F6F6F6")
+        );
 
-                lastValue = window.editor.getValue();
+        const fractal = new Fractos.SDF(
+          document.querySelector("#fractal").innerHTML
+        );
 
-                try {
-                    const sdf = await Fractos.SDF.createInSandbox(window.editor.getValue());
-                    renderer.sdf = sdf;
-                    pathTracer.sdf = sdf;
-                }
-                catch (e) {
-                    console.log(e);
-                }
+        const editor = document.querySelector(".editor");
+
+        const renderer = new Fractos.RealtimeRenderer(fractal, background);
+
+        async function recompile() {
+          if (window.editor.getValue() === lastValue) return;
+
+          lastValue = window.editor.getValue();
+
+          try {
+            const sdf = await Fractos.SDF.createInSandbox(
+              window.editor.getValue()
+            );
+            renderer.sdf = sdf;
+            pathTracer.sdf = sdf;
+          } catch (e) {
+            console.log(e);
+          }
+        }
+
+        editor.addEventListener("keyup", recompile);
+
+        editor.addEventListener("keydown", (event) => {
+          if (event.key === "s" && event.ctrlKey) {
+            console.log("saving");
+
+            //recompile();
+
+            event.preventDefault();
+          }
+        });
+
+        renderer.step = 1000;
+
+        renderer.color = new THREE.Color(0.8, 0.2, 0.2);
+        renderer.enableShadows = true;
+        renderer.framerate = 30;
+
+        renderer.sunDirection = new THREE.Vector3(1, -1, 3);
+
+        renderer.postprocess = [];
+
+        Fractos.camera.position.set(-3, 3, -3);
+        Fractos.camera.lookAt(new THREE.Vector3(0, 0, 0));
+        Fractos.camera.rotation.z = 20;
+        Fractos.camera.fov = 50;
+
+        const pathTracer = new Fractos.PathTracer(fractal, background);
+        pathTracer.color = renderer.color;
+        pathTracer.roughness = 1;
+        pathTracer.sunDirection = renderer.sunDirection;
+        pathTracer.rayDepth = 5;
+
+        pathTracer.pixelDivisions = 8;
+        pathTracer.sunStrength = 1;
+        pathTracer.sunColor = new THREE.Color(1, 1, 1);
+
+        let capturing = false;
+        let recordingPath = false;
+
+        let pressed = false;
+
+        const animationPath = [];
+
+        renderer.start();
+        Fractos.controls.enabled = true;
+
+        document.addEventListener("keydown", (event) => {
+          if (document.activeElement !== document.body) return;
+
+          if (event.key.toLowerCase() === "c") {
+            capturing = !capturing;
+
+            if (capturing) {
+              renderer.timer.stop();
+              pathTracer
+                .renderImage(
+                  1080,
+                  1080,
+                  renderer.time / renderer.animationDuration
+                )
+                .then((image) => image.show())
+                .catch(() => {});
+              Fractos.controls.enabled = true;
+            } else {
+              renderer.start();
+              renderer.timer.start();
             }
+          } else if (event.key === " ") {
+            if (capturing) return;
 
-            editor.addEventListener('keyup', recompile);
+            Fractos.controls.enabled = !Fractos.controls.enabled;
+          } else if (event.key.toLowerCase() === "p") {
+            recordingPath = !recordingPath;
 
-            editor.addEventListener('keydown', (event) => {
+            if (recordingPath) animationPath.length = 0;
 
-                if (event.key === 's' && event.ctrlKey) {
-                    console.log('saving');
+            renderer.start(
+              recordingPath
+                ? () => {
+                    const point = {
+                      position: new THREE.Vector3(),
+                      direction: new THREE.Vector3(),
+                      time: renderer.time / renderer.animationDuration,
+                    };
 
-                    //recompile();
+                    Fractos.camera.getWorldPosition(point.position);
+                    Fractos.camera.getWorldDirection(point.direction);
 
-                    event.preventDefault();
-                }
-            });
+                    animationPath.push(point);
+                  }
+                : () => {}
+            );
+          } else if (event.key.toLowerCase() === "f") {
+            capturing = !capturing;
 
+            if (capturing) {
+              renderer.timer.stop();
 
+              let index = 0;
 
+              pathTracer
+                .renderAnimationDiffusion(1080, 1080, animationPath, [])
+                .catch(() => {});
 
+              Fractos.controls.enabled = true;
+            } else {
+              renderer.start();
+              renderer.timer.start();
+            }
+          } else if (event.key.toLowerCase() === "g") {
+            pathTracer.lastImage.download();
+          } else if (event.key.toLowerCase() === "l") {
+            renderer.sunDirection.set(
+              -Fractos.camera.position.x,
+              -Fractos.camera.position.y,
+              -Fractos.camera.position.z
+            );
+            pathTracer.sunDirection.set(
+              -Fractos.camera.position.x,
+              -Fractos.camera.position.y,
+              -Fractos.camera.position.z
+            );
+          }
+        });
 
+        Fractos.controls.addEventListener("start", () => {
+          document.activeElement.blur();
+        });
 
-
-            renderer.step = 1000;
-
-            renderer.color = new THREE.Color(0.8, 0.2, 0.2);
-            renderer.enableShadows = true;
-            renderer.framerate = 0;
-
-            renderer.sunDirection = new THREE.Vector3(1, -1, 3);
-
-            renderer.postprocess = [];
-
-
-            Fractos.camera.position.set(-3, 3, -3);
-            Fractos.camera.lookAt(new THREE.Vector3(0, 0, 0));
-            Fractos.camera.rotation.z = 20;
-            Fractos.camera.fov = 50;
-
-
-
-            const pathTracer = new Fractos.PathTracer(fractal, background);
-            pathTracer.color = renderer.color;
-            pathTracer.roughness = 1;
-            pathTracer.sunDirection = renderer.sunDirection;
-            pathTracer.rayDepth = 5;
-
-
-
-            pathTracer.pixelDivisions = 16;
-            pathTracer.sunStrength = 1;
-            pathTracer.sunColor = new THREE.Color(1, 1, 1);
-
-
-            let capturing = false;
-            let recordingPath = false;
-
-            let pressed = false;
-
-
-            const animationPath = [];
-
-            renderer.start();
-            Fractos.controls.enabled = true;
-
-            document.addEventListener('keydown', event => {
-                if (document.activeElement !== document.body) return;
-
-                if (event.key.toLowerCase() === 'c') {
-                    capturing = !capturing;
-
-                    if (capturing) {
-                        renderer.timer.stop();
-                        pathTracer.renderImage(1080, 1080, renderer.time / renderer.animationDuration)
-                            .then(image => image.show()).catch(() => { });
-                        Fractos.controls.enabled = true;
-                    }
-                    else {
-                        renderer.start();
-                        renderer.timer.start();
-                    }
-                }
-                else if (event.key === ' ') {
-                    if (capturing) return;
-
-                    Fractos.controls.enabled = !Fractos.controls.enabled;
-                }
-                else if (event.key.toLowerCase() === 'p') {
-                    recordingPath = !recordingPath;
-
-                    if (recordingPath) animationPath.length = 0;
-
-                    renderer.start(recordingPath ? () => {
-                        const point = { position: new THREE.Vector3(), direction: new THREE.Vector3(), time: renderer.time / renderer.animationDuration };
-
-                        Fractos.camera.getWorldPosition(point.position);
-                        Fractos.camera.getWorldDirection(point.direction);
-
-                        animationPath.push(point);
-                    } : () => { });
-                }
-                else if (event.key.toLowerCase() === 'f') {
-                    capturing = !capturing;
-
-                    if (capturing) {
-                        renderer.timer.stop();
-
-                        let index = 0;
-
-                        pathTracer.renderAnimation(1080, 1080, animationPath).catch(() => { });
-
-                        Fractos.controls.enabled = true;
-                    }
-                    else {
-                        renderer.start();
-                        renderer.timer.start();
-                    }
-                }
-                else if (event.key.toLowerCase() === 'g') {
-                    pathTracer.lastImage.download();
-                }
-                else if (event.key.toLowerCase() === 'l') {
-                    renderer.sunDirection.set(-Fractos.camera.position.x, -Fractos.camera.position.y, -Fractos.camera.position.z);
-                    pathTracer.sunDirection.set(-Fractos.camera.position.x, -Fractos.camera.position.y, -Fractos.camera.position.z);
-                }
-            });
-
-            Fractos.controls.addEventListener('start', () => {
-                document.activeElement.blur();
-            });
-
-            window.renderer = renderer;
-            window.pathTracer = pathTracer;
-        })();
-
-
+        window.renderer = renderer;
+        window.pathTracer = pathTracer;
+      })();
     </script>
-</body>
-
+  </body>
 </html>

@@ -19,8 +19,9 @@ export default defineConfig({
             output: {
                 globals: {
                     three: 'THREE'
-                }
-            }
+                },
+                inlineDynamicImports: true
+            },
         }
     },
     publicDir: false,
