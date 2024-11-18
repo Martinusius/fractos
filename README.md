@@ -17,7 +17,9 @@ Fractos depends on [Three.js](https://raw.githubusercontent.com/mrdoob/three.js)
 Fractos.init("body"); // Any css selector can be used
 
 // Scene background
-const background = new Fractos.ColorBackground(new THREE.Color("rgb(255, 80, 60)"));
+const background = new Fractos.ColorBackground(
+  new THREE.Color("rgb(255, 80, 60)")
+);
 
 // Menger sponge
 const fractal = new Fractos.Menger(6 /* Number of iterations */);
@@ -25,13 +27,17 @@ const fractal = new Fractos.Menger(6 /* Number of iterations */);
 const renderer = new Fractos.RealtimeRenderer(fractal, background);
 
 /* Renderer configuration (default values) */
-renderer.color = new THREE.Color("rgb(255, 255, 255)" /* Color of the fractal */);
+renderer.color = new THREE.Color(
+  "rgb(255, 255, 255)" /* Color of the fractal */
+);
 renderer.sunColor = new THREE.Color("rgb(255, 255, 255)");
 renderer.sunDirection = new THREE.Vector3(-0.5, -2, -1);
 renderer.enableShadows = true;
 
 /* Configure the camera (THREE.PerspectiveCamera) */
 Fractos.camera.fov = 90;
+
+renderer.start();
 ```
 
 ##### Path tracer setup
@@ -41,13 +47,16 @@ Fractos.camera.fov = 90;
 Fractos.init("body");
 
 // Scene background
-const background = new Fractos.ImageBackground(/* Insert your own THREE.CubeTexture here */);
+const background =
+  new Fractos.ImageBackground(/* Insert your own THREE.CubeTexture here */);
 
 // Sierpinski tetrahedron
 const fractal = new Fractos.Sierpinski(12 /* Number of iterations */);
 
 const pathTracer = new Fractos.PathTracer(fractal, background);
-pathTracer.color = new THREE.Color("rgb(255, 255, 255)" /* Color of the fractal */);
+pathTracer.color = new THREE.Color(
+  "rgb(255, 255, 255)" /* Color of the fractal */
+);
 pathTracer.sunDirection = new THREE.Vector3(-0.5, -2, -1);
 
 // Every pixel will be split into 8x8 subpixels (one sample each) which will be averaged to get the final pixel color
@@ -59,7 +68,7 @@ pathTracer.renderImage(1080, 1080);
 
 ### Custom fractals
 
-You can also create you own custom fractals. Use a simple javascript syntax to describe the steps to create the fractal. For example this is how you could create the Menger sponge:
+You can also create your own custom fractals. Use a simple javascript syntax to describe the steps to create the fractal. For example this is how you could create the Menger sponge:
 
 ```ts
 const fractal = new Fractos.SDF(() => {
@@ -127,7 +136,8 @@ const fractal = new Fractos.SDF(`
 WARNING: The provided code needs to be evaluated first before the fractal can be rendered. If the code contains an infinite loop, the entire page will stop responding. In situations where you cannot verify whether the code does or does not contain an infinite loop, you can create the fractal safely like this:
 
 ```ts
-const fractal = await Fractos.SDF.createInSandbox(/* function or code string */);
+const fractal =
+  await Fractos.SDF.createInSandbox(/* function or code string */);
 ```
 
 The code will terminate after the function execution time exceeds 100ms. In that case an error is thrown.
@@ -151,7 +161,9 @@ renderer.postprocess = ["filmic()", "contrast(1.5)"];
 const pathTracer = new Fractos.PathTracer(fractal, background);
 
 // Apply filmic tone mapping and increase the contrast by 50%
-pathTracer.renderImage(1080, 1080).then((image) => image.postprocess("filmic()", "contrast(1.5)"));
+pathTracer
+  .renderImage(1080, 1080)
+  .then((image) => image.postprocess("filmic()", "contrast(1.5)"));
 ```
 
 ### Example Images (Path Traced)
